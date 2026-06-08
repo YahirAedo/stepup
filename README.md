@@ -194,7 +194,7 @@ npm test -- --watch
 
 | Entrega | Período | Stack | Estado |
 |---|---|---|---|
-| E1 | Marzo – Mayo 2026 | React Native + Expo + SQLite local | 🟡 En curso |
+| E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | 🟡 En curso |
 | E2 | Junio – Agosto 2026 | + Node.js + PostgreSQL + Firebase FCM | ⏳ Planificado |
 | E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | ⏳ Planificado |
 
