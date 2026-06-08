@@ -1,20 +1,55 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Text } from 'react-native';
 
-import FocusScreen    from './src/screens/FocusScreen';
-import TaskListScreen from './src/screens/TaskListScreen';
-import HistoryScreen  from './src/screens/HistoryScreen';
+import FocusScreen      from './src/screens/FocusScreen';
+import TaskListScreen   from './src/screens/TaskListScreen';
+import TaskDetailScreen from './src/screens/TaskDetailScreen';
+import TaskFormScreen   from './src/screens/TaskFormScreen';
+import StepFormScreen   from './src/screens/StepFormScreen';
+import HistoryScreen    from './src/screens/HistoryScreen';
 
-export type RootTabParamList = {
-  Focus:   undefined;
-  Tasks:   undefined;
-  History: undefined;
+const Tab   = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const screenOpts = {
+  headerStyle:      { backgroundColor: '#1A3A5C' },
+  headerTintColor:  '#FFFFFF',
+  headerTitleStyle: { fontWeight: '600' as const },
 };
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+// Stack de tareas: Lista → Detalle → Formularios
+function TasksStack() {
+  return (
+    <Stack.Navigator screenOptions={screenOpts}>
+      <Stack.Screen name="TaskList"   component={TaskListScreen}   options={{ title: 'Tareas' }} />
+      <Stack.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
+      <Stack.Screen name="TaskForm"   component={TaskFormScreen}   options={{ title: 'Nueva tarea' }} />
+      <Stack.Screen name="StepForm"   component={StepFormScreen}   options={{ title: 'Nuevo paso' }} />
+    </Stack.Navigator>
+  );
+}
+
+// Stack de Vista Foco (necesita acceso a Tasks para navegar)
+function FocusStack() {
+  return (
+    <Stack.Navigator screenOptions={screenOpts}>
+      <Stack.Screen name="FocusMain" component={FocusScreen} options={{ title: 'Ahora' }} />
+    </Stack.Navigator>
+  );
+}
+
+// Stack de Historial
+function HistoryStack() {
+  return (
+    <Stack.Navigator screenOptions={screenOpts}>
+      <Stack.Screen name="HistoryMain" component={HistoryScreen} options={{ title: 'Historial' }} />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   return (
@@ -22,9 +57,7 @@ export default function App() {
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
-            headerStyle:      { backgroundColor: '#1A3A5C' },
-            headerTintColor:  '#FFFFFF',
-            headerTitleStyle: { fontWeight: '600' },
+            headerShown: false,
             tabBarActiveTintColor:   '#2563EB',
             tabBarInactiveTintColor: '#94A3B8',
             tabBarStyle: {
@@ -36,9 +69,8 @@ export default function App() {
         >
           <Tab.Screen
             name="Focus"
-            component={FocusScreen}
+            component={FocusStack}
             options={{
-              title: 'Ahora',
               tabBarLabel: 'Ahora',
               tabBarIcon: ({ color, size }) => (
                 <Text style={{ fontSize: size, color }}>▶</Text>
@@ -47,9 +79,8 @@ export default function App() {
           />
           <Tab.Screen
             name="Tasks"
-            component={TaskListScreen}
+            component={TasksStack}
             options={{
-              title: 'Tareas',
               tabBarLabel: 'Tareas',
               tabBarIcon: ({ color, size }) => (
                 <Text style={{ fontSize: size, color }}>☑</Text>
@@ -58,9 +89,8 @@ export default function App() {
           />
           <Tab.Screen
             name="History"
-            component={HistoryScreen}
+            component={HistoryStack}
             options={{
-              title: 'Historial',
               tabBarLabel: 'Historial',
               tabBarIcon: ({ color, size }) => (
                 <Text style={{ fontSize: size, color }}>📋</Text>
