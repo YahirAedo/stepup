@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ScrollView
+  View, Text, ScrollView, TouchableOpacity,
+  Alert, StatusBar, Platform,
 } from 'react-native';
 import { StepService } from '../services/StepService';
 import { Step } from '../types';
+import { colors, typography, spacing, borderRadius } from '../theme';
+import TextField from '../components/TextField';
+import Button from '../components/Button';
 
 type Props = {
   navigation: any;
   route: any;
 };
 
+const DURATION_PILLS = [5, 10, 15, 20, 30];
+
 export default function StepFormScreen({ navigation, route }: Props) {
   const { taskId, stepId } = route.params;
   const isEditing = !!stepId;
 
   const [name, setName] = useState('');
-  const [duration, setDuration] = useState('');
+  const [duration, setDuration] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -61,109 +66,93 @@ export default function StepFormScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.content}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingHorizontal: spacing['container-padding'],
+          paddingTop: spacing['container-padding'],
+          paddingBottom: 120,
+          gap: spacing['section-gap'],
+        }}
+      >
+        {/* Task name input */}
+        <TextField
+          label="Descripción del paso"
+          placeholder="Ej. Leer las primeras 10 páginas"
+          value={name}
+          onChangeText={setName}
+          autoFocus
+          maxLength={200}
+          hint="Tiene que ser algo que puedas hacer ahora."
+        />
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Descripción del paso *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Leer las primeras 10 páginas"
-            placeholderTextColor="#94A3B8"
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            maxLength={200}
-            multiline
-          />
-          <Text style={styles.hint}>Tiene que ser algo que puedas hacer ahora.</Text>
-        </View>
-
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Duración estimada (minutos)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: 15"
-            placeholderTextColor="#94A3B8"
-            value={duration}
-            onChangeText={setDuration}
-            keyboardType="numeric"
-            maxLength={3}
-          />
-          <Text style={styles.hint}>Opcional. Se usa para el timer.</Text>
-        </View>
-
-        {/* Sugerencias de duración */}
-        <View style={styles.suggestions}>
-          <Text style={styles.suggestionsLabel}>Sugerencias rápidas:</Text>
-          <View style={styles.suggestionRow}>
-            {['5', '10', '15', '20', '30'].map(d => (
-              <TouchableOpacity
-                key={d}
-                style={[styles.suggestionBtn, duration === d && styles.suggestionBtnActive]}
-                onPress={() => setDuration(d)}
-              >
-                <Text style={[styles.suggestionText, duration === d && styles.suggestionTextActive]}>
-                  {d} min
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.btn, saving && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.btnText}>
-            {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Agregar paso'}
+        {/* Duration pills */}
+        <View style={{ gap: spacing['stack-gap'] }}>
+          <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+            Duración estimada
           </Text>
-        </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: spacing.unit * 2, flexWrap: 'wrap' }}>
+            {DURATION_PILLS.map(d => {
+              const active = duration === String(d);
+              return (
+                <TouchableOpacity
+                  key={d}
+                  onPress={() => setDuration(active ? '' : String(d))}
+                  activeOpacity={0.7}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: active ? colors.secondary : colors['surface-container-low'],
+                    borderWidth: 1,
+                    borderColor: active ? colors.secondary : colors['outline-variant'],
+                  }}
+                >
+                  <Text style={[
+                    typography['label-md'] as any,
+                    { color: active ? '#FFFFFF' : colors['on-surface-variant'] },
+                  ]}>
+                    {d} min
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+            Opcional. Se usa para el timer.
+          </Text>
+        </View>
+      </ScrollView>
 
-        <TouchableOpacity
-          style={styles.btnCancel}
+      {/* Footer */}
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: spacing['container-padding'],
+        paddingVertical: 16,
+        paddingBottom: 32,
+        backgroundColor: colors.surface,
+        flexDirection: 'row',
+        gap: spacing['stack-gap'],
+      }}>
+        <Button
+          title="Cancelar"
           onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.btnCancelText}>Cancelar</Text>
-        </TouchableOpacity>
-
+          variant="secondary"
+          style={{ flex: 1 }}
+        />
+        <Button
+          title={saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Guardar Tarea'}
+          onPress={handleSave}
+          variant="primary"
+          disabled={saving}
+          style={{ flex: 2 }}
+        />
       </View>
-    </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFF' },
-  content: { padding: 20 },
-  fieldGroup: { marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: '600', color: '#1A3A5C', marginBottom: 6 },
-  input: {
-    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
-    borderRadius: 10, padding: 12, fontSize: 14, color: '#1A3A5C',
-  },
-  hint: { fontSize: 11, color: '#94A3B8', marginTop: 4 },
-  suggestions: { marginBottom: 24 },
-  suggestionsLabel: { fontSize: 12, color: '#64748B', marginBottom: 8 },
-  suggestionRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  suggestionBtn: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF',
-  },
-  suggestionBtnActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  suggestionText: { fontSize: 12, color: '#64748B' },
-  suggestionTextActive: { color: '#FFFFFF', fontWeight: '600' },
-  btn: {
-    backgroundColor: '#2563EB', borderRadius: 10,
-    padding: 14, alignItems: 'center', marginBottom: 10,
-  },
-  btnDisabled: { backgroundColor: '#93C5FD' },
-  btnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-  btnCancel: {
-    borderRadius: 10, padding: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: '#E2E8F0',
-  },
-  btnCancelText: { color: '#64748B', fontSize: 15 },
-});

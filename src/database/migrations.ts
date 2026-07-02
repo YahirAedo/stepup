@@ -31,10 +31,9 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
     );
   `);
 
-  // Seed data si la tabla está vacía
-  const row = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM tasks');
-  if (row?.count === 0) {
-    await db.withTransactionAsync(async () => {
+  // Seed data (limpia y resiembra cada vez para desarrollo)
+  await db.execAsync('DELETE FROM steps; DELETE FROM tasks; DELETE FROM daily_progress;');
+  await db.withTransactionAsync(async () => {
       const now = new Date().toISOString();
       // Tarea 1: Proyecto Final (urgente, con pasos)
       const t1 = await db.runAsync(
@@ -45,7 +44,7 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
       await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 0, 'pending')`, [t1.lastInsertRowId, 'Definir alcance', 30]);
       await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 1, 'pending')`, [t1.lastInsertRowId, 'Diseñar prototipo', 60]);
       await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 2, 'pending')`, [t1.lastInsertRowId, 'Documentar', 45]);
-      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 3, 'completed', ?)`, [t1.lastInsertRowId, 'Investigar requisitos', 20, now]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at) VALUES (?, ?, ?, 3, 'completed', ?)`, [t1.lastInsertRowId, 'Investigar requisitos', 20, now]);
 
       // Tarea 2: Estudiar Álgebra (con progreso parcial)
       const t2 = await db.runAsync(
@@ -53,8 +52,8 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
          VALUES (?, ?, 'active', ?, NULL)`,
         ['Estudiar Álgebra', new Date(Date.now() + 86400000 * 5).toISOString(), now]
       );
-      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 0, 'completed', ?)`, [t2.lastInsertRowId, 'Repasar vectores', 25, now]);
-      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 1, 'completed', ?)`, [t2.lastInsertRowId, 'Resolver matrices', 40, now]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at) VALUES (?, ?, ?, 0, 'completed', ?)`, [t2.lastInsertRowId, 'Repasar vectores', 25, now]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at) VALUES (?, ?, ?, 1, 'completed', ?)`, [t2.lastInsertRowId, 'Resolver matrices', 40, now]);
       await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 2, 'pending')`, [t2.lastInsertRowId, 'Practicar determinantes', 30]);
 
       // Tarea 3: Preparar Presentación
@@ -82,5 +81,4 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
         );
       }
     });
-  }
 }
