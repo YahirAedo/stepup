@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# design system (E2 visual reference, managed separately)
+stitch_stepup_design_system/
+
+# drive docs
+*.docx
