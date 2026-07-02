@@ -31,10 +31,9 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
     );
   `);
 
-  // Seed data si la tabla está vacía
-  const row = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM tasks');
-  if (row?.count === 0) {
-    await db.withTransactionAsync(async () => {
+  // Seed data (limpia y resiembra cada vez para desarrollo)
+  await db.execAsync('DELETE FROM steps; DELETE FROM tasks; DELETE FROM daily_progress;');
+  await db.withTransactionAsync(async () => {
       const now = new Date().toISOString();
       // Tarea 1: Proyecto Final (urgente, con pasos)
       const t1 = await db.runAsync(
@@ -82,5 +81,4 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
         );
       }
     });
-  }
 }

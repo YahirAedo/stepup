@@ -47,35 +47,40 @@ export default function FocusScreen({ navigation }: Props) {
     setTimerFinished(false);
     setTimerDisplay('');
 
-    const tasks = await TaskService.getAll();
-    const today = await ProgressService.getToday();
-    setStepsToday(today);
+    try {
+      const tasks = await TaskService.getAll();
+      const today = await ProgressService.getToday();
+      setStepsToday(today);
 
-    if (tasks.length === 0) {
-      setActiveTask(null);
-      setNextStep(null);
-      setLoading(false);
-      return;
-    }
-
-    for (const task of tasks) {
-      const step = await StepService.getNextPending(task.id);
-      if (step) {
-        setActiveTask(task);
-        setNextStep(step);
-        if (step.duration_min) {
-          setTimerDisplay(TimerService.format(step.duration_min * 60));
-        } else {
-          setTimerDisplay('00:00');
-        }
+      if (tasks.length === 0) {
+        setActiveTask(null);
+        setNextStep(null);
         setLoading(false);
         return;
       }
-    }
 
-    setActiveTask(null);
-    setNextStep(null);
-    setLoading(false);
+      for (const task of tasks) {
+        const step = await StepService.getNextPending(task.id);
+        if (step) {
+          setActiveTask(task);
+          setNextStep(step);
+          if (step.duration_min) {
+            setTimerDisplay(TimerService.format(step.duration_min * 60));
+          } else {
+            setTimerDisplay('00:00');
+          }
+          setLoading(false);
+          return;
+        }
+      }
+
+      setActiveTask(null);
+      setNextStep(null);
+    } catch (err) {
+      console.warn('Focus load error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleToggleTimer() {
