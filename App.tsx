@@ -22,6 +22,7 @@ import TaskListScreen   from './src/screens/TaskListScreen';
 import TaskDetailScreen from './src/screens/TaskDetailScreen';
 import TaskFormScreen   from './src/screens/TaskFormScreen';
 import StepFormScreen   from './src/screens/StepFormScreen';
+import StepCompleteScreen from './src/screens/StepCompleteScreen';
 import HistoryScreen    from './src/screens/HistoryScreen';
 
 SplashScreen.preventAutoHideAsync();
@@ -43,6 +44,7 @@ function TasksStack() {
       <Stack.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
       <Stack.Screen name="TaskForm"   component={TaskFormScreen}   options={{ title: 'Nueva tarea' }} />
       <Stack.Screen name="StepForm"   component={StepFormScreen}   options={{ title: 'Nuevo paso' }} />
+      <Stack.Screen name="StepComplete" component={StepCompleteScreen} options={{ title: 'Progreso', headerShown: false }} />
     </Stack.Navigator>
   );
 }
