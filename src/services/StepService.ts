@@ -79,6 +79,22 @@ export const StepService = {
     );
   },
 
+  async getStepCounts(task_id: number): Promise<{ total: number; completed: number }> {
+    const db = await getDb();
+    const total = await db.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) as count FROM steps WHERE task_id = ?`,
+      [task_id]
+    );
+    const completed = await db.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) as count FROM steps WHERE task_id = ? AND status = 'completed'`,
+      [task_id]
+    );
+    return {
+      total: total?.count ?? 0,
+      completed: completed?.count ?? 0,
+    };
+  },
+
   async reorder(task_id: number, orderedIds: number[]): Promise<void> {
     const db = await getDb();
     await db.withTransactionAsync(async () => {
