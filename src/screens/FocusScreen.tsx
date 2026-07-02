@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, Vibration
+  View,
+  Text,
+  Alert,
+  ActivityIndicator,
+  Vibration,
+  StatusBar,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { TaskService } from '../services/TaskService';
@@ -9,6 +14,11 @@ import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
 import { TimerService } from '../services/TimerService';
 import { Task, Step } from '../types';
+import { colors, typography, spacing } from '../theme';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import TimerWidget from '../components/TimerWidget';
+import EmptyState from '../components/EmptyState';
 
 type Props = { navigation: any };
 
@@ -19,7 +29,6 @@ export default function FocusScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
 
-  // Timer
   const [timerDisplay, setTimerDisplay] = useState('');
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerFinished, setTimerFinished] = useState(false);
@@ -27,7 +36,7 @@ export default function FocusScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       loadFocus();
-      return () => TimerService.stop(); // limpiar timer al salir
+      return () => TimerService.stop();
     }, [])
   );
 
@@ -49,13 +58,11 @@ export default function FocusScreen({ navigation }: Props) {
       return;
     }
 
-    // Buscar la primera tarea con pasos pendientes
     for (const task of tasks) {
       const step = await StepService.getNextPending(task.id);
       if (step) {
         setActiveTask(task);
         setNextStep(step);
-        // Inicializar display del timer sin arrancarlo
         if (step.duration_min) {
           setTimerDisplay(TimerService.format(step.duration_min * 60));
         } else {
@@ -66,7 +73,6 @@ export default function FocusScreen({ navigation }: Props) {
       }
     }
 
-    // No hay pasos pendientes en ninguna tarea
     setActiveTask(null);
     setNextStep(null);
     setLoading(false);
@@ -74,7 +80,6 @@ export default function FocusScreen({ navigation }: Props) {
 
   function handleToggleTimer() {
     if (!nextStep) return;
-
     if (timerFinished) return;
 
     if (timerRunning) {
@@ -83,13 +88,12 @@ export default function FocusScreen({ navigation }: Props) {
     } else {
       TimerService.start(
         nextStep.duration_min,
-        (state) => {
-          setTimerDisplay(TimerService.format(state.seconds));
-          setTimerRunning(state.running);
-          setTimerFinished(state.finished);
+        (s) => {
+          setTimerDisplay(TimerService.format(s.seconds));
+          setTimerRunning(s.running);
+          setTimerFinished(s.finished);
         },
         () => {
-          // Timer terminó
           Vibration.vibrate(500);
           Alert.alert('⏰ ¡Tiempo!', '¿Completaste el paso?', [
             { text: 'Todavía no', style: 'cancel' },
@@ -135,183 +139,121 @@ export default function FocusScreen({ navigation }: Props) {
     }
   }
 
-  // ── Estados de la pantalla ────────────────────────────────────────────
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+        <ActivityIndicator size="large" color={colors['primary-container']} />
       </View>
     );
   }
 
-  // Sin tareas
   if (!activeTask) {
     return (
-      <View style={styles.container}>
-        <View style={styles.counterRow}>
-          <View style={styles.counterCard}>
-            <Text style={styles.counterNum}>{stepsToday}</Text>
-            <Text style={styles.counterLabel}>pasos hoy</Text>
+      <View style={{ flex: 1, backgroundColor: colors.surface }}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+        <View style={{ flexDirection: 'row', gap: 12, padding: spacing['container-padding'], paddingBottom: 0 }}>
+          <View style={{ flex: 1, backgroundColor: colors['primary-container'], borderRadius: 12, padding: 14, alignItems: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: '700', color: colors['on-primary-container'] }}>{stepsToday}</Text>
+            <Text style={{ fontSize: 11, color: colors['on-primary-container'], opacity: 0.7, marginTop: 2 }}>pasos hoy</Text>
           </View>
         </View>
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyIcon}>🎯</Text>
-          <Text style={styles.emptyTitle}>No hay pasos pendientes</Text>
-          <Text style={styles.emptyText}>
-            Creá una tarea y dividila en pasos para empezar.
-          </Text>
-          <TouchableOpacity
-            style={styles.btnGoTasks}
-            onPress={() => navigation.navigate('Tasks')}
-          >
-            <Text style={styles.btnGoTasksText}>Ir a Tareas</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          headline="Mente clara, espacio libre"
+          subtext="No tienes tareas pendientes para ahora. ¿Quieres planear algo nuevo?"
+          cta="Crear Tarea"
+          onCtaPress={() => navigation.navigate('TaskForm')}
+        />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+      {/* Ambient gradient blurs */}
+      <View style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <View style={{ position: 'absolute', top: -80, left: -80, width: 320, height: 320, borderRadius: 160, backgroundColor: `${colors['tertiary-fixed-dim']}33` }} />
+        <View style={{ position: 'absolute', bottom: 160, right: -80, width: 384, height: 384, borderRadius: 192, backgroundColor: `${colors['tertiary-container']}1A` }} />
+      </View>
 
-      {/* Contador diario */}
-      <View style={styles.counterRow}>
-        <View style={styles.counterCard}>
-          <Text style={styles.counterNum}>{stepsToday}</Text>
-          <Text style={styles.counterLabel}>pasos hoy</Text>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing['container-padding'], paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Counter row */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: spacing['section-gap'], marginTop: 16 }}>
+          <View style={{ flex: 1, backgroundColor: colors['primary-container'], borderRadius: 12, padding: 14, alignItems: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: '700', color: colors['on-primary-container'] }}>{stepsToday}</Text>
+            <Text style={{ fontSize: 11, color: colors['on-primary-container'], opacity: 0.7, marginTop: 2 }}>pasos hoy</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: colors['secondary-container'], borderRadius: 12, padding: 14, alignItems: 'center' }}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors['on-secondary-container'], textAlign: 'center' }}>{activeTask.name}</Text>
+            <Text style={{ fontSize: 11, color: colors['on-secondary-container'], opacity: 0.7, marginTop: 2 }}>tarea activa</Text>
+          </View>
         </View>
-        <TouchableOpacity
-          style={styles.counterCard}
-          onPress={() => navigation.navigate('Tasks')}
-        >
-          <Text style={styles.counterNumSmall}>{activeTask.name}</Text>
-          <Text style={styles.counterLabel}>tarea activa</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Caja del próximo paso */}
-      <View style={styles.focusBox}>
-        <Text style={styles.focusLabel}>PRÓXIMO PASO</Text>
-        <Text style={styles.focusStep}>{nextStep?.name}</Text>
-        {nextStep?.duration_min && (
-          <Text style={styles.focusDur}>⏱ {nextStep.duration_min} min estimados</Text>
-        )}
-
-        {/* Timer */}
-        <Text style={[
-          styles.timerDisplay,
-          timerFinished && styles.timerFinished
-        ]}>
-          {timerDisplay || '—'}
-        </Text>
-
-        <TouchableOpacity
-          style={[styles.btnTimer, timerRunning && styles.btnTimerActive]}
-          onPress={handleToggleTimer}
-          disabled={timerFinished}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.btnTimerText}>
-            {timerFinished ? '⏰ Tiempo terminado' :
-             timerRunning ? '⏸ Pausar timer' : '▶ Iniciar timer'}
+        {/* Header */}
+        <View style={{ alignItems: 'center', marginBottom: spacing['section-gap'] }}>
+          <Text style={[typography['headline-lg-mobile'] as any, { color: colors['on-surface'], marginBottom: spacing.unit * 2 }]}>
+            Un paso a la vez
           </Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'], opacity: 0.7 }]}>
+            Focus • Azul
+          </Text>
+        </View>
 
-      {/* Botón completar */}
-      <TouchableOpacity
-        style={[styles.btnComplete, completing && styles.btnDisabled]}
-        onPress={handleComplete}
-        disabled={completing}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.btnCompleteText}>
-          {completing ? 'Guardando...' : '✓  Completé este paso'}
-        </Text>
-      </TouchableOpacity>
+        {/* Timer widget */}
+        <View style={{ alignItems: 'center', marginBottom: spacing['section-gap'] }}>
+          <TimerWidget display={timerDisplay || '—'} finished={timerFinished} />
+        </View>
 
-      <TouchableOpacity
-        style={styles.btnSkip}
-        onPress={() => navigation.navigate('Tasks')}
-      >
-        <Text style={styles.btnSkipText}>Ver todas mis tareas</Text>
-      </TouchableOpacity>
+        {/* Current task card */}
+        <Card style={{ marginBottom: spacing['stack-gap'] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: `${colors.tertiary}1A`, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 20, color: colors.tertiary }}>📄</Text>
+              </View>
+              <View>
+                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+                  Tarea actual
+                </Text>
+                <Text style={[typography['body-lg'] as any, { fontWeight: '700', color: colors['on-surface'], marginTop: 2 }]}>
+                  {nextStep?.name}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </Card>
 
+        {/* Action buttons */}
+        <View style={{ marginTop: 'auto', gap: spacing['stack-gap'] }}>
+          <Button
+            title={
+              timerFinished
+                ? '⏰ Tiempo terminado'
+                : timerRunning
+                ? '⏸ Pausar Sesión'
+                : '▶ Iniciar Cronómetro'
+            }
+            onPress={handleToggleTimer}
+            variant={timerRunning ? 'tertiary' : 'primary'}
+            disabled={timerFinished}
+          />
+
+          <Button
+            title={completing ? 'Guardando...' : '✓ Completé este paso'}
+            onPress={handleComplete}
+            variant="secondary"
+            disabled={completing}
+          />
+
+          <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'], textAlign: 'center', opacity: 0.6 }]}>
+            Toque para comenzar su sesión de calma
+          </Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFF', padding: 20 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  counterRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
-  counterCard: {
-    flex: 1, backgroundColor: '#1A3A5C', borderRadius: 12,
-    padding: 14, alignItems: 'center',
-  },
-  counterNum: { fontSize: 28, fontWeight: '700', color: '#93C5FD' },
-  counterNumSmall: {
-    fontSize: 12, fontWeight: '600', color: '#93C5FD',
-    textAlign: 'center', numberOfLines: 1,
-  } as any,
-  counterLabel: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
-
-  focusBox: {
-    backgroundColor: '#FFFFFF', borderRadius: 16,
-    padding: 24, marginBottom: 16,
-    borderWidth: 0.5, borderColor: '#E2E8F0',
-    elevation: 3, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08, shadowRadius: 6,
-  },
-  focusLabel: {
-    fontSize: 11, color: '#94A3B8', fontWeight: '600',
-    letterSpacing: 1, marginBottom: 12,
-  },
-  focusStep: {
-    fontSize: 20, fontWeight: '600', color: '#1A3A5C',
-    textAlign: 'center', lineHeight: 28, marginBottom: 8,
-  },
-  focusDur: { fontSize: 13, color: '#64748B', marginBottom: 8 },
-  timerDisplay: {
-    fontSize: 42, fontWeight: '300', color: '#2563EB',
-    marginVertical: 12, letterSpacing: 2,
-  },
-  timerFinished: { color: '#F59E0B' },
-  btnTimer: {
-    paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFF',
-  },
-  btnTimerActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  btnTimerText: { fontSize: 13, color: '#64748B' },
-
-  btnComplete: {
-    backgroundColor: '#2563EB', borderRadius: 12,
-    padding: 16, alignItems: 'center', marginBottom: 10,
-  },
-  btnDisabled: { backgroundColor: '#93C5FD' },
-  btnCompleteText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-
-  btnSkip: {
-    padding: 14, alignItems: 'center',
-    borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
-  },
-  btnSkipText: { fontSize: 14, color: '#64748B' },
-
-  emptyBox: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32,
-  },
-  emptyIcon: { fontSize: 52, marginBottom: 16 },
-  emptyTitle: {
-    fontSize: 18, fontWeight: '600', color: '#1A3A5C',
-    marginBottom: 8, textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 24,
-  },
-  btnGoTasks: {
-    backgroundColor: '#2563EB', borderRadius: 10, paddingHorizontal: 28, paddingVertical: 12,
-  },
-  btnGoTasksText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
-});
