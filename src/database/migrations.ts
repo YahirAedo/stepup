@@ -30,4 +30,57 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
       steps_completed  INTEGER NOT NULL DEFAULT 0
     );
   `);
+
+  // Seed data si la tabla está vacía
+  const row = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM tasks');
+  if (row?.count === 0) {
+    await db.withTransactionAsync(async () => {
+      const now = new Date().toISOString();
+      // Tarea 1: Proyecto Final (urgente, con pasos)
+      const t1 = await db.runAsync(
+        `INSERT INTO tasks (name, due_date, status, created_at, completed_at)
+         VALUES (?, ?, 'active', ?, NULL)`,
+        ['Proyecto Final', new Date(Date.now() + 86400000 * 2).toISOString(), now]
+      );
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 0, 'pending')`, [t1.lastInsertRowId, 'Definir alcance', 30]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 1, 'pending')`, [t1.lastInsertRowId, 'Diseñar prototipo', 60]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 2, 'pending')`, [t1.lastInsertRowId, 'Documentar', 45]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 3, 'completed', ?)`, [t1.lastInsertRowId, 'Investigar requisitos', 20, now]);
+
+      // Tarea 2: Estudiar Álgebra (con progreso parcial)
+      const t2 = await db.runAsync(
+        `INSERT INTO tasks (name, due_date, status, created_at, completed_at)
+         VALUES (?, ?, 'active', ?, NULL)`,
+        ['Estudiar Álgebra', new Date(Date.now() + 86400000 * 5).toISOString(), now]
+      );
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 0, 'completed', ?)`, [t2.lastInsertRowId, 'Repasar vectores', 25, now]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 1, 'completed', ?)`, [t2.lastInsertRowId, 'Resolver matrices', 40, now]);
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 2, 'pending')`, [t2.lastInsertRowId, 'Practicar determinantes', 30]);
+
+      // Tarea 3: Preparar Presentación
+      const t3 = await db.runAsync(
+        `INSERT INTO tasks (name, due_date, status, created_at, completed_at)
+         VALUES (?, ?, 'active', ?, NULL)`,
+        ['Preparar Presentación', new Date(Date.now() + 86400000 * 1).toISOString(), now]
+      );
+      await db.runAsync(`INSERT INTO steps (task_id, name, duration_min, order_index, status) VALUES (?, ?, ?, 0, 'pending')`, [t3.lastInsertRowId, 'Armar slides', 45]);
+
+      // Tarea 4: Leer libro (sin pasos)
+      await db.runAsync(
+        `INSERT INTO tasks (name, due_date, status, created_at, completed_at)
+         VALUES (?, ?, 'active', ?, NULL)`,
+        ['Leer "Atomic Habits"', null, now]
+      );
+
+      // Progreso semanal
+      const days = ['2026-06-26', '2026-06-27', '2026-06-28', '2026-06-29', '2026-06-30', '2026-07-01', '2026-07-02'];
+      const counts = [2, 5, 1, 7, 3, 4, 6];
+      for (let i = 0; i < days.length; i++) {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO daily_progress (date, steps_completed) VALUES (?, ?)`,
+          [days[i], counts[i]]
+        );
+      }
+    });
+  }
 }
