@@ -1,3 +1,41 @@
-# Expo HAS CHANGED
+# StepUp — Guía para agentes
+
+## Stack
+
+- React Native + Expo SDK 54 (no usar SDK 55)
+- TypeScript
+- SQLite local (expo-sqlite)
+- Backend E2: Node.js + Express + Prisma + PostgreSQL + Railway
+- Diseño: Sistema Zenith Vitality (stitch_stepup_design_system/)
+
+## Contexto completo del proyecto
+
+Leer `docs/Contexto cambiable.md` antes de tocar cualquier cosa.
+
+## Flujo de trabajo en Git
+
+Nunca commitear directo a `main`.
+
+```
+main        ← Entrega final. Solo recibe merges desde develop.
+develop     ← Integración diaria. Rama base para todo.
+feature/*   ← Una rama por cambio.
+```
+
+Pasos para cada cambio:
+
+1. `git checkout develop && git pull`
+2. `git checkout -b feature/<nombre-del-cambio>`
+3. Hacer commits con formato convencional: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`
+4. `git push origin feature/<nombre-del-cambio>`
+5. Crear Pull Request a `develop`
+6. Mergear a `develop`
+
+## Issues
+
+Los issues de E2 están en GitHub con label `ready-for-agent`.
+Referencia: https://github.com/YahirAedo/stepup/issues
+
+## Expo
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before writing any code.
