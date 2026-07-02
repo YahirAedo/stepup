@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Text } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+import {
+  Manrope_800ExtraBold,
+  Manrope_700Bold,
+} from '@expo-google-fonts/manrope';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 
 import FocusScreen      from './src/screens/FocusScreen';
 import TaskListScreen   from './src/screens/TaskListScreen';
@@ -11,6 +23,8 @@ import TaskDetailScreen from './src/screens/TaskDetailScreen';
 import TaskFormScreen   from './src/screens/TaskFormScreen';
 import StepFormScreen   from './src/screens/StepFormScreen';
 import HistoryScreen    from './src/screens/HistoryScreen';
+
+SplashScreen.preventAutoHideAsync();
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -52,6 +66,28 @@ function HistoryStack() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontsError] = useFonts({
+    Manrope_800ExtraBold,
+    Manrope_700Bold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontsError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontsError]);
+
+  if (!fontsLoaded && !fontsError) {
+    return null;
+  }
+
+  if (fontsError) {
+    console.warn('Font loading error:', fontsError);
+  }
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
