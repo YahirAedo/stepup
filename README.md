@@ -63,7 +63,7 @@ Migración visual al diseño Zenith Vitality + backend + auth + sync.
 ## Tech stack
 
 | Capa | Tecnología |
-|---|---|---|
+|---|---|
 | Framework mobile | React Native + Expo SDK 54 (no usar SDK 55) |
 | Lenguaje | TypeScript |
 | Base de datos local | expo-sqlite (SQLite) |
@@ -112,7 +112,7 @@ git --version
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/YahirAedo/stepup.git.git
+git clone https://github.com/YahirAedo/stepup.git
 cd stepup
 ```
 
@@ -157,8 +157,7 @@ stepup/
 │   │   ├── HistoryScreen.tsx      # Historial + gráfico semanal
 │   │   ├── BadgesScreen.tsx       # Galería de insignias
 │   │   ├── ProfileScreen.tsx      # Perfil y configuración
-│   │   ├── OnboardingScreen.tsx    # Onboarding inicial
-│   │   └── FocusScreen.tsx        # Vista Foco
+│   │   └── OnboardingScreen.tsx    # Onboarding inicial
 │   ├── services/
 │   │   ├── TaskService.ts         # CRUD tareas + completado
 │   │   ├── StepService.ts         # Pasos + orden + completar
@@ -216,7 +215,7 @@ Resumen rápido:
 ## Entregas
 
 | Entrega | Período | Stack | Estado |
-|---|---|---|---|---|
+|---|---|---|---|
 | E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | ✅ Completada |
 | E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Railway | 🟡 En curso |
 | E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | ⏳ Planificado |
