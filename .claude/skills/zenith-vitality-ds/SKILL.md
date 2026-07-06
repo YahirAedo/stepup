@@ -191,6 +191,61 @@ interface EmptyStateProps {
 
 ---
 
+---
+
+## Responsive Scaling
+
+La utility responsive vive en `src/theme/responsive.ts` y se importa desde el theme:
+
+```typescript
+import { scale, moderateScale, useResponsive } from '../theme';
+```
+
+### Funciones
+
+| Función | Uso |
+|---------|-----|
+| `scale(n)` | Escala lineal respecto al ancho de pantalla (baseline: 375pt). Para rings del timer, ilustraciones, checkmarks, círculos decorativos. |
+| `moderateScale(n, factor?)` | Escala moderada (factor 0.5 default). Para padding interno, border radius, iconos chicos. |
+| `useResponsive()` | Hook que retorna `{ scale, isSmall, isMedium, isTablet }`. Preferir sobre `scale()` directo cuando el componente puede rotar o cambiar de tamaño. |
+
+### Cuándo usar scale()
+
+| Escalar | NO escalar |
+|---------|------------|
+| Rings del TimerWidget (256, 320, 224) | `spacing.*` — el spacing del theme ya es proporcional |
+| Círculos decorativos de FocusScreen | Padding de componentes (Button, Card, etc.) |
+| Checkmark de StepCompleteScreen (120) | `typography.*` — la tipografía ya escala |
+| Ilustraciones de EmptyState (200, 160, 120) | Gap y gutter entre elementos |
+| Iconos de TaskListScreen (40, 48, 56) | Layout flex — columnas, filas, `flex: 1` |
+
+**Regla:** si el valor ya viene de `spacing`, `typography`, o es un porcentaje/`flex`, NO escalar. El escalado es solo para valores absolutos que representan elementos visuales de tamaño fijo.
+
+### Ejemplos
+
+```tsx
+// ✅ Timer rings escalan con el dispositivo
+const { scale: s } = useResponsive();
+<View style={{ width: s(256), height: s(256) }} />
+
+// ✅ Ilustración de EmptyState
+<View style={{ width: s(200), height: s(200) }} />
+
+// ❌ Spacing del theme NO se escala
+<View style={{ gap: spacing['stack-gap'] }} />
+// ❌ Tipografía NO se escala
+<Text style={typography['headline-md'] as TextStyle} />
+```
+
+### Anti-patterns
+
+- ❌ Escalar valores de `spacing.*` o `typography.*` — ya están diseñados para el baseline
+- ❌ Envolver TODOS los números en `scale()` — solo los que son tamaños absolutos visuales
+- ❌ Usar `scale()` directo en componentes que rotan — usar `useResponsive()` para reactividad
+- ❌ Importar de `react-native-size-matters` u otras librerías externas — tenemos nuestra utility liviana
+
+---
+
 ## Anti-patterns (lo que NO se hace)
 
 - ❌ **Colores hardcodeados** — siempre usar `colors.xxx`
