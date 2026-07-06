@@ -8,9 +8,23 @@
 - Backend E2: Node.js + Express + Prisma + PostgreSQL + Railway
 - Diseño: Sistema Zenith Vitality (stitch_stepup_design_system/)
 
-## Contexto completo del proyecto
+## Documentos obligatorios (leer antes de tocar código)
 
-Leer `docs/Contexto cambiable.md` antes de tocar cualquier cosa.
+| Orden | Documento | Por qué |
+|-------|-----------|---------|
+| 1 | `docs/Contexto cambiable.md` | Contexto completo del proyecto, entregas, decisiones técnicas |
+| 2 | `docs/CONVENCIONES.md` | Reglas de estilo, arquitectura, git y calidad para el equipo |
+| 3 | `.claude/skills/zenith-vitality-ds/SKILL.md` | Design System: tokens, componentes, anti-patterns |
+
+**Regla:** cualquier agente que genere código debe leer estos 3 documentos primero.
+No hacerlo produce código inconsistente y PRs rechazadas.
+
+## Diseño y componentes
+
+- Todos los colores, tipografía, espaciado y sombras vienen del theme en `src/theme/`
+-**NUNCA** hardcodear colores, fuentes o spacing
+- Componentes reutilizables en `src/components/`, no en screens
+- Ver catálogo completo en `.claude/skills/zenith-vitality-ds/SKILL.md`
 
 ## Flujo de trabajo en Git
 
