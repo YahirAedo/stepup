@@ -228,9 +228,9 @@ Proyecto universitario — Ingeniería en Sistemas de Información — 2026
 
 | Integrante | GitHub |
 |---|---|
-| Integrante A | @YahirAedo |
-| Integrante B | @IamSantiFarias |
-| Integrante C | @joaar |
+| Alejandro Aedo | @YahirAedo |
+| Santiago Farias | @IamSantiFarias |
+| Joaquín Arias | @joaar |
 
 ---
 
