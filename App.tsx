@@ -25,6 +25,8 @@ import TaskFormScreen from './src/screens/TaskFormScreen';
 import StepFormScreen from './src/screens/StepFormScreen';
 import StepCompleteScreen from './src/screens/StepCompleteScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import BadgesScreen from './src/screens/BadgesScreen';
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
@@ -70,6 +72,15 @@ function HistoryStack() {
   );
 }
 
+function ProfileStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+      <Stack.Screen name="Badges" component={BadgesScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -111,6 +122,16 @@ function MainTabs() {
           tabBarLabel: 'Historial',
           tabBarIcon: ({ color, size }) => (
             <Text style={{ fontSize: size, color }}>📋</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStack}
+        options={{
+          tabBarLabel: 'Perfil',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>👤</Text>
           ),
         }}
       />
