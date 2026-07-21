@@ -14,7 +14,7 @@ import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
 import { TimerService } from '../services/TimerService';
 import { Task, Step } from '../types';
-import { colors, typography, spacing } from '../theme';
+import { colors, typography, spacing, scale } from '../theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import TimerWidget from '../components/TimerWidget';
@@ -178,8 +178,8 @@ export default function FocusScreen({ navigation }: Props) {
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       {/* Ambient gradient blurs */}
       <View style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', top: -80, left: -80, width: 320, height: 320, borderRadius: 160, backgroundColor: `${colors['tertiary-fixed-dim']}33` }} />
-        <View style={{ position: 'absolute', bottom: 160, right: -80, width: 384, height: 384, borderRadius: 192, backgroundColor: `${colors['tertiary-container']}1A` }} />
+        <View style={{ position: 'absolute', top: scale(-80), left: scale(-80), width: scale(320), height: scale(320), borderRadius: scale(320) / 2, backgroundColor: `${colors['tertiary-fixed-dim']}33` }} />
+        <View style={{ position: 'absolute', bottom: scale(160), right: scale(-80), width: scale(384), height: scale(384), borderRadius: scale(384) / 2, backgroundColor: `${colors['tertiary-container']}1A` }} />
       </View>
 
       <ScrollView
