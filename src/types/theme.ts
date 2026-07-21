@@ -50,13 +50,7 @@ export interface ThemeColors {
   'surface-variant': string;
 }
 
-export interface TypographyStyle {
-  fontFamily: string;
-  fontSize: number;
-  fontWeight: TextStyle['fontWeight'];
-  lineHeight: number;
-  letterSpacing: number;
-}
+export type TypographyStyle = Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight' | 'lineHeight' | 'letterSpacing'>;
 
 export interface ThemeTypography {
   display: TypographyStyle;

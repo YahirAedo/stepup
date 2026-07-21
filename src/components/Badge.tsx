@@ -29,7 +29,7 @@ export default function Badge({ label, variant = 'default' }: BadgeProps) {
     >
       <Text
         style={[
-          typography['label-sm'] as any,
+          typography['label-sm'] ,
           { color: v.text },
         ]}
       >

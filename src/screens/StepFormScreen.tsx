@@ -90,7 +90,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
 
         {/* Duration pills */}
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+          <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
             Duración estimada
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing.unit * 2, flexWrap: 'wrap' }}>
@@ -111,7 +111,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
                   }}
                 >
                   <Text style={[
-                    typography['label-md'] as any,
+                    typography['label-md'] ,
                     { color: active ? '#FFFFFF' : colors['on-surface-variant'] },
                   ]}>
                     {d} min
@@ -120,7 +120,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
               );
             })}
           </View>
-          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
             Opcional. Se usa para el timer.
           </Text>
         </View>

@@ -114,19 +114,19 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
             {/* Hero section */}
             <View style={{ gap: spacing['stack-gap'] }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2 }]}>
+                <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2 }]}>
                   Alta Prioridad
                 </Text>
               </View>
 
-              <Text style={[typography['headline-lg-mobile'] as any, { color: colors['on-surface'] }]}>
+              <Text style={[typography['headline-lg-mobile'] , { color: colors['on-surface'] }]}>
                 {task.name}
               </Text>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 16, color: colors['on-surface-variant'] }}>📅</Text>
-                  <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+                  <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
                     {task.due_date
                       ? new Date(task.due_date).toLocaleDateString('es-AR', {
                           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -137,7 +137,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
                 <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors['outline-variant'] }} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 16, color: colors['on-surface-variant'] }}>⏱</Text>
-                  <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+                  <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
                     {formatHours(totalEstMinutes)}
                   </Text>
                 </View>
@@ -146,10 +146,10 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
               {/* Progress */}
               <View style={{ gap: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+                  <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
                     Progreso general
                   </Text>
-                  <Text style={[typography['headline-md'] as any, { color: colors.secondary }]}>
+                  <Text style={[typography['headline-md'] , { color: colors.secondary }]}>
                     {Math.round(progress * 100)}%
                   </Text>
                 </View>
@@ -162,14 +162,14 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
             </View>
 
             {/* Steps header */}
-            <Text style={[typography['headline-md'] as any, { color: colors['on-surface'], marginBottom: spacing['stack-gap'] }]}>
+            <Text style={[typography['headline-md'] , { color: colors['on-surface'], marginBottom: spacing['stack-gap'] }]}>
               Pasos a seguir
             </Text>
           </View>
         )}
         ListEmptyComponent={() => (
           <View style={{ padding: 16, alignItems: 'center' }}>
-            <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'], textAlign: 'center' }]}>
+            <Text style={[typography['body-md'] , { color: colors['on-surface-variant'], textAlign: 'center' }]}>
               Esta tarea no tiene pasos todavía. Tocá "+" para agregar uno.
             </Text>
           </View>
@@ -199,7 +199,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
               opacity: 0.6,
             }}
           >
-            <Text style={[typography['label-md'] as any, { color: colors.secondary }]}>
+            <Text style={[typography['label-md'] , { color: colors.secondary }]}>
               + Agregar paso
             </Text>
           </TouchableOpacity>
@@ -232,7 +232,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           }}
         >
           <Text style={{ fontSize: 20, color: colors['on-tertiary'] }}>▶</Text>
-          <Text style={[typography['label-md'] as any, { color: colors['on-tertiary'], fontSize: 16 }]}>
+          <Text style={[typography['label-md'] , { color: colors['on-tertiary'], fontSize: 16 }]}>
             Comenzar ahora
           </Text>
         </TouchableOpacity>
