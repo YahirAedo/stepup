@@ -76,13 +76,13 @@ export default function HistoryScreen() {
       >
         {/* Hero */}
         <View style={{ marginBottom: spacing['section-gap'], marginTop: 16 }}>
-          <Text style={[typography['label-sm'] as any, { color: colors.primary, textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing.unit * 2 }]}>
+          <Text style={[typography['label-sm'] , { color: colors.primary, textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing.unit * 2 }]}>
             Resumen Semanal
           </Text>
-          <Text style={[typography['headline-lg-mobile'] as any, { color: colors.primary, marginBottom: spacing.unit }]}>
+          <Text style={[typography['headline-lg-mobile'] , { color: colors.primary, marginBottom: spacing.unit }]}>
             Historial
           </Text>
-          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
             {thisWeekTotal} paso{thisWeekTotal !== 1 ? 's' : ''} esta semana
           </Text>
         </View>
@@ -97,10 +97,10 @@ export default function HistoryScreen() {
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: spacing['stack-gap'] * 2 }}>
             <View>
-              <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+              <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
                 Rendimiento
               </Text>
-              <Text style={[typography['headline-md'] as any, { color: colors.secondary }]}>
+              <Text style={[typography['headline-md'] , { color: colors.secondary }]}>
                 {pctChange >= 0 ? '+' : ''}{pctChange}% vs. semana pasada
               </Text>
             </View>
@@ -116,7 +116,7 @@ export default function HistoryScreen() {
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing['stack-gap'] }}>
             {weekData.map((day, i) => (
-              <Text key={i} style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+              <Text key={i} style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
                 {getDayLabel(day.date)}
               </Text>
             ))}
@@ -125,17 +125,17 @@ export default function HistoryScreen() {
 
         {/* Achievements */}
         <View style={{ marginBottom: spacing['section-gap'] }}>
-          <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing['stack-gap'] }]}>
+          <Text style={[typography['label-md'] , { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing['stack-gap'] }]}>
             Logros Recientes
           </Text>
 
           {tasks.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: spacing['section-gap'] }}>
               <Text style={{ fontSize: 48, marginBottom: spacing['stack-gap'] }}>🏆</Text>
-              <Text style={[typography['headline-md'] as any, { color: colors['on-surface'], textAlign: 'center', marginBottom: spacing.unit * 2 }]}>
+              <Text style={[typography['headline-md'] , { color: colors['on-surface'], textAlign: 'center', marginBottom: spacing.unit * 2 }]}>
                 Todavía no completaste ninguna tarea
               </Text>
-              <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'], textAlign: 'center' }]}>
+              <Text style={[typography['body-md'] , { color: colors['on-surface-variant'], textAlign: 'center' }]}>
                 Cuando completes todos los pasos de una tarea va a aparecer acá.
               </Text>
             </View>
@@ -157,15 +157,15 @@ export default function HistoryScreen() {
                     <Text style={{ fontSize: 20, color: colors.primary }}>✓</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[typography['label-md'] as any, { color: colors['on-surface'] }]}>
+                    <Text style={[typography['label-md'] , { color: colors['on-surface'] }]}>
                       {task.name}
                     </Text>
-                    <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+                    <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
                       {formatDate(task.completed_at)}
                     </Text>
                   </View>
                   <View style={{ backgroundColor: colors['surface-container'], borderRadius: borderRadius.full, paddingHorizontal: 12, paddingVertical: 4 }}>
-                    <Text style={[typography['label-sm'] as any, { color: colors.primary }]}>
+                    <Text style={[typography['label-sm'] , { color: colors.primary }]}>
                       +{50 - i * 10} xp
                     </Text>
                   </View>
@@ -180,10 +180,10 @@ export default function HistoryScreen() {
                 overflow: 'hidden',
                 marginTop: spacing.unit,
               }}>
-                <Text style={[typography['headline-md'] as any, { color: colors['on-primary'], marginBottom: spacing.unit * 2 }]}>
+                <Text style={[typography['headline-md'] , { color: colors['on-primary'], marginBottom: spacing.unit * 2 }]}>
                   ¡Racha de 7 Días!
                 </Text>
-                <Text style={[typography['body-md'] as any, { color: colors['on-primary'], opacity: 0.9, marginBottom: spacing['stack-gap'] }]}>
+                <Text style={[typography['body-md'] , { color: colors['on-primary'], opacity: 0.9, marginBottom: spacing['stack-gap'] }]}>
                   Has mantenido tu actividad durante una semana completa. ¡Mantén el ritmo!
                 </Text>
                 <View style={{
@@ -193,7 +193,7 @@ export default function HistoryScreen() {
                   paddingVertical: 8,
                   borderRadius: borderRadius.full,
                 }}>
-                  <Text style={[typography['label-md'] as any, { color: colors.primary }]}>
+                  <Text style={[typography['label-md'] , { color: colors.primary }]}>
                     Ver Insignias
                   </Text>
                 </View>

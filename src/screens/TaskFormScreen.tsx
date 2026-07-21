@@ -80,7 +80,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
 
         {/* Due date */}
         <View style={{ gap: spacing.unit * 2 }}>
-          <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+          <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
             Fecha límite
           </Text>
           <TextInput
@@ -100,7 +100,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
             keyboardType="numeric"
             maxLength={10}
           />
-          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
             Opcional. Ayuda a priorizar.
           </Text>
         </View>
@@ -113,10 +113,10 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           borderWidth: 1,
           borderColor: colors['primary-container'],
         }}>
-          <Text style={[typography['label-md'] as any, { color: colors['on-primary-fixed'], marginBottom: spacing.unit }]}>
+          <Text style={[typography['label-md'] , { color: colors['on-primary-fixed'], marginBottom: spacing.unit }]}>
             💡 Tip
           </Text>
-          <Text style={[typography['body-md'] as any, { color: colors['on-primary-fixed'], lineHeight: 22 }]}>
+          <Text style={[typography['body-md'] , { color: colors['on-primary-fixed'], lineHeight: 22 }]}>
             Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la pantalla de detalle.
           </Text>
         </View>

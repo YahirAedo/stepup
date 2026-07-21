@@ -1,6 +1,6 @@
-import type { TypographyStyle } from '../types/theme';
+import type { ThemeTypography } from '../types/theme';
 
-export const typography: Record<string, TypographyStyle> = {
+export const typography: ThemeTypography = {
   display: {
     fontFamily: 'Manrope_800ExtraBold',
     fontSize: 48,

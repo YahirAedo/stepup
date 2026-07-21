@@ -60,7 +60,7 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
       <View style={{ flex: 1, gap: 4 }}>
         <Text
           style={[
-            typography['body-md'] as any,
+            typography['body-md'] ,
             {
               color: completed ? colors['on-surface-variant'] : colors['on-surface'],
               textDecorationLine: completed ? 'line-through' : 'none',
@@ -71,12 +71,12 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
           {step.name}
         </Text>
         {completed && (
-          <Text style={[typography['label-sm'] as any, { color: colors.outline, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+          <Text style={[typography['label-sm'] , { color: colors.outline, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
             ✓ Completado
           </Text>
         )}
         {isNext && !completed && (
-          <Text style={[typography['label-sm'] as any, { color: colors.secondary, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+          <Text style={[typography['label-sm'] , { color: colors.secondary, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
             ○ En progreso
           </Text>
         )}
@@ -84,7 +84,7 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
 
       {/* Duration */}
       {step.duration_min && (
-        <Text style={[typography['label-md'] as any, { color: completed ? colors.outline : colors['on-surface-variant'] }]}>
+        <Text style={[typography['label-md'] , { color: completed ? colors.outline : colors['on-surface-variant'] }]}>
           {step.duration_min}m
         </Text>
       )}

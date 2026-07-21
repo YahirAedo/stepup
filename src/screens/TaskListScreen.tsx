@@ -131,7 +131,7 @@ export default function TaskListScreen({ navigation }: Props) {
         {/* Header */}
         <View style={{ paddingHorizontal: spacing['container-padding'], paddingTop: 16, paddingBottom: spacing['stack-gap'] }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={[typography['headline-md'] as any, { color: colors.primary }]}>
+            <Text style={[typography['headline-md'] , { color: colors.primary }]}>
               StepUp
             </Text>
             <TouchableOpacity style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors['surface-variant'], alignItems: 'center', justifyContent: 'center' }}>
@@ -142,13 +142,13 @@ export default function TaskListScreen({ navigation }: Props) {
 
         {/* Hero section */}
         <View style={{ paddingHorizontal: spacing['container-padding'], marginBottom: spacing['section-gap'] }}>
-          <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing.unit }]}>
+          <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing.unit }]}>
             Gestión Activa
           </Text>
-          <Text style={[typography['headline-lg-mobile'] as any, { color: colors['on-surface'], marginBottom: spacing.unit }]}>
+          <Text style={[typography['headline-lg-mobile'] , { color: colors['on-surface'], marginBottom: spacing.unit }]}>
             Tareas en curso
           </Text>
-          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'], marginBottom: spacing['stack-gap'] }]}>
+          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'], marginBottom: spacing['stack-gap'] }]}>
             {stepsToday > 0
               ? `${stepsToday} paso${stepsToday !== 1 ? 's' : ''} completado${stepsToday !== 1 ? 's' : ''} hoy`
               : 'Organiza tus proyectos con precisión Zen.'}
@@ -157,7 +157,7 @@ export default function TaskListScreen({ navigation }: Props) {
             <View style={{ flexDirection: 'row', gap: spacing.unit }}>
               <View style={{ backgroundColor: colors['secondary-fixed'], paddingHorizontal: 16, paddingVertical: 8, borderRadius: borderRadius.full, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={{ fontSize: 14 }}>🚀</Text>
-                <Text style={[typography['label-md'] as any, { color: colors['on-secondary-fixed'] }]}>
+                <Text style={[typography['label-md'] , { color: colors['on-secondary-fixed'] }]}>
                   {stepsToday} Completado hoy
                 </Text>
               </View>
@@ -186,20 +186,20 @@ export default function TaskListScreen({ navigation }: Props) {
                   <Badge label="Urgente" variant="urgent" />
                   <Text style={{ fontSize: 20 }}>⋯</Text>
                 </View>
-                <Text style={[typography['headline-md'] as any, { color: colors['on-surface'], marginBottom: spacing.unit * 2 }]}>
+                <Text style={[typography['headline-md'] , { color: colors['on-surface'], marginBottom: spacing.unit * 2 }]}>
                   {featured.name}
                 </Text>
-                <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'], marginBottom: 48 }]}>
+                <Text style={[typography['body-md'] , { color: colors['on-surface-variant'], marginBottom: 48 }]}>
                   {featured.stepsTotal > 0
                     ? `${featured.stepsTotal - featured.stepsCompleted} paso${featured.stepsTotal - featured.stepsCompleted !== 1 ? 's' : ''} pendiente${featured.stepsTotal - featured.stepsCompleted !== 1 ? 's' : ''}`
                     : 'Sin pasos definidos'}
                 </Text>
                 <View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.unit }}>
-                    <Text style={[typography['label-md'] as any, { color: colors.secondary }]}>
+                    <Text style={[typography['label-md'] , { color: colors.secondary }]}>
                       {featured.stepsTotal > 0 ? `${featured.stepsTotal - featured.stepsCompleted} pasos pendientes` : '—'}
                     </Text>
-                    <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+                    <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
                       {featured.stepsTotal > 0 ? `${Math.round((featured.stepsCompleted / featured.stepsTotal) * 100)}%` : '—'}
                     </Text>
                   </View>
@@ -236,10 +236,10 @@ export default function TaskListScreen({ navigation }: Props) {
                   <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
                     <Text style={{ fontSize: 20, color: colors.secondary }}>📖</Text>
                   </View>
-                  <Text style={[typography['headline-md'] as any, { color: colors['on-surface'], fontSize: 18, marginBottom: spacing.unit }]}>
+                  <Text style={[typography['headline-md'] , { color: colors['on-surface'], fontSize: 18, marginBottom: spacing.unit }]}>
                     {task.name}
                   </Text>
-                  <Text style={[typography['label-md'] as any, { color: `${colors.secondary}CC` }]}>
+                  <Text style={[typography['label-md'] , { color: `${colors.secondary}CC` }]}>
                     {task.stepsTotal - task.stepsCompleted} paso{task.stepsTotal - task.stepsCompleted !== 1 ? 's' : ''} pendiente{task.stepsTotal - task.stepsCompleted !== 1 ? 's' : ''}
                   </Text>
                   <View style={{ marginTop: 24 }}>
@@ -257,7 +257,7 @@ export default function TaskListScreen({ navigation }: Props) {
                         alignItems: 'center',
                       }}
                     >
-                      <Text style={[typography['label-md'] as any, { color: '#FFFFFF' }]}>Continuar</Text>
+                      <Text style={[typography['label-md'] , { color: '#FFFFFF' }]}>Continuar</Text>
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -269,7 +269,7 @@ export default function TaskListScreen({ navigation }: Props) {
         {/* Pending tasks list */}
         {activeTasks.length > 2 && (
           <View style={{ paddingHorizontal: spacing['container-padding'], marginBottom: spacing['stack-gap'] }}>
-            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing['stack-gap'] }]}>
+            <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing['stack-gap'] }]}>
               Pendientes
             </Text>
             <View style={{ gap: spacing['stack-gap'] }}>
@@ -295,10 +295,10 @@ export default function TaskListScreen({ navigation }: Props) {
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.secondary }} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[typography['label-md'] as any, { color: colors['on-surface'] }]} numberOfLines={1}>
+                    <Text style={[typography['label-md'] , { color: colors['on-surface'] }]} numberOfLines={1}>
                       {task.name}
                     </Text>
-                    <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+                    <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
                       {formatDueDate(task.due_date) || 'Sin fecha'}
                     </Text>
                   </View>
@@ -332,7 +332,7 @@ export default function TaskListScreen({ navigation }: Props) {
                 <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors['primary-container'], alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 18, color: '#FFFFFF', transform: [{ translateY: -2 }] }}>+</Text>
                 </View>
-                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>Nueva Tarea</Text>
+                <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>Nueva Tarea</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -346,7 +346,7 @@ export default function TaskListScreen({ navigation }: Props) {
             padding: 24,
             ...shadows.ambient,
           }}>
-            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }]}>
+            <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }]}>
               Ritmo Semanal
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 80, gap: 4 }}>
@@ -375,7 +375,7 @@ export default function TaskListScreen({ navigation }: Props) {
 
         {/* Next steps list */}
         <View style={{ paddingHorizontal: spacing['container-padding'] }}>
-          <Text style={[typography['headline-md'] as any, { color: colors['on-surface'], marginBottom: spacing['stack-gap'] }]}>
+          <Text style={[typography['headline-md'] , { color: colors['on-surface'], marginBottom: spacing['stack-gap'] }]}>
             Siguientes pasos
           </Text>
           {activeTasks.slice(0, 5).map((task) => (
@@ -394,11 +394,11 @@ export default function TaskListScreen({ navigation }: Props) {
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing['stack-gap'], flex: 1 }}>
                 <Text style={{ fontSize: 20, color: colors['on-surface-variant'] }}>⬜</Text>
-                <Text style={[typography['body-md'] as any, { color: colors['on-surface'], flex: 1 }]} numberOfLines={1}>
+                <Text style={[typography['body-md'] , { color: colors['on-surface'], flex: 1 }]} numberOfLines={1}>
                   {task.name}
                 </Text>
               </View>
-              <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+              <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
                 {task.stepsTotal - task.stepsCompleted} paso{task.stepsTotal - task.stepsCompleted !== 1 ? 's' : ''}
               </Text>
             </TouchableOpacity>

@@ -65,7 +65,7 @@ export default function EmptyState({
 
       <Text
         style={[
-          typography['headline-lg-mobile'] as any,
+          typography['headline-lg-mobile'] ,
           {
             color: colors.primary,
             textAlign: 'center',
@@ -78,7 +78,7 @@ export default function EmptyState({
 
       <Text
         style={[
-          typography['body-md'] as any,
+          typography['body-md'] ,
           {
             color: colors['on-surface-variant'],
             textAlign: 'center',

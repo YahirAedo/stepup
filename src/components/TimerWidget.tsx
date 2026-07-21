@@ -97,7 +97,7 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
           </Text>
           <Text
             style={[
-              typography['headline-md'] as any,
+              typography['headline-md'] ,
               {
                 color: colors['tertiary-container'],
                 fontSize: 32,
@@ -108,7 +108,7 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
           </Text>
           <Text
             style={[
-              typography['label-sm'] as any,
+              typography['label-sm'] ,
               {
                 color: colors['on-surface-variant'],
                 textTransform: 'uppercase',

@@ -200,10 +200,10 @@ export default function FocusScreen({ navigation }: Props) {
 
         {/* Header */}
         <View style={{ alignItems: 'center', marginBottom: spacing['section-gap'] }}>
-          <Text style={[typography['headline-lg-mobile'] as any, { color: colors['on-surface'], marginBottom: spacing.unit * 2 }]}>
+          <Text style={[typography['headline-lg-mobile'], { color: colors['on-surface'], marginBottom: spacing.unit * 2 }]}>
             Un paso a la vez
           </Text>
-          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'], opacity: 0.7 }]}>
+          <Text style={[typography['body-md'], { color: colors['on-surface-variant'], opacity: 0.7 }]}>
             Focus • Azul
           </Text>
         </View>
@@ -221,10 +221,10 @@ export default function FocusScreen({ navigation }: Props) {
                 <Text style={{ fontSize: 20, color: colors.tertiary }}>📄</Text>
               </View>
               <View>
-                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+                <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
                   Tarea actual
                 </Text>
-                <Text style={[typography['body-lg'] as any, { fontWeight: '700', color: colors['on-surface'], marginTop: 2 }]}>
+                <Text style={[typography['body-lg'] , { fontWeight: '700', color: colors['on-surface'], marginTop: 2 }]}>
                   {nextStep?.name}
                 </Text>
               </View>
@@ -254,7 +254,7 @@ export default function FocusScreen({ navigation }: Props) {
             disabled={completing}
           />
 
-          <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'], textAlign: 'center', opacity: 0.6 }]}>
+          <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'], textAlign: 'center', opacity: 0.6 }]}>
             Toque para comenzar su sesión de calma
           </Text>
         </View>

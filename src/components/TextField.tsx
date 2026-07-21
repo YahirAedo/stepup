@@ -10,7 +10,7 @@ interface TextFieldProps extends TextInputProps {
 export default function TextField({ label, hint, style, ...inputProps }: TextFieldProps) {
   return (
     <View style={{ gap: 8 }}>
-      <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+      <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
         {label}
       </Text>
       <TextInput
@@ -32,7 +32,7 @@ export default function TextField({ label, hint, style, ...inputProps }: TextFie
         {...inputProps}
       />
       {hint && (
-        <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+        <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
           {hint}
         </Text>
       )}
