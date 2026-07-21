@@ -43,5 +43,8 @@ yarn-error.*
 # design system (E2 visual reference, managed separately)
 stitch_stepup_design_system/
 
+# AI tool caches (local paths, not for the team)
+.atl/
+
 # drive docs
 *.docx
