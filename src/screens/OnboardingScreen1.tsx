@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, borderRadius, scale } from '../theme';
+import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
 import ProgressDots from '../components/ProgressDots';
 
 type Props = {
@@ -9,11 +10,19 @@ type Props = {
 };
 
 export default function OnboardingScreen1({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const { scale: s } = useResponsive();
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <TouchableOpacity
         onPress={() => navigation.replace('Onboarding2')}
-        style={{ position: 'absolute', top: 60, right: 24, zIndex: 10 }}
+        style={{
+          position: 'absolute',
+          top: insets.top + 8,
+          right: spacing['container-padding'],
+          zIndex: 10,
+        }}
       >
         <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
           Saltar
@@ -30,8 +39,8 @@ export default function OnboardingScreen1({ navigation }: Props) {
       >
         <View
           style={{
-            width: scale(240),
-            height: scale(240),
+            width: s(220),
+            height: s(180),
             marginBottom: spacing['section-gap'],
             position: 'relative',
           }}
@@ -39,61 +48,103 @@ export default function OnboardingScreen1({ navigation }: Props) {
           <View
             style={{
               position: 'absolute',
-              top: scale(8),
-              left: scale(16),
-              width: scale(100),
-              height: scale(100),
+              top: 0,
+              left: 0,
+              width: s(100),
+              height: s(100),
               backgroundColor: colors['primary-fixed-dim'],
-              borderRadius: borderRadius.md,
-              transform: [{ rotate: '-12deg' }],
+              borderRadius: borderRadius.lg,
+              transform: [{ rotate: '-8deg' }],
             }}
-          />
+          >
+            <View
+              style={{
+                position: 'absolute',
+                right: -s(12),
+                bottom: -s(8),
+                width: s(36),
+                height: s(36),
+                backgroundColor: colors.primary,
+                borderRadius: borderRadius.sm,
+                transform: [{ rotate: '15deg' }],
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                left: s(16),
+                top: s(20),
+                width: s(12),
+                height: s(12),
+                backgroundColor: colors['on-primary'],
+                borderRadius: borderRadius.full,
+                opacity: 0.3,
+              }}
+            />
+          </View>
+
           <View
             style={{
               position: 'absolute',
-              top: scale(60),
-              right: scale(20),
-              width: scale(70),
-              height: scale(70),
+              top: s(20),
+              right: 0,
+              width: s(70),
+              height: s(70),
               backgroundColor: colors['tertiary-fixed-dim'],
-              borderRadius: borderRadius.md,
-              transform: [{ rotate: '8deg' }],
+              borderRadius: borderRadius.lg,
+              transform: [{ rotate: '12deg' }],
             }}
-          />
+          >
+            <View
+              style={{
+                position: 'absolute',
+                left: -s(10),
+                top: -s(6),
+                width: s(28),
+                height: s(28),
+                backgroundColor: colors.tertiary,
+                borderRadius: borderRadius.sm,
+                transform: [{ rotate: '-10deg' }],
+              }}
+            />
+          </View>
+
           <View
             style={{
               position: 'absolute',
-              bottom: scale(30),
-              left: scale(40),
-              width: scale(80),
-              height: scale(80),
+              bottom: 0,
+              right: s(30),
+              width: s(80),
+              height: s(80),
               backgroundColor: colors['secondary-fixed-dim'],
-              borderRadius: borderRadius.md,
-              transform: [{ rotate: '20deg' }],
+              borderRadius: borderRadius.lg,
+              transform: [{ rotate: '-15deg' }],
             }}
-          />
+          >
+            <View
+              style={{
+                position: 'absolute',
+                right: s(8),
+                top: s(10),
+                width: s(16),
+                height: s(16),
+                backgroundColor: colors['on-secondary-container'],
+                borderRadius: borderRadius.full,
+                opacity: 0.25,
+              }}
+            />
+          </View>
+
           <View
             style={{
               position: 'absolute',
-              bottom: scale(8),
-              right: scale(30),
-              width: scale(50),
-              height: scale(50),
+              top: s(40),
+              left: s(30),
+              width: s(40),
+              height: s(40),
               backgroundColor: colors['surface-container-high'],
-              borderRadius: borderRadius.md,
-              transform: [{ rotate: '-5deg' }],
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              top: scale(100),
-              left: scale(80),
-              width: scale(90),
-              height: scale(90),
-              backgroundColor: colors['primary-container'],
               borderRadius: borderRadius.full,
-              opacity: 0.15,
+              opacity: 0.5,
             }}
           />
         </View>
@@ -128,7 +179,7 @@ export default function OnboardingScreen1({ navigation }: Props) {
       <View
         style={{
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: spacing['container-padding'],
+          paddingBottom: insets.bottom + spacing['container-padding'],
           gap: spacing['stack-gap'],
           alignItems: 'center',
         }}

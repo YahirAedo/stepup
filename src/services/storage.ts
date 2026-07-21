@@ -4,9 +4,7 @@ function getItem(key: string): Promise<string | null> {
   if (isWeb) {
     return Promise.resolve(localStorage.getItem(key));
   }
-  return import('@react-native-async-storage/async-storage').then(
-    (m) => m.default.getItem(key),
-  );
+  return import('@react-native-async-storage/async-storage').then((m) => m.default.getItem(key));
 }
 
 function setItem(key: string, value: string): Promise<void> {

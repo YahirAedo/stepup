@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, borderRadius } from '../theme';
+import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
 import ProgressDots from '../components/ProgressDots';
 
 type Props = {
@@ -9,6 +10,9 @@ type Props = {
 };
 
 export default function OnboardingScreen2({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const { scale: s } = useResponsive();
+
   const fade1 = useRef(new Animated.Value(0)).current;
   const fade2 = useRef(new Animated.Value(0)).current;
   const fade3 = useRef(new Animated.Value(0)).current;
@@ -53,7 +57,12 @@ export default function OnboardingScreen2({ navigation }: Props) {
           style={{
             opacity: fade1,
             transform: [
-              { translateY: fade1.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+              {
+                translateY: fade1.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }),
+              },
             ],
             marginBottom: spacing['section-gap'],
             alignItems: 'center',
@@ -61,15 +70,15 @@ export default function OnboardingScreen2({ navigation }: Props) {
         >
           <View
             style={{
-              width: 160,
-              height: 160,
-              borderRadius: borderRadius.full,
+              width: s(160),
+              height: s(160),
+              borderRadius: s(80),
               backgroundColor: colors['primary-fixed-dim'],
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 64, lineHeight: 72 }}>🎯</Text>
+            <Text style={{ fontSize: s(60), lineHeight: s(68) }}>🎯</Text>
           </View>
         </Animated.View>
 
@@ -77,7 +86,12 @@ export default function OnboardingScreen2({ navigation }: Props) {
           style={{
             opacity: fade2,
             transform: [
-              { translateY: fade2.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+              {
+                translateY: fade2.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }),
+              },
             ],
             marginBottom: spacing['stack-gap'],
           }}
@@ -101,7 +115,12 @@ export default function OnboardingScreen2({ navigation }: Props) {
           style={{
             opacity: fade3,
             transform: [
-              { translateY: fade3.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+              {
+                translateY: fade3.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }),
+              },
             ],
             alignItems: 'center',
           }}
@@ -138,10 +157,15 @@ export default function OnboardingScreen2({ navigation }: Props) {
         style={{
           opacity: fade4,
           transform: [
-            { translateY: fade4.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+            {
+              translateY: fade4.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0],
+              }),
+            },
           ],
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: spacing['container-padding'],
+          paddingBottom: insets.bottom + spacing['container-padding'],
           gap: spacing['stack-gap'],
           alignItems: 'center',
         }}
@@ -163,7 +187,7 @@ export default function OnboardingScreen2({ navigation }: Props) {
           <Text style={[typography['label-md'] as any, { color: colors['on-primary'] }]}>
             Empezar
           </Text>
-          <Text style={{ fontSize: 20, color: colors['on-primary'] }}>→</Text>
+          <Text style={{ fontSize: s(20), color: colors['on-primary'] }}>→</Text>
         </TouchableOpacity>
 
         <ProgressDots total={3} active={2} />

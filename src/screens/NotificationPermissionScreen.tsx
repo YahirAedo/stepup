@@ -1,17 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, borderRadius, moderateScale } from '../theme';
+import { colors, typography, spacing, borderRadius, useResponsive, moderateScale } from '../theme';
 import { storage } from '../services/storage';
-
-const ONBOARDING_KEY = 'hasSeenOnboarding';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
 
+const ONBOARDING_KEY = 'hasSeenOnboarding';
+
 function WaveRing({ delay }: { delay: number }) {
   const anim = useRef(new Animated.Value(0)).current;
+  const { scale: s } = useResponsive();
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -30,7 +32,7 @@ function WaveRing({ delay }: { delay: number }) {
 
   const size = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [moderateScale(100), moderateScale(200)],
+    outputRange: [s(100), s(220)],
   });
 
   const opacity = anim.interpolate({
@@ -54,6 +56,9 @@ function WaveRing({ delay }: { delay: number }) {
 }
 
 export default function NotificationPermissionScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const { scale: s } = useResponsive();
+
   const completeOnboarding = async () => {
     await storage.setItem(ONBOARDING_KEY, 'true');
     navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
@@ -69,11 +74,11 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
       <View
         style={{
           position: 'absolute',
-          top: -80,
-          right: -80,
-          width: 240,
-          height: 240,
-          borderRadius: 120,
+          top: -s(80),
+          right: -s(80),
+          width: s(240),
+          height: s(240),
+          borderRadius: s(120),
           backgroundColor: colors['tertiary-fixed-dim'],
           opacity: 0.12,
         }}
@@ -89,8 +94,8 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
       >
         <View
           style={{
-            width: moderateScale(200),
-            height: moderateScale(200),
+            width: s(220),
+            height: s(220),
             justifyContent: 'center',
             alignItems: 'center',
             marginBottom: spacing['section-gap'],
@@ -102,15 +107,15 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
 
           <View
             style={{
-              width: moderateScale(100),
-              height: moderateScale(100),
-              borderRadius: moderateScale(50),
+              width: s(100),
+              height: s(100),
+              borderRadius: s(50),
               backgroundColor: colors['tertiary-container'],
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: moderateScale(40) }}>🔔</Text>
+            <Text style={{ fontSize: s(40) }}>🔔</Text>
           </View>
         </View>
 
@@ -144,7 +149,7 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
       <View
         style={{
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: spacing['container-padding'],
+          paddingBottom: insets.bottom + spacing['container-padding'],
           gap: spacing['stack-gap'],
           alignItems: 'center',
         }}
