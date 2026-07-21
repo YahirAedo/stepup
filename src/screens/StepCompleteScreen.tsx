@@ -3,7 +3,7 @@ import {
   View, Text, Animated, TouchableOpacity,
   StatusBar, Dimensions,
 } from 'react-native';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows, scale } from '../theme';
 import ConfettiOverlay from '../components/ConfettiOverlay';
 
 type Props = {
@@ -44,9 +44,9 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
       {/* Animated checkmark */}
       <Animated.View
         style={{
-          width: 120,
-          height: 120,
-          borderRadius: 60,
+          width: scale(120),
+          height: scale(120),
+          borderRadius: scale(120) / 2,
           backgroundColor: '#a9d293',
           alignItems: 'center',
           justifyContent: 'center',
