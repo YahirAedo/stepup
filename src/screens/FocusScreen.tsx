@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -37,7 +37,7 @@ export default function FocusScreen({ navigation }: Props) {
     useCallback(() => {
       loadFocus();
       return () => TimerService.stop();
-    }, [])
+    }, []),
   );
 
   async function loadFocus() {
@@ -104,7 +104,7 @@ export default function FocusScreen({ navigation }: Props) {
             { text: 'Todavía no', style: 'cancel' },
             { text: 'Sí, completar', onPress: () => handleComplete() },
           ]);
-        }
+        },
       );
       setTimerRunning(true);
     }
@@ -125,7 +125,7 @@ export default function FocusScreen({ navigation }: Props) {
         Alert.alert(
           '🎉 ¡Tarea completada!',
           `Terminaste "${activeTask?.name}". Pasó al historial.`,
-          [{ text: '¡Genial!', onPress: () => loadFocus() }]
+          [{ text: '¡Genial!', onPress: () => loadFocus() }],
         );
       } else if (next) {
         setNextStep(next);
@@ -146,7 +146,14 @@ export default function FocusScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+        }}
+      >
         <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
         <ActivityIndicator size="large" color={colors['primary-container']} />
       </View>
@@ -157,10 +164,38 @@ export default function FocusScreen({ navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.surface }}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
-        <View style={{ flexDirection: 'row', gap: 12, padding: spacing['container-padding'], paddingBottom: 0 }}>
-          <View style={{ flex: 1, backgroundColor: colors['primary-container'], borderRadius: 12, padding: 14, alignItems: 'center' }}>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: colors['on-primary-container'] }}>{stepsToday}</Text>
-            <Text style={{ fontSize: 11, color: colors['on-primary-container'], opacity: 0.7, marginTop: 2 }}>pasos hoy</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 12,
+            padding: spacing['container-padding'],
+            paddingBottom: 0,
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors['primary-container'],
+              borderRadius: 12,
+              padding: 14,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{ fontSize: 28, fontWeight: '700', color: colors['on-primary-container'] }}
+            >
+              {stepsToday}
+            </Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: colors['on-primary-container'],
+                opacity: 0.7,
+                marginTop: 2,
+              }}
+            >
+              pasos hoy
+            </Text>
           </View>
         </View>
         <EmptyState
@@ -178,32 +213,117 @@ export default function FocusScreen({ navigation }: Props) {
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       {/* Ambient gradient blurs */}
       <View style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', top: scale(-80), left: scale(-80), width: scale(320), height: scale(320), borderRadius: scale(320) / 2, backgroundColor: `${colors['tertiary-fixed-dim']}33` }} />
-        <View style={{ position: 'absolute', bottom: scale(160), right: scale(-80), width: scale(384), height: scale(384), borderRadius: scale(384) / 2, backgroundColor: `${colors['tertiary-container']}1A` }} />
+        <View
+          style={{
+            position: 'absolute',
+            top: scale(-80),
+            left: scale(-80),
+            width: scale(320),
+            height: scale(320),
+            borderRadius: scale(320) / 2,
+            backgroundColor: `${colors['tertiary-fixed-dim']}33`,
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: scale(160),
+            right: scale(-80),
+            width: scale(384),
+            height: scale(384),
+            borderRadius: scale(384) / 2,
+            backgroundColor: `${colors['tertiary-container']}1A`,
+          }}
+        />
       </View>
 
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing['container-padding'], paddingBottom: 32 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: spacing['container-padding'],
+          paddingBottom: 32,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Counter row */}
-        <View style={{ flexDirection: 'row', gap: 12, marginBottom: spacing['section-gap'], marginTop: 16 }}>
-          <View style={{ flex: 1, backgroundColor: colors['primary-container'], borderRadius: 12, padding: 14, alignItems: 'center' }}>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: colors['on-primary-container'] }}>{stepsToday}</Text>
-            <Text style={{ fontSize: 11, color: colors['on-primary-container'], opacity: 0.7, marginTop: 2 }}>pasos hoy</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 12,
+            marginBottom: spacing['section-gap'],
+            marginTop: 16,
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors['primary-container'],
+              borderRadius: 12,
+              padding: 14,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{ fontSize: 28, fontWeight: '700', color: colors['on-primary-container'] }}
+            >
+              {stepsToday}
+            </Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: colors['on-primary-container'],
+                opacity: 0.7,
+                marginTop: 2,
+              }}
+            >
+              pasos hoy
+            </Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: colors['secondary-container'], borderRadius: 12, padding: 14, alignItems: 'center' }}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: colors['on-secondary-container'], textAlign: 'center' }}>{activeTask.name}</Text>
-            <Text style={{ fontSize: 11, color: colors['on-secondary-container'], opacity: 0.7, marginTop: 2 }}>tarea activa</Text>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors['secondary-container'],
+              borderRadius: 12,
+              padding: 14,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: colors['on-secondary-container'],
+                textAlign: 'center',
+              }}
+            >
+              {activeTask.name}
+            </Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: colors['on-secondary-container'],
+                opacity: 0.7,
+                marginTop: 2,
+              }}
+            >
+              tarea activa
+            </Text>
           </View>
         </View>
 
         {/* Header */}
         <View style={{ alignItems: 'center', marginBottom: spacing['section-gap'] }}>
-          <Text style={[typography['headline-lg-mobile'], { color: colors['on-surface'], marginBottom: spacing.unit * 2 }]}>
+          <Text
+            style={[
+              typography['headline-lg-mobile'],
+              { color: colors['on-surface'], marginBottom: spacing.unit * 2 },
+            ]}
+          >
             Un paso a la vez
           </Text>
-          <Text style={[typography['body-md'], { color: colors['on-surface-variant'], opacity: 0.7 }]}>
+          <Text
+            style={[typography['body-md'], { color: colors['on-surface-variant'], opacity: 0.7 }]}
+          >
             Focus • Azul
           </Text>
         </View>
@@ -215,16 +335,32 @@ export default function FocusScreen({ navigation }: Props) {
 
         {/* Current task card */}
         <Card style={{ marginBottom: spacing['stack-gap'] }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: `${colors.tertiary}1A`, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: `${colors.tertiary}1A`,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Text style={{ fontSize: 20, color: colors.tertiary }}>📄</Text>
               </View>
               <View>
-                <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
+                <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
                   Tarea actual
                 </Text>
-                <Text style={[typography['body-lg'] , { fontWeight: '700', color: colors['on-surface'], marginTop: 2 }]}>
+                <Text
+                  style={[
+                    typography['body-lg'],
+                    { fontWeight: '700', color: colors['on-surface'], marginTop: 2 },
+                  ]}
+                >
                   {nextStep?.name}
                 </Text>
               </View>
@@ -239,8 +375,8 @@ export default function FocusScreen({ navigation }: Props) {
               timerFinished
                 ? '⏰ Tiempo terminado'
                 : timerRunning
-                ? '⏸ Pausar Sesión'
-                : '▶ Iniciar Cronómetro'
+                  ? '⏸ Pausar Sesión'
+                  : '▶ Iniciar Cronómetro'
             }
             onPress={handleToggleTimer}
             variant={timerRunning ? 'tertiary' : 'primary'}
@@ -254,7 +390,12 @@ export default function FocusScreen({ navigation }: Props) {
             disabled={completing}
           />
 
-          <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'], textAlign: 'center', opacity: 0.6 }]}>
+          <Text
+            style={[
+              typography['label-sm'],
+              { color: colors['on-surface-variant'], textAlign: 'center', opacity: 0.6 },
+            ]}
+          >
             Toque para comenzar su sesión de calma
           </Text>
         </View>

@@ -1,7 +1,5 @@
 import React, { useCallback } from 'react';
-import {
-  View, Text, ScrollView, ActivityIndicator, StatusBar,
-} from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { TaskService } from '../services/TaskService';
 import { ProgressService } from '../services/ProgressService';
@@ -17,7 +15,7 @@ export default function HistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       loadHistory();
-    }, [])
+    }, []),
   );
 
   async function loadHistory() {
@@ -48,10 +46,11 @@ export default function HistoryScreen() {
     return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
   }
 
-  const weekCounts = weekData.map(d => d.count);
+  const weekCounts = weekData.map((d) => d.count);
   const thisWeekTotal = weekCounts.reduce((a, b) => a + b, 0);
   const prevWeekTotal = Math.round(thisWeekTotal * 0.88);
-  const pctChange = prevWeekTotal > 0 ? Math.round(((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100) : 0;
+  const pctChange =
+    prevWeekTotal > 0 ? Math.round(((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100) : 0;
   const fullDayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   function getDayLabel(dateStr: string): string {
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -60,7 +59,14 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+        }}
+      >
         <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
         <ActivityIndicator size="large" color={colors['primary-container']} />
       </View>
@@ -72,36 +78,64 @@ export default function HistoryScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: spacing['container-padding'], paddingBottom: 100 }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing['container-padding'],
+          paddingBottom: 100,
+        }}
       >
         {/* Hero */}
         <View style={{ marginBottom: spacing['section-gap'], marginTop: 16 }}>
-          <Text style={[typography['label-sm'] , { color: colors.primary, textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing.unit * 2 }]}>
+          <Text
+            style={[
+              typography['label-sm'],
+              {
+                color: colors.primary,
+                textTransform: 'uppercase',
+                letterSpacing: 2,
+                marginBottom: spacing.unit * 2,
+              },
+            ]}
+          >
             Resumen Semanal
           </Text>
-          <Text style={[typography['headline-lg-mobile'] , { color: colors.primary, marginBottom: spacing.unit }]}>
+          <Text
+            style={[
+              typography['headline-lg-mobile'],
+              { color: colors.primary, marginBottom: spacing.unit },
+            ]}
+          >
             Historial
           </Text>
-          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
             {thisWeekTotal} paso{thisWeekTotal !== 1 ? 's' : ''} esta semana
           </Text>
         </View>
 
         {/* Chart card */}
-        <View style={{
-          backgroundColor: colors['surface-container-low'],
-          borderRadius: borderRadius.xl + 8,
-          padding: 24,
-          ...shadows.ambient,
-          marginBottom: spacing['section-gap'],
-        }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: spacing['stack-gap'] * 2 }}>
+        <View
+          style={{
+            backgroundColor: colors['surface-container-low'],
+            borderRadius: borderRadius.xl + 8,
+            padding: 24,
+            ...shadows.ambient,
+            marginBottom: spacing['section-gap'],
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              marginBottom: spacing['stack-gap'] * 2,
+            }}
+          >
             <View>
-              <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
+              <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
                 Rendimiento
               </Text>
-              <Text style={[typography['headline-md'] , { color: colors.secondary }]}>
-                {pctChange >= 0 ? '+' : ''}{pctChange}% vs. semana pasada
+              <Text style={[typography['headline-md'], { color: colors.secondary }]}>
+                {pctChange >= 0 ? '+' : ''}
+                {pctChange}% vs. semana pasada
               </Text>
             </View>
             <Text style={{ fontSize: 32, color: colors['primary-container'] }}>📊</Text>
@@ -114,9 +148,18 @@ export default function HistoryScreen() {
             dotColor="#FFFFFF"
           />
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing['stack-gap'] }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: spacing['stack-gap'],
+            }}
+          >
             {weekData.map((day, i) => (
-              <Text key={i} style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
+              <Text
+                key={i}
+                style={[typography['label-sm'], { color: colors['on-surface-variant'] }]}
+              >
                 {getDayLabel(day.date)}
               </Text>
             ))}
@@ -125,17 +168,41 @@ export default function HistoryScreen() {
 
         {/* Achievements */}
         <View style={{ marginBottom: spacing['section-gap'] }}>
-          <Text style={[typography['label-md'] , { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing['stack-gap'] }]}>
+          <Text
+            style={[
+              typography['label-md'],
+              {
+                color: colors['on-surface-variant'],
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                marginBottom: spacing['stack-gap'],
+              },
+            ]}
+          >
             Logros Recientes
           </Text>
 
           {tasks.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: spacing['section-gap'] }}>
               <Text style={{ fontSize: 48, marginBottom: spacing['stack-gap'] }}>🏆</Text>
-              <Text style={[typography['headline-md'] , { color: colors['on-surface'], textAlign: 'center', marginBottom: spacing.unit * 2 }]}>
+              <Text
+                style={[
+                  typography['headline-md'],
+                  {
+                    color: colors['on-surface'],
+                    textAlign: 'center',
+                    marginBottom: spacing.unit * 2,
+                  },
+                ]}
+              >
                 Todavía no completaste ninguna tarea
               </Text>
-              <Text style={[typography['body-md'] , { color: colors['on-surface-variant'], textAlign: 'center' }]}>
+              <Text
+                style={[
+                  typography['body-md'],
+                  { color: colors['on-surface-variant'], textAlign: 'center' },
+                ]}
+              >
                 Cuando completes todos los pasos de una tarea va a aparecer acá.
               </Text>
             </View>
@@ -153,19 +220,35 @@ export default function HistoryScreen() {
                     borderRadius: 20,
                   }}
                 >
-                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors['primary-fixed'], alignItems: 'center', justifyContent: 'center' }}>
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: colors['primary-fixed'],
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Text style={{ fontSize: 20, color: colors.primary }}>✓</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[typography['label-md'] , { color: colors['on-surface'] }]}>
+                    <Text style={[typography['label-md'], { color: colors['on-surface'] }]}>
                       {task.name}
                     </Text>
-                    <Text style={[typography['label-sm'] , { color: colors['on-surface-variant'] }]}>
+                    <Text style={[typography['label-sm'], { color: colors['on-surface-variant'] }]}>
                       {formatDate(task.completed_at)}
                     </Text>
                   </View>
-                  <View style={{ backgroundColor: colors['surface-container'], borderRadius: borderRadius.full, paddingHorizontal: 12, paddingVertical: 4 }}>
-                    <Text style={[typography['label-sm'] , { color: colors.primary }]}>
+                  <View
+                    style={{
+                      backgroundColor: colors['surface-container'],
+                      borderRadius: borderRadius.full,
+                      paddingHorizontal: 12,
+                      paddingVertical: 4,
+                    }}
+                  >
+                    <Text style={[typography['label-sm'], { color: colors.primary }]}>
                       +{50 - i * 10} xp
                     </Text>
                   </View>
@@ -173,31 +256,58 @@ export default function HistoryScreen() {
               ))}
 
               {/* Milestone card */}
-              <View style={{
-                backgroundColor: colors['primary-container'],
-                borderRadius: borderRadius.xl + 8,
-                padding: 24,
-                overflow: 'hidden',
-                marginTop: spacing.unit,
-              }}>
-                <Text style={[typography['headline-md'] , { color: colors['on-primary'], marginBottom: spacing.unit * 2 }]}>
+              <View
+                style={{
+                  backgroundColor: colors['primary-container'],
+                  borderRadius: borderRadius.xl + 8,
+                  padding: 24,
+                  overflow: 'hidden',
+                  marginTop: spacing.unit,
+                }}
+              >
+                <Text
+                  style={[
+                    typography['headline-md'],
+                    { color: colors['on-primary'], marginBottom: spacing.unit * 2 },
+                  ]}
+                >
                   ¡Racha de 7 Días!
                 </Text>
-                <Text style={[typography['body-md'] , { color: colors['on-primary'], opacity: 0.9, marginBottom: spacing['stack-gap'] }]}>
+                <Text
+                  style={[
+                    typography['body-md'],
+                    {
+                      color: colors['on-primary'],
+                      opacity: 0.9,
+                      marginBottom: spacing['stack-gap'],
+                    },
+                  ]}
+                >
                   Has mantenido tu actividad durante una semana completa. ¡Mantén el ritmo!
                 </Text>
-                <View style={{
-                  backgroundColor: colors['primary-fixed'],
-                  alignSelf: 'flex-start',
-                  paddingHorizontal: 24,
-                  paddingVertical: 8,
-                  borderRadius: borderRadius.full,
-                }}>
-                  <Text style={[typography['label-md'] , { color: colors.primary }]}>
+                <View
+                  style={{
+                    backgroundColor: colors['primary-fixed'],
+                    alignSelf: 'flex-start',
+                    paddingHorizontal: 24,
+                    paddingVertical: 8,
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Text style={[typography['label-md'], { color: colors.primary }]}>
                     Ver Insignias
                   </Text>
                 </View>
-                <Text style={{ position: 'absolute', right: -16, bottom: -16, fontSize: 120, opacity: 0.1, color: colors['on-primary'] }}>
+                <Text
+                  style={{
+                    position: 'absolute',
+                    right: -16,
+                    bottom: -16,
+                    fontSize: 120,
+                    opacity: 0.1,
+                    color: colors['on-primary'],
+                  }}
+                >
                   🏅
                 </Text>
               </View>

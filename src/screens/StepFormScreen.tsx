@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity,
-  Alert, StatusBar, Platform,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, StatusBar } from 'react-native';
 import { StepService } from '../services/StepService';
 import { Step } from '../types';
 import { colors, typography, spacing, borderRadius } from '../theme';
@@ -58,7 +55,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
         await StepService.add({ task_id: taskId, name: name.trim(), duration_min: dur });
       }
       navigation.goBack();
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar el paso. Intentá de nuevo.');
     } finally {
       setSaving(false);
@@ -90,11 +87,21 @@ export default function StepFormScreen({ navigation, route }: Props) {
 
         {/* Duration pills */}
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+          <Text
+            style={[
+              typography['label-sm'],
+              {
+                color: colors.secondary,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                paddingLeft: 4,
+              },
+            ]}
+          >
             Duración estimada
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing.unit * 2, flexWrap: 'wrap' }}>
-            {DURATION_PILLS.map(d => {
+            {DURATION_PILLS.map((d) => {
               const active = duration === String(d);
               return (
                 <TouchableOpacity
@@ -110,35 +117,39 @@ export default function StepFormScreen({ navigation, route }: Props) {
                     borderColor: active ? colors.secondary : colors['outline-variant'],
                   }}
                 >
-                  <Text style={[
-                    typography['label-md'] ,
-                    { color: active ? '#FFFFFF' : colors['on-surface-variant'] },
-                  ]}>
+                  <Text
+                    style={[
+                      typography['label-md'],
+                      { color: active ? '#FFFFFF' : colors['on-surface-variant'] },
+                    ]}
+                  >
                     {d} min
                   </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
             Opcional. Se usa para el timer.
           </Text>
         </View>
       </ScrollView>
 
       {/* Footer */}
-      <View style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: spacing['container-padding'],
-        paddingVertical: 16,
-        paddingBottom: 32,
-        backgroundColor: colors.surface,
-        flexDirection: 'row',
-        gap: spacing['stack-gap'],
-      }}>
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: spacing['container-padding'],
+          paddingVertical: 16,
+          paddingBottom: 32,
+          backgroundColor: colors.surface,
+          flexDirection: 'row',
+          gap: spacing['stack-gap'],
+        }}
+      >
         <Button
           title="Cancelar"
           onPress={() => navigation.goBack()}

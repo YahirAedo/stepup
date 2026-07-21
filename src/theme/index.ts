@@ -5,5 +5,12 @@ export { borderRadius } from './borderRadius';
 export { shadows } from './shadows';
 export { scale, moderateScale, useResponsive } from './responsive';
 
-export type { ThemeColors, ThemeTypography, ThemeSpacing, ThemeBorderRadius, ThemeShadows, Theme } from '../types/theme';
+export type {
+  ThemeColors,
+  ThemeTypography,
+  ThemeSpacing,
+  ThemeBorderRadius,
+  ThemeShadows,
+  Theme,
+} from '../types/theme';
 export type { Responsive } from './responsive';

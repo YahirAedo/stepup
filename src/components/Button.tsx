@@ -70,13 +70,7 @@ export default function Button({
       ]}
     >
       {icon}
-      <Text
-        style={[
-          typography['label-md'] as TextStyle,
-          { color: v.text },
-          textStyle,
-        ]}
-      >
+      <Text style={[typography['label-md'] as TextStyle, { color: v.text }, textStyle]}>
         {title}
       </Text>
     </TouchableOpacity>

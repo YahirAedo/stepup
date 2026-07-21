@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { colors, typography, borderRadius } from '../theme';
 import { Step } from '../types';
-import { StepService } from '../services/StepService';
 
 interface StepItemProps {
   step: Step;
@@ -29,8 +28,8 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
         backgroundColor: completed
           ? colors['surface-container-low']
           : isNext
-          ? colors['surface-container-lowest']
-          : colors['surface-container-low'],
+            ? colors['surface-container-lowest']
+            : colors['surface-container-low'],
         borderWidth: 1,
         borderColor: isNext ? `${colors.secondary}33` : 'transparent',
       }}
@@ -51,16 +50,14 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
           justifyContent: 'center',
         }}
       >
-        {completed && (
-          <Text style={{ fontSize: 14, color: colors['on-secondary-fixed'] }}>✓</Text>
-        )}
+        {completed && <Text style={{ fontSize: 14, color: colors['on-secondary-fixed'] }}>✓</Text>}
       </TouchableOpacity>
 
       {/* Content */}
       <View style={{ flex: 1, gap: 4 }}>
         <Text
           style={[
-            typography['body-md'] ,
+            typography['body-md'],
             {
               color: completed ? colors['on-surface-variant'] : colors['on-surface'],
               textDecorationLine: completed ? 'line-through' : 'none',
@@ -71,12 +68,22 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
           {step.name}
         </Text>
         {completed && (
-          <Text style={[typography['label-sm'] , { color: colors.outline, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+          <Text
+            style={[
+              typography['label-sm'],
+              { color: colors.outline, flexDirection: 'row', alignItems: 'center', gap: 4 },
+            ]}
+          >
             ✓ Completado
           </Text>
         )}
         {isNext && !completed && (
-          <Text style={[typography['label-sm'] , { color: colors.secondary, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+          <Text
+            style={[
+              typography['label-sm'],
+              { color: colors.secondary, flexDirection: 'row', alignItems: 'center', gap: 4 },
+            ]}
+          >
             ○ En progreso
           </Text>
         )}
@@ -84,7 +91,12 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
 
       {/* Duration */}
       {step.duration_min && (
-        <Text style={[typography['label-md'] , { color: completed ? colors.outline : colors['on-surface-variant'] }]}>
+        <Text
+          style={[
+            typography['label-md'],
+            { color: completed ? colors.outline : colors['on-surface-variant'] },
+          ]}
+        >
           {step.duration_min}m
         </Text>
       )}
