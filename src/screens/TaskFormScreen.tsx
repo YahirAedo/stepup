@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ScrollView, Platform
+  Alert, ScrollView, Platform
 } from 'react-native';
 import { TaskService } from '../services/TaskService';
 import { Task } from '../types';
+import { colors, typography, spacing, borderRadius } from '../theme';
+import Button from '../components/Button';
+import TextField from '../components/TextField';
 
 type Props = {
   navigation: any;
@@ -31,7 +34,6 @@ export default function TaskFormScreen({ navigation, route }: Props) {
       return;
     }
 
-    // Validar formato de fecha si se ingresó
     if (dueDate.trim()) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(dueDate.trim())) {
@@ -62,147 +64,79 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.content}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} keyboardShouldPersistTaps="handled">
+      <View style={{ padding: spacing['container-padding'], gap: spacing['section-gap'] }}>
 
-        {/* Campo nombre */}
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Nombre de la tarea *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Estudiar para el parcial de SO"
-            placeholderTextColor="#94A3B8"
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            maxLength={120}
-          />
-          <Text style={styles.hint}>Usá un nombre claro para vos.</Text>
-        </View>
+        {/* Task name */}
+        <TextField
+          label="Nombre de la tarea *"
+          placeholder="Ej: Estudiar para el parcial de SO"
+          value={name}
+          onChangeText={setName}
+          autoFocus
+          maxLength={120}
+          hint="Usá un nombre claro para vos."
+        />
 
-        {/* Campo fecha límite */}
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Fecha límite</Text>
+        {/* Due date */}
+        <View style={{ gap: spacing.unit * 2 }}>
+          <Text style={[typography['label-sm'] as any, { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+            Fecha límite
+          </Text>
           <TextInput
-            style={styles.input}
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderWidth: 1,
+              borderColor: colors['outline-variant'],
+              borderRadius: borderRadius.lg,
+              padding: spacing['stack-gap'] - 4,
+              fontSize: 16,
+              color: colors['on-surface'],
+            }}
             placeholder="AAAA-MM-DD  (Ej: 2026-05-30)"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors['on-surface-variant']}
             value={dueDate}
             onChangeText={setDueDate}
             keyboardType="numeric"
             maxLength={10}
           />
-          <Text style={styles.hint}>Opcional. Ayuda a priorizar.</Text>
+          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+            Opcional. Ayuda a priorizar.
+          </Text>
         </View>
 
         {/* Tip */}
-        <View style={styles.tip}>
-          <Text style={styles.tipTitle}>💡 Tip</Text>
-          <Text style={styles.tipText}>
+        <View style={{
+          backgroundColor: colors['primary-fixed'],
+          borderRadius: borderRadius.lg,
+          padding: spacing['stack-gap'] - 2,
+          borderWidth: 1,
+          borderColor: colors['primary-container'],
+        }}>
+          <Text style={[typography['label-md'] as any, { color: colors['on-primary-fixed'], marginBottom: spacing.unit }]}>
+            💡 Tip
+          </Text>
+          <Text style={[typography['body-md'] as any, { color: colors['on-primary-fixed'], lineHeight: 22 }]}>
             Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la pantalla de detalle.
           </Text>
         </View>
 
-        {/* Botón guardar */}
-        <TouchableOpacity
-          style={[styles.btn, saving && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.btnText}>
-            {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear tarea'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Botón cancelar */}
-        <TouchableOpacity
-          style={styles.btnCancel}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.btnCancelText}>Cancelar</Text>
-        </TouchableOpacity>
+        {/* Buttons */}
+        <View style={{ gap: spacing['stack-gap'] - 6 }}>
+          <Button
+            title={saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear tarea'}
+            onPress={handleSave}
+            variant="primary"
+            disabled={saving}
+          />
+          <Button
+            title="Cancelar"
+            onPress={() => navigation.goBack()}
+            variant="secondary"
+          />
+        </View>
 
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFF',
-  },
-  content: {
-    padding: 20,
-  },
-  fieldGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1A3A5C',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    color: '#1A3A5C',
-  },
-  hint: {
-    fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 4,
-  },
-  tip: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 24,
-    borderWidth: 0.5,
-    borderColor: '#BFDBFE',
-  },
-  tipTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1D4ED8',
-    marginBottom: 4,
-  },
-  tipText: {
-    fontSize: 12,
-    color: '#1E40AF',
-    lineHeight: 18,
-  },
-  btn: {
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  btnDisabled: {
-    backgroundColor: '#93C5FD',
-  },
-  btnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  btnCancel: {
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  btnCancelText: {
-    color: '#64748B',
-    fontSize: 15,
-  },
-});
