@@ -88,7 +88,11 @@ export default function TaskListScreen({ navigation }: Props) {
   const secondary = activeTasks.slice(1, 3);
 
   const maxWeekCount = Math.max(1, ...weekData.map(d => d.count));
-  const dayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  const shortDayLabels = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  function getDayLabel(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return shortDayLabels[new Date(y, m - 1, d).getDay()];
+  }
 
   if (loading) {
     return (
@@ -262,65 +266,77 @@ export default function TaskListScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* Mini cards row */}
-        <View style={{ paddingHorizontal: spacing['container-padding'], marginBottom: spacing['stack-gap'] }}>
-          <View style={{ flexDirection: 'row', gap: spacing['stack-gap'] }}>
-            {/* Remaining active tasks as mini cards */}
-            {activeTasks.slice(2, 4).map((task) => (
+        {/* Pending tasks list */}
+        {activeTasks.length > 2 && (
+          <View style={{ paddingHorizontal: spacing['container-padding'], marginBottom: spacing['stack-gap'] }}>
+            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 2, marginBottom: spacing['stack-gap'] }]}>
+              Pendientes
+            </Text>
+            <View style={{ gap: spacing['stack-gap'] }}>
+              {activeTasks.slice(2, 4).map((task) => (
+                <TouchableOpacity
+                  key={task.id}
+                  onPress={() => navigation.navigate('TaskDetail', { taskId: task.id })}
+                  onLongPress={() => handleDelete(task)}
+                  activeOpacity={0.85}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: borderRadius.xl + 8,
+                    padding: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing['stack-gap'],
+                    borderWidth: 1,
+                    borderColor: colors['surface-container'],
+                    ...shadows.ambient,
+                  }}
+                >
+                  <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: `${colors.secondary}33`, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.secondary }} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[typography['label-md'] as any, { color: colors['on-surface'] }]} numberOfLines={1}>
+                      {task.name}
+                    </Text>
+                    <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+                      {formatDueDate(task.due_date) || 'Sin fecha'}
+                    </Text>
+                  </View>
+                  <View style={{ width: 60 }}>
+                    <ProgressBar
+                      progress={task.stepsTotal > 0 ? task.stepsCompleted / task.stepsTotal : 0}
+                      color={colors.secondary}
+                    />
+                  </View>
+                </TouchableOpacity>
+              ))}
+
+              {/* New task button */}
               <TouchableOpacity
-                key={task.id}
-                onPress={() => navigation.navigate('TaskDetail', { taskId: task.id })}
-                onLongPress={() => handleDelete(task)}
-                activeOpacity={0.85}
+                onPress={() => navigation.navigate('TaskForm', {})}
+                activeOpacity={0.7}
                 style={{
-                  flex: 1,
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: colors['surface-container-low'],
                   borderRadius: borderRadius.xl + 8,
                   padding: 20,
-                  flexDirection: 'row',
+                  borderWidth: 2,
+                  borderStyle: 'dashed',
+                  borderColor: colors['outline-variant'],
                   alignItems: 'center',
-                  gap: spacing['stack-gap'],
-                  borderWidth: 1,
-                  borderColor: colors['surface-container'],
-                  ...shadows.ambient,
+                  justifyContent: 'center',
+                  minHeight: 72,
+                  flexDirection: 'row',
+                  gap: spacing.unit * 2,
                 }}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: `${colors.secondary}33`, alignItems: 'center', justifyContent: 'center' }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.secondary }} />
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors['primary-container'], alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18, color: '#FFFFFF', transform: [{ translateY: -2 }] }}>+</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[typography['label-md'] as any, { color: colors['on-surface'] }]} numberOfLines={1}>
-                    {task.name}
-                  </Text>
-                  <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
-                    {formatDueDate(task.due_date) || 'Sin fecha'}
-                  </Text>
-                </View>
+                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>Nueva Tarea</Text>
               </TouchableOpacity>
-            ))}
-
-            {/* New task placeholder */}
-            <TouchableOpacity
-              onPress={() => navigation.navigate('TaskForm', {})}
-              activeOpacity={0.7}
-              style={{
-                flex: 1,
-                backgroundColor: colors['surface-container-low'],
-                borderRadius: borderRadius.xl + 8,
-                padding: 20,
-                borderWidth: 2,
-                borderStyle: 'dashed',
-                borderColor: colors['outline-variant'],
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing.unit * 2,
-              }}
-            >
-              <Text style={{ fontSize: 28, color: colors.outline }}>+</Text>
-              <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>Nueva Tarea</Text>
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Activity visualizer */}
         <View style={{ paddingHorizontal: spacing['container-padding'], marginBottom: spacing['section-gap'] }}>
@@ -348,7 +364,7 @@ export default function TaskListScreen({ navigation }: Props) {
                       }}
                     />
                     <Text style={{ fontSize: 10, color: colors['on-surface-variant'], opacity: 0.6 }}>
-                      {dayLabels[i]}
+                      {getDayLabel(day.date)}
                     </Text>
                   </View>
                 );
@@ -407,7 +423,7 @@ export default function TaskListScreen({ navigation }: Props) {
           ...shadows.fab,
         }}
       >
-        <Text style={{ fontSize: 28, color: '#FFFFFF', lineHeight: 32 }}>+</Text>
+        <Text style={{ fontSize: 26, color: '#FFFFFF', transform: [{ translateY: -3 }] }}>+</Text>
       </TouchableOpacity>
     </View>
   );
