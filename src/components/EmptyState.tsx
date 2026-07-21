@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, type ViewStyle, type StyleProp } from 'react-native';
-import { colors, typography, spacing } from '../theme';
+import { colors, typography, spacing, scale, moderateScale } from '../theme';
 import Button from './Button';
 
 interface EmptyStateProps {
@@ -32,8 +32,8 @@ export default function EmptyState({
     >
       <View
         style={{
-          width: 200,
-          height: 200,
+          width: scale(200),
+          height: scale(200),
           marginBottom: spacing['stack-gap'],
           alignItems: 'center',
           justifyContent: 'center',
@@ -41,22 +41,22 @@ export default function EmptyState({
       >
         <View
           style={{
-            width: 120,
-            height: 120,
-            borderRadius: 60,
+            width: scale(120),
+            height: scale(120),
+            borderRadius: scale(120) / 2,
             backgroundColor: colors['surface-container-high'],
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontSize: 48, opacity: 0.4 }}>🪴</Text>
+          <Text style={{ fontSize: moderateScale(48), opacity: 0.4 }}>🪴</Text>
         </View>
         <View
           style={{
             position: 'absolute',
-            bottom: 20,
-            width: 160,
-            height: 8,
+            bottom: moderateScale(20),
+            width: scale(160),
+            height: moderateScale(8),
             borderRadius: 4,
             backgroundColor: colors['surface-container-highest'],
           }}
@@ -94,7 +94,7 @@ export default function EmptyState({
           title={cta}
           onPress={onCtaPress}
           variant="tertiary"
-          style={{ paddingHorizontal: 32 }}
+          style={{ paddingHorizontal: moderateScale(32) }}
         />
       )}
     </View>
