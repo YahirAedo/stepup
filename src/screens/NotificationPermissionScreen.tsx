@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, typography, spacing, borderRadius, moderateScale } from '../theme';
+import { storage } from '../services/storage';
 
 const ONBOARDING_KEY = 'hasSeenOnboarding';
 
@@ -55,7 +55,7 @@ function WaveRing({ delay }: { delay: number }) {
 
 export default function NotificationPermissionScreen({ navigation }: Props) {
   const completeOnboarding = async () => {
-    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    await storage.setItem(ONBOARDING_KEY, 'true');
     navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
   };
 

@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from './src/services/storage';
 
 import {
   Manrope_800ExtraBold,
@@ -132,7 +132,7 @@ export default function App() {
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
+    storage.getItem(ONBOARDING_KEY).then((val) => {
       setInitialRoute(val === 'true' ? 'MainTabs' : 'Onboarding1');
     });
   }, []);
