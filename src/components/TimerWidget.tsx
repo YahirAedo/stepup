@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated } from 'react-native';
-import { colors, typography, shadows } from '../theme';
+import { colors, typography, shadows, scale } from '../theme';
 
 interface TimerWidgetProps {
   display: string;
@@ -46,9 +46,9 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 256,
-          height: 256,
-          borderRadius: 128,
+          width: scale(256),
+          height: scale(256),
+          borderRadius: scale(256) / 2,
           borderWidth: 1,
           borderColor: `${colors['tertiary-container']}4D`,
           opacity: ringOpacity,
@@ -58,9 +58,9 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 320,
-          height: 320,
-          borderRadius: 160,
+          width: scale(320),
+          height: scale(320),
+          borderRadius: scale(320) / 2,
           borderWidth: 1,
           borderColor: `${colors['tertiary-container']}33`,
           opacity: ringOpacity,
@@ -74,9 +74,9 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
       {/* Glass card circle */}
       <View
         style={{
-          width: 224,
-          height: 224,
-          borderRadius: 112,
+          width: scale(224),
+          height: scale(224),
+          borderRadius: scale(224) / 2,
           backgroundColor: 'rgba(255,255,255,0.4)',
           borderWidth: 1,
           borderColor: 'rgba(255,255,255,0.5)',
