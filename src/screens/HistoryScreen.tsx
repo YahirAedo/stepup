@@ -52,7 +52,11 @@ export default function HistoryScreen() {
   const thisWeekTotal = weekCounts.reduce((a, b) => a + b, 0);
   const prevWeekTotal = Math.round(thisWeekTotal * 0.88);
   const pctChange = prevWeekTotal > 0 ? Math.round(((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100) : 0;
-  const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const fullDayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  function getDayLabel(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return fullDayLabels[new Date(y, m - 1, d).getDay()];
+  }
 
   if (loading) {
     return (
@@ -111,9 +115,9 @@ export default function HistoryScreen() {
           />
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing['stack-gap'] }}>
-            {dayLabels.map((label, i) => (
+            {weekData.map((day, i) => (
               <Text key={i} style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
-                {label}
+                {getDayLabel(day.date)}
               </Text>
             ))}
           </View>
