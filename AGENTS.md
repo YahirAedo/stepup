@@ -41,9 +41,10 @@ Pasos para cada cambio:
 1. `git checkout develop && git pull`
 2. `git checkout -b feature/<nombre-del-cambio>`
 3. Hacer commits con formato convencional: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`
-4. `git push origin feature/<nombre-del-cambio>`
-5. Crear Pull Request a `develop`
-6. Mergear a `develop`
+4. **Solo stagear archivos relacionados al cambio** — prohibido `git add -A`, `git add .`, `git commit -a`
+5. `git push origin feature/<nombre-del-cambio>`
+6. Crear Pull Request a `develop`
+7. Mergear a `develop`
 
 ## Issues
 
