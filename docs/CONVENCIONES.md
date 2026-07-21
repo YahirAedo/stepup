@@ -71,6 +71,54 @@ src/components/
 
 ---
 
+## 1.5 Responsive scaling — tamaños que escalan con la pantalla
+
+Usamos la utility `src/theme/responsive.ts` para elementos con tamaño absoluto
+que deben adaptarse a distintos dispositivos.
+
+### Import
+
+```tsx
+import { scale, moderateScale, useResponsive } from '../theme';
+```
+
+### Reglas
+
+| ✅ Se escala | ❌ No se escala |
+|---|---|
+| Rings del timer, ilustraciones, checkmarks decorativos | `spacing.*` — el gap y padding del theme |
+| Círculos decorativos de fondo | `typography.*` — las fuentes ya son proporcionales |
+| Iconos grandes (40px+) en listas | Layout flex — `flex: 1`, `width: '100%'` |
+| Imágenes e ilustraciones | Porcentajes y valores relativos |
+
+**Regla de oro:** si es un valor absoluto que representa un elemento visual
+(círculo, icono, ilustración), escalálo. Si es spacing, tipografía, o layout flex,
+no lo escalés.
+
+### Hook vs función directa
+
+```tsx
+// ✅ Para componentes que rotan o cambian de tamaño → hook
+function TimerWidget() {
+  const { scale: s, isSmall } = useResponsive();
+  return <View style={{ width: s(256), height: s(256) }} />;
+}
+
+// ✅ Para valores estáticos (se calculan una vez) → función directa
+const CHECK_SIZE = scale(120);
+```
+
+### Moderate scale
+
+Para elementos donde el escalado completo se siente exagerado (border radius,
+iconos chicos), usar `moderateScale`:
+
+```tsx
+<View style={{ borderRadius: moderateScale(12) }} />
+```
+
+---
+
 ## 2. Arquitectura y patrones
 
 ### 2.1 Las pantallas NO acceden a SQLite directamente
