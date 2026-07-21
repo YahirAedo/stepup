@@ -11,13 +11,7 @@ interface EmptyStateProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export default function EmptyState({
-  headline,
-  subtext,
-  cta,
-  onCtaPress,
-  style,
-}: EmptyStateProps) {
+export default function EmptyState({ headline, subtext, cta, onCtaPress, style }: EmptyStateProps) {
   return (
     <View
       style={[
@@ -65,7 +59,7 @@ export default function EmptyState({
 
       <Text
         style={[
-          typography['headline-lg-mobile'] ,
+          typography['headline-lg-mobile'],
           {
             color: colors.primary,
             textAlign: 'center',
@@ -78,7 +72,7 @@ export default function EmptyState({
 
       <Text
         style={[
-          typography['body-md'] ,
+          typography['body-md'],
           {
             color: colors['on-surface-variant'],
             textAlign: 'center',

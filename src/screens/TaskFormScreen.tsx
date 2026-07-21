@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity,
-  Alert, ScrollView, Platform
-} from 'react-native';
+import { View, Text, TextInput, Alert, ScrollView } from 'react-native';
 import { TaskService } from '../services/TaskService';
 import { Task } from '../types';
 import { colors, typography, spacing, borderRadius } from '../theme';
@@ -37,7 +34,10 @@ export default function TaskFormScreen({ navigation, route }: Props) {
     if (dueDate.trim()) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(dueDate.trim())) {
-        Alert.alert('Formato inválido', 'La fecha debe tener el formato AAAA-MM-DD.\nEjemplo: 2026-05-30');
+        Alert.alert(
+          'Formato inválido',
+          'La fecha debe tener el formato AAAA-MM-DD.\nEjemplo: 2026-05-30',
+        );
         return;
       }
     }
@@ -56,7 +56,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
         });
       }
       navigation.goBack();
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar la tarea. Intentá de nuevo.');
     } finally {
       setSaving(false);
@@ -64,9 +64,11 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.surface }}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={{ padding: spacing['container-padding'], gap: spacing['section-gap'] }}>
-
         {/* Task name */}
         <TextField
           label="Nombre de la tarea *"
@@ -80,7 +82,17 @@ export default function TaskFormScreen({ navigation, route }: Props) {
 
         {/* Due date */}
         <View style={{ gap: spacing.unit * 2 }}>
-          <Text style={[typography['label-sm'] , { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 }]}>
+          <Text
+            style={[
+              typography['label-sm'],
+              {
+                color: colors.secondary,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                paddingLeft: 4,
+              },
+            ]}
+          >
             Fecha límite
           </Text>
           <TextInput
@@ -100,24 +112,34 @@ export default function TaskFormScreen({ navigation, route }: Props) {
             keyboardType="numeric"
             maxLength={10}
           />
-          <Text style={[typography['body-md'] , { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
             Opcional. Ayuda a priorizar.
           </Text>
         </View>
 
         {/* Tip */}
-        <View style={{
-          backgroundColor: colors['primary-fixed'],
-          borderRadius: borderRadius.lg,
-          padding: spacing['stack-gap'] - 2,
-          borderWidth: 1,
-          borderColor: colors['primary-container'],
-        }}>
-          <Text style={[typography['label-md'] , { color: colors['on-primary-fixed'], marginBottom: spacing.unit }]}>
+        <View
+          style={{
+            backgroundColor: colors['primary-fixed'],
+            borderRadius: borderRadius.lg,
+            padding: spacing['stack-gap'] - 2,
+            borderWidth: 1,
+            borderColor: colors['primary-container'],
+          }}
+        >
+          <Text
+            style={[
+              typography['label-md'],
+              { color: colors['on-primary-fixed'], marginBottom: spacing.unit },
+            ]}
+          >
             💡 Tip
           </Text>
-          <Text style={[typography['body-md'] , { color: colors['on-primary-fixed'], lineHeight: 22 }]}>
-            Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la pantalla de detalle.
+          <Text
+            style={[typography['body-md'], { color: colors['on-primary-fixed'], lineHeight: 22 }]}
+          >
+            Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la
+            pantalla de detalle.
           </Text>
         </View>
 
@@ -129,13 +151,8 @@ export default function TaskFormScreen({ navigation, route }: Props) {
             variant="primary"
             disabled={saving}
           />
-          <Button
-            title="Cancelar"
-            onPress={() => navigation.goBack()}
-            variant="secondary"
-          />
+          <Button title="Cancelar" onPress={() => navigation.goBack()} variant="secondary" />
         </View>
-
       </View>
     </ScrollView>
   );

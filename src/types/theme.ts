@@ -1,4 +1,4 @@
-import type { TextStyle, ViewStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 
 export interface ThemeColors {
   surface: string;
@@ -50,7 +50,10 @@ export interface ThemeColors {
   'surface-variant': string;
 }
 
-export type TypographyStyle = Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight' | 'lineHeight' | 'letterSpacing'>;
+export type TypographyStyle = Pick<
+  TextStyle,
+  'fontFamily' | 'fontSize' | 'fontWeight' | 'lineHeight' | 'letterSpacing'
+>;
 
 export interface ThemeTypography {
   display: TypographyStyle;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { colors, borderRadius } from '../theme';
+import { colors } from '../theme';
 
 interface LineChartProps {
   data: number[];

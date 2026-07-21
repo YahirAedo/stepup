@@ -1,8 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View, Text, Animated, TouchableOpacity,
-  StatusBar, Dimensions,
-} from 'react-native';
+import { View, Text, Animated, TouchableOpacity, StatusBar } from 'react-native';
 import { colors, typography, spacing, borderRadius, shadows, scale } from '../theme';
 import ConfettiOverlay from '../components/ConfettiOverlay';
 
@@ -12,7 +9,7 @@ type Props = {
 };
 
 export default function StepCompleteScreen({ navigation, route }: Props) {
-  const { stepName, stepDuration, nextStepName, taskName } = route.params;
+  const { stepName, stepDuration, nextStepName } = route.params;
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -37,7 +34,14 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       <ConfettiOverlay visible />
 
@@ -58,13 +62,40 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
       </Animated.View>
 
       {/* Text content */}
-      <Animated.View style={{ opacity: fadeAnim, alignItems: 'center', paddingHorizontal: 32, marginTop: spacing['stack-gap'] * 2 }}>
-        <Text style={[typography.display, { color: colors['on-surface'], textAlign: 'center', fontSize: 36, marginBottom: spacing.unit * 3 }]}>
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
+          alignItems: 'center',
+          paddingHorizontal: 32,
+          marginTop: spacing['stack-gap'] * 2,
+        }}
+      >
+        <Text
+          style={[
+            typography.display,
+            {
+              color: colors['on-surface'],
+              textAlign: 'center',
+              fontSize: 36,
+              marginBottom: spacing.unit * 3,
+            },
+          ]}
+        >
           Paso{'\n'}completado!
         </Text>
 
-        <Text style={[typography['body-lg'] , { color: colors['on-surface-variant'], textAlign: 'center', marginBottom: spacing['section-gap'] }]}>
-          {stepName}{stepDuration ? ` (${stepDuration}m)` : ''} listo.
+        <Text
+          style={[
+            typography['body-lg'],
+            {
+              color: colors['on-surface-variant'],
+              textAlign: 'center',
+              marginBottom: spacing['section-gap'],
+            },
+          ]}
+        >
+          {stepName}
+          {stepDuration ? ` (${stepDuration}m)` : ''} listo.
         </Text>
 
         {nextStepName && (
@@ -82,7 +113,7 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
               ...shadows.fab,
             }}
           >
-            <Text style={[typography['label-md'] , { color: colors['on-tertiary'], fontSize: 15 }]}>
+            <Text style={[typography['label-md'], { color: colors['on-tertiary'], fontSize: 15 }]}>
               Siguiente paso: {nextStepName}
             </Text>
             <Text style={{ color: colors['on-tertiary'], fontSize: 20 }}>→</Text>
@@ -93,7 +124,7 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
           onPress={() => navigation.popToTop()}
           style={{ marginTop: spacing['stack-gap'], padding: spacing['stack-gap'] }}
         >
-          <Text style={[typography['label-md'] , { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
             Volver al inicio
           </Text>
         </TouchableOpacity>

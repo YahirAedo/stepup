@@ -23,7 +23,7 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
           duration: 4000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     loop.start();
@@ -64,10 +64,14 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
           borderWidth: 1,
           borderColor: `${colors['tertiary-container']}33`,
           opacity: ringOpacity,
-          transform: [{ scale: ringAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [1, 1.1],
-          }) }],
+          transform: [
+            {
+              scale: ringAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 1.1],
+              }),
+            },
+          ],
         }}
       />
 
@@ -97,7 +101,7 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
           </Text>
           <Text
             style={[
-              typography['headline-md'] ,
+              typography['headline-md'],
               {
                 color: colors['tertiary-container'],
                 fontSize: 32,
@@ -108,7 +112,7 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
           </Text>
           <Text
             style={[
-              typography['label-sm'] ,
+              typography['label-sm'],
               {
                 color: colors['on-surface-variant'],
                 textTransform: 'uppercase',
