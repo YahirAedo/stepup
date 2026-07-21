@@ -259,6 +259,23 @@ feature/*   ← Una rama por cambio
 El autor de la PR no se mergea su propio código. Mínimo 1 aprobación de otro
 integrante antes de mergear.
 
+### 5.4 Prohibido `git commit -a` y `git add` masivos
+
+No usar `git commit -a`, `git add -A`, `git add .` ni wildcards que agreguen
+archivos no relacionados al cambio. Cada archivo en el commit debe estar
+directamente vinculado a lo que resuelve la issue.
+
+```bash
+# ❌ INCORRECTO
+git add -A
+git commit -m "feat: algo"
+git add src/ && git commit -m "feat: algo"
+
+# ✅ CORRECTO
+git add src/screens/NuevaScreen.tsx src/components/NuevoComponente.tsx
+git commit -m "feat: descripción del cambio"
+```
+
 ---
 
 ## 6. Reglas para la IA
