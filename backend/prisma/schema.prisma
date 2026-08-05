@@ -1,0 +1,55 @@
+// Backend StepUp — modelo relacional (espejo de src/database/migrations.ts del app móvil)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  active
+  completed
+}
+
+enum StepStatus {
+  pending
+  completed
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  name        String
+  dueDate     DateTime?  @map("due_date")
+  status      TaskStatus @default(active)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  completedAt DateTime?  @map("completed_at")
+
+  steps Step[]
+
+  @@map("tasks")
+}
+
+model Step {
+  id          Int        @id @default(autoincrement())
+  taskId      Int        @map("task_id")
+  name        String
+  durationMin Int?       @map("duration_min")
+  orderIndex  Int        @map("order_index")
+  status      StepStatus @default(pending)
+  completedAt DateTime?  @map("completed_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("steps")
+}
+
+model DailyProgress {
+  id             Int    @id @default(autoincrement())
+  date           String @unique
+  stepsCompleted Int    @default(0) @map("steps_completed")
+
+  @@map("daily_progress")
+}
