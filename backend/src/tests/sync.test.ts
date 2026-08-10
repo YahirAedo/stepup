@@ -108,6 +108,27 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(res.status).toBe(409);
   });
 
+  it('push con un step cuya tarea no existe devuelve 404', async () => {
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: crypto.randomUUID(),
+            taskId: crypto.randomUUID(),
+            name: 'Paso huérfano',
+            orderIndex: 0,
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe('La tarea especificada no existe');
+  });
+
   it('GET /api/sync/pull retorna solo los cambios posteriores a since', async () => {
     const id = crypto.randomUUID();
     await request(app)

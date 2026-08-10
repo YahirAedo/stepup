@@ -39,6 +39,15 @@ describe('API de autenticación — registro, login y me', () => {
     expect(res.status).toBe(400);
   });
 
+  it('registro con contraseña menor a 6 caracteres devuelve 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ name: 'Ana', email: 'corta@stepup.app', password: '12345' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('La contraseña debe tener al menos 6 caracteres');
+  });
+
   it('POST /api/auth/login con credenciales correctas devuelve token (200)', async () => {
     await registerUser('Test User', 'test@stepup.app', 'secret123');
 

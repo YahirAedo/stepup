@@ -118,4 +118,49 @@ describe('API de pasos — ejecución y orden', () => {
     expect(steps[1].orderIndex).toBe(1);
     expect(steps[1].id).toBe(stepC.id);
   });
+
+  it('un paso de otro usuario no puede editarse, completarse ni borrarse (404)', async () => {
+    const other = await registerUser('Otro', 'otro-step@stepup.app');
+    const task = await createTask(token, 'Tarea de A');
+    const step = await addStep(token, task.id, 'Paso de A');
+
+    const patch = await request(app)
+      .patch(`/api/steps/${step.id}`)
+      .set(authHeader(other.token))
+      .send({ name: 'Robado' });
+    expect(patch.status).toBe(404);
+
+    const complete = await request(app)
+      .patch(`/api/steps/${step.id}/complete`)
+      .set(authHeader(other.token));
+    expect(complete.status).toBe(404);
+
+    const del = await request(app).delete(`/api/steps/${step.id}`).set(authHeader(other.token));
+    expect(del.status).toBe(404);
+
+    const steps = (
+      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+    ).body;
+    expect(steps).toHaveLength(1);
+    expect(steps[0].name).toBe('Paso de A');
+  });
+
+  it('reorder sobre una tarea ajena no altera el orden real', async () => {
+    const other = await registerUser('Otro', 'otro-reorder@stepup.app');
+    const task = await createTask(token, 'Tarea de A');
+    const stepA = await addStep(token, task.id, 'A');
+    const stepB = await addStep(token, task.id, 'B');
+
+    await request(app)
+      .put('/api/steps/reorder')
+      .set(authHeader(other.token))
+      .send({ taskId: task.id, orderedIds: [stepB.id, stepA.id] })
+      .expect(200);
+
+    const steps = (
+      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+    ).body;
+    expect(steps[0].name).toBe('A');
+    expect(steps[1].name).toBe('B');
+  });
 });
