@@ -4,6 +4,7 @@ import { taskRoutes } from './routes/task.routes';
 import { stepRoutes } from './routes/step.routes';
 import { progressRoutes } from './routes/progress.routes';
 import { authRoutes } from './routes/auth.routes';
+import { syncRoutes } from './routes/sync.routes';
 import { requireAuth } from './middleware/auth';
 
 export function createApp() {
@@ -20,6 +21,7 @@ export function createApp() {
   app.use('/api/tasks', requireAuth, taskRoutes);
   app.use('/api/steps', requireAuth, stepRoutes);
   app.use('/api/progress', requireAuth, progressRoutes);
+  app.use('/api/sync', syncRoutes);
 
   return app;
 }
