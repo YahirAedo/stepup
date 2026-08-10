@@ -3,6 +3,8 @@ import cors from 'cors';
 import { taskRoutes } from './routes/task.routes';
 import { stepRoutes } from './routes/step.routes';
 import { progressRoutes } from './routes/progress.routes';
+import { authRoutes } from './routes/auth.routes';
+import { requireAuth } from './middleware/auth';
 
 export function createApp() {
   const app = express();
@@ -14,9 +16,10 @@ export function createApp() {
     res.status(200).json({ status: 'ok' });
   });
 
-  app.use('/api/tasks', taskRoutes);
-  app.use('/api/steps', stepRoutes);
-  app.use('/api/progress', progressRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/tasks', requireAuth, taskRoutes);
+  app.use('/api/steps', requireAuth, stepRoutes);
+  app.use('/api/progress', requireAuth, progressRoutes);
 
   return app;
 }

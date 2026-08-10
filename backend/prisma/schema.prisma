@@ -19,26 +19,45 @@ enum StepStatus {
   completed
 }
 
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tasks Task[]
+  dailyProgress DailyProgress[]
+
+  @@map("users")
+}
+
 model Task {
-  id          Int        @id @default(autoincrement())
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
   name        String
   dueDate     DateTime?  @map("due_date")
   status      TaskStatus @default(active)
   createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
   completedAt DateTime?  @map("completed_at")
 
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   steps Step[]
 
+  @@index([userId, updatedAt])
   @@map("tasks")
 }
 
 model Step {
-  id          Int        @id @default(autoincrement())
-  taskId      Int        @map("task_id")
+  id          String     @id @default(uuid())
+  taskId      String     @map("task_id")
   name        String
   durationMin Int?       @map("duration_min")
   orderIndex  Int        @map("order_index")
   status      StepStatus @default(pending)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
   completedAt DateTime?  @map("completed_at")
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
@@ -48,8 +67,12 @@ model Step {
 
 model DailyProgress {
   id             Int    @id @default(autoincrement())
-  date           String @unique
+  userId         String @map("user_id")
+  date           String
   stepsCompleted Int    @default(0) @map("steps_completed")
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
   @@map("daily_progress")
 }
