@@ -1,10 +1,21 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { getToken } from './session';
 
 const API_PORT = 3000;
 
 export const ENDPOINTS = {
   health: '/health',
+  auth: {
+    register: '/api/auth/register',
+    login: '/api/auth/login',
+    me: '/api/auth/me',
+  },
+  sync: {
+    push: '/api/sync/push',
+    pull: '/api/sync/pull',
+    migrate: '/api/sync/migrate',
+  },
   tasks: {
     list: '/api/tasks',
     completed: '/api/tasks/completed',
@@ -56,12 +67,14 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers ?? {}),
       },
     });

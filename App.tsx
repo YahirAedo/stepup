@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { storage } from './src/services/storage';
+import { startSyncLifecycle } from './src/services/syncLifecycle';
 
 import {
   Manrope_800ExtraBold,
@@ -27,6 +28,7 @@ import StepCompleteScreen from './src/screens/StepCompleteScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import BadgesScreen from './src/screens/BadgesScreen';
+import SyncConflictScreen from './src/screens/SyncConflictScreen';
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
@@ -77,6 +79,7 @@ function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="Badges" component={BadgesScreen} />
+      <Stack.Screen name="SyncConflict" component={SyncConflictScreen} />
     </Stack.Navigator>
   );
 }
@@ -151,6 +154,11 @@ export default function App() {
   });
 
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stopSync = startSyncLifecycle();
+    return stopSync;
+  }, []);
 
   useEffect(() => {
     storage.getItem(ONBOARDING_KEY).then((val) => {

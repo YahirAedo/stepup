@@ -17,4 +17,14 @@ function setItem(key: string, value: string): Promise<void> {
   );
 }
 
-export const storage = { getItem, setItem };
+function removeItem(key: string): Promise<void> {
+  if (isWeb) {
+    localStorage.removeItem(key);
+    return Promise.resolve();
+  }
+  return import('@react-native-async-storage/async-storage').then((m) =>
+    m.default.removeItem(key),
+  );
+}
+
+export const storage = { getItem, setItem, removeItem };

@@ -61,6 +61,7 @@ export class SyncService {
     return prisma.$transaction(async (tx) => {
       const taskIdByLocal = new Map<number, string>();
       const tasks: Array<{ id: string; applied: boolean; localId?: number }> = [];
+      const completedTaskIds = new Set<string>();
 
       for (const task of data.tasks) {
         const result = await this.upsertTask(tx, userId, task);
@@ -68,12 +69,23 @@ export class SyncService {
         if (task.localId) {
           taskIdByLocal.set(task.localId, result.id);
         }
+        if (task.status === 'completed') {
+          completedTaskIds.add(result.id);
+        }
       }
 
       const steps: Array<{ id: string; applied: boolean; localId?: number }> = [];
       for (const step of data.steps) {
         const targetTaskId = await this.resolveTaskId(tx, userId, step.taskId, step.taskLocalId, taskIdByLocal);
         steps.push(await this.upsertStep(tx, userId, { ...step, taskId: targetTaskId }));
+      }
+
+      // Invariante (espejo del REST): no se puede completar una tarea con pasos pendientes
+      for (const taskId of completedTaskIds) {
+        const pendingCount = await tx.step.count({ where: { taskId, status: 'pending' } });
+        if (pendingCount > 0) {
+          throw new Error('CANNOT_COMPLETE_WITH_PENDING_STEPS');
+        }
       }
 
       return { tasks, steps };
