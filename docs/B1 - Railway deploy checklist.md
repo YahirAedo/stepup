@@ -3,7 +3,8 @@
 > Issue: https://github.com/YahirAedo/stepup/issues/17
 > Etiquetas: `backend`, `E2 API (Express/Prisma)`, `ready-for-agent`
 > Rama base de código: `feature/backend-express-prisma-postgres` (commit `ca0912d`)
-> Última actualización: 2026-08-11 (plan de ejecución por fases agregado)
+> Última actualización: 2026-08-11 (Fases A–C completadas; deploy en Railway verificado)
+> URL de producción: https://stepup-backend-api-production.up.railway.app
 
 ## Qué pide el issue (acceptance criteria)
 
@@ -11,10 +12,10 @@
 |---|----------|--------|
 | 1 | `backend/` con Express + TypeScript + Prisma funcionando localmente | ✅ HECHO |
 | 2 | Prisma schema con User, Task, Step migrado a PostgreSQL | ✅ HECHO (local Docker) |
-| 3 | Railway project creado con PostgreSQL | ❌ PENDIENTE |
-| 4 | `GET /api/health` retorna 200 OK | ⚠️ desvío: hoy es `GET /health` |
-| 5 | Variables de entorno configuradas (PORT, JWT_SECRET, DATABASE_URL) | ⚠️ solo valores dev locales |
-| 6 | Backend responde en la URL pública de Railway | ❌ PENDIENTE |
+| 3 | Railway project creado con PostgreSQL | ✅ HECHO (proyecto `stepup-backend` + Postgres provisionado) |
+| 4 | `GET /api/health` retorna 200 OK | ✅ HECHO (convive con `/health`; app migró a `/api/health`) |
+| 5 | Variables de entorno configuradas (PORT, JWT_SECRET, DATABASE_URL) | ✅ HECHO (producción en Railway; `DATABASE_URL` por referencia `${{ Postgres.DATABASE_URL }}`) |
+| 6 | Backend responde en la URL pública de Railway | ✅ HECHO (`https://stepup-backend-api-production.up.railway.app`) |
 
 ## Lo que ya está hecho (verificado)
 
@@ -30,28 +31,28 @@
 - [x] Registrar `GET /api/health` (issue dice `/api/health`) en `backend/src/app.ts`
 - [x] Decidir qué hacer con `/health` actual:
   - Opción B aplicada: app migra a `/api/health` (`src/services/api.ts` → `ENDPOINTS.health`) y `/health` se mantiene por compatibilidad (no rompe nada)
-- [ ] Verificar con `Invoke-RestMethod http://localhost:3000/api/health` → 200 `{"status":"ok"}`
+- [x] Verificar con `Invoke-RestMethod http://localhost:3000/api/health` → 200 `{"status":"ok"}` (y en producción: `https://stepup-backend-api-production.up.railway.app/api/health` → 200)
 
 ### 2. Desvíos menores detectados (decisión del equipo)
 - [x] Entry point: se mantiene `src/server.ts` y se documenta como entry point válido (spec pedía `src/index.ts`; renombrar no aporta valor funcional)
 
 ### 3. Railway
 Requisitos previos (lo hace el usuario, requiere su cuenta):
-- [ ] Crear/cuenta en Railway (tier gratuito) o pedir acceso al dueño del repo
-- [ ] Instalar Railway CLI: `npm i -g @railway/cli` (hoy NO está instalado)
-- [ ] `railway login` en esta máquina
+- [x] Crear/cuenta en Railway (tier gratuito) o pedir acceso al dueño del repo — hecha con GitHub
+- [x] Instalar Railway CLI: `npm i -g @railway/cli` (versión 5.35.2)
+- [x] `railway login` en esta máquina (login: Santiago Farias — zanthiagoferiasd@gmail.com)
 
 Proyecto y base de datos (dashboard o CLI):
-- [ ] Crear proyecto `stepup-backend` en Railway
-- [ ] Provisionar PostgreSQL desde el dashboard (plan gratuito)
-- [ ] Obtener la `DATABASE_URL` interna del servicio Postgres
+- [x] Crear proyecto `stepup-backend` en Railway (id `b685fcc1-aa11-4040-a026-3e178d01a7ac`)
+- [x] Provisionar PostgreSQL desde el dashboard (plan gratuito)
+- [x] Obtener la `DATABASE_URL` interna del servicio Postgres
 
 Deploy:
-- [ ] Crear `railway.json` (o nixpacks auto-detection de Node.js) en la raíz de `backend/`
-- [ ] Conectar el repo a Railway (dashboard → Deploy → GitHub → `YahirAedo/stepup`) o con CLI: `railway up` desde `backend/`
-- [ ] Configurar env vars en Railway: `PORT=3000`, `JWT_SECRET=<secreto fuerte>`, `DATABASE_URL=<url de Railway>`
-- [ ] Correr migraciones contra la DB de Railway: `npx prisma migrate deploy` con `DATABASE_URL` apuntando a Railway
-- [ ] Confirmar en el dashboard que el deploy está "Deployed" y que hay una URL pública (`https://<proyecto>.up.railway.app`)
+- [x] Crear `railway.json` (NIXPACKS) en la raíz de `backend/` con startCommand `npx prisma migrate deploy && node dist/server.js`
+- [x] Conectar el repo a Railway (CLI: `railway up` desde `backend/`)
+- [x] Configurar env vars en Railway: `PORT=3000`, `JWT_SECRET=<secreto fuerte>`, `DATABASE_URL` (referencia `${{ Postgres.DATABASE_URL }}`)
+- [x] Correr migraciones contra la DB de Railway (`prisma migrate deploy` se ejecuta en el startCommand del deploy; 2 migraciones aplicadas)
+- [x] Confirmar en el dashboard que el deploy está "Deployed" y que hay una URL pública (`https://stepup-backend-api-production.up.railway.app`)
 
 Env vars en la app (para que la app apunte al backend público):
 - [ ] Setear `EXPO_PUBLIC_API_URL=https://<proyecto>.up.railway.app` en la app (override en `src/services/api.ts::resolveBaseUrl`)
@@ -87,20 +88,20 @@ Nota: el código de B1 ya vive en `feature/backend-express-prisma-postgres` (anc
 
 ## Plan de ejecución por fases
 
-### Fase A — Código (agente)
+### Fase A — Código (agente) ✅ HECHA
 1. Crear rama `feature/b1-finish` desde el tip de `feature/offline-first-sync`.
 2. Registrar `GET /api/health` en `backend/src/app.ts` (spec del issue; hoy solo hay `/health`).
 3. Resolver el desvío del entry point: spec pide `src/index.ts`, hoy es `src/server.ts`.
 4. Decidir `/api/health` en la app: actualizar `ENDPOINTS.health` en `src/services/api.ts` o mantener ambos.
 5. Tests backend (45/45) + typecheck + commit + push.
 
-### Fase B — Preparación Railway (requiere cuenta del usuario)
+### Fase B — Preparación Railway (requiere cuenta del usuario) ✅ HECHA
 1. `npm i -g @railway/cli` (no está instalado).
 2. `railway login` → requiere cuenta del usuario (o acceso del dueño del repo).
 3. Crear proyecto `stepup-backend` + provisionar PostgreSQL.
 4. Obtener la `DATABASE_URL` interna.
 
-### Fase C — Deploy (agente si el CLI quedó logueado)
+### Fase C — Deploy (agente si el CLI quedó logueado) ✅ HECHA
 1. Crear `railway.json` en `backend/`.
 2. Deploy: `railway up` desde `backend/` (o conectar GitHub en dashboard).
 3. Env vars en Railway: `PORT`, `JWT_SECRET`, `DATABASE_URL`.
@@ -121,9 +122,8 @@ Nota: el código de B1 ya vive en `feature/backend-express-prisma-postgres` (anc
 ### Decisiones a tomar antes de Fase A
 - [x] `/api/health` convive con `/health`; la app migra a `/api/health` (tomado)
 - [x] Entry point: se mantiene `src/server.ts` documentado como válido (tomado)
-- [ ] Para Railway: ¿CLI (`railway up`) o deploy desde GitHub dashboard?
+- [x] Para Railway: CLI (`railway up`) desde `backend/` (tomado; deploy verificado en producción)
 
 ## Decisiones pendientes del equipo
 - [ ] ¿`PUT` o `PATCH` para update (B3 usa PATCH hoy, spec dice PUT)?
 - [ ] ¿Rutas anidadas `/api/tasks/:taskId/steps` o planas `/api/steps?taskId=` (spec dice anidadas)?
-- [ ] ¿Railway con CLI (`railway up`) o deploy desde GitHub (dashboard)?
