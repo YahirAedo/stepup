@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
+import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
 import ProgressRing from '../components/ProgressRing';
 
 type Props = {
@@ -85,7 +84,7 @@ function BadgeCard({
 }
 
 export default function BadgesScreen({ navigation }: Props) {
-  const insets = useSafeAreaInsets();
+  const { insets, contentPaddingBottom } = useBottomLayout();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -111,7 +110,7 @@ export default function BadgesScreen({ navigation }: Props) {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: insets.bottom + spacing['container-padding'],
+          paddingBottom: contentPaddingBottom,
           gap: spacing['section-gap'],
         }}
       >

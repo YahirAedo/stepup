@@ -12,7 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { Task, Step } from '../types';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import ProgressBar from '../components/ProgressBar';
 import StepItem from '../components/StepItem';
 
@@ -22,6 +22,7 @@ type Props = {
 };
 
 export default function TaskDetailScreen({ navigation, route }: Props) {
+  const { contentPaddingBottom } = useBottomLayout();
   const { taskId } = route.params;
   const [task, setTask] = useState<Task | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -125,7 +126,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: 120,
+          paddingBottom: contentPaddingBottom,
         }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={() => (

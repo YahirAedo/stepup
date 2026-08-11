@@ -14,7 +14,7 @@ import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
 import { Task } from '../types';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import Badge from '../components/Badge';
 import ProgressBar from '../components/ProgressBar';
 import EmptyState from '../components/EmptyState';
@@ -36,6 +36,7 @@ interface TaskWithProgress extends Task {
 }
 
 export default function TaskListScreen({ navigation }: Props) {
+  const { contentPaddingBottomWithFab } = useBottomLayout();
   const [tasks, setTasks] = useState<TaskWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [stepsToday, setStepsToday] = useState(0);
@@ -135,7 +136,7 @@ export default function TaskListScreen({ navigation }: Props) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: contentPaddingBottomWithFab }}
       >
         {/* Header */}
         <View

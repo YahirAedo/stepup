@@ -14,7 +14,7 @@ import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
 import { TimerService } from '../services/TimerService';
 import { Task, Step } from '../types';
-import { colors, typography, spacing, scale } from '../theme';
+import { colors, typography, spacing, scale, useBottomLayout } from '../theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import TimerWidget from '../components/TimerWidget';
@@ -23,6 +23,7 @@ import EmptyState from '../components/EmptyState';
 type Props = { navigation: any };
 
 export default function FocusScreen({ navigation }: Props) {
+  const { contentPaddingBottom } = useBottomLayout();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [nextStep, setNextStep] = useState<Step | null>(null);
   const [stepsToday, setStepsToday] = useState(0);
@@ -241,7 +242,7 @@ export default function FocusScreen({ navigation }: Props) {
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: 32,
+          paddingBottom: contentPaddingBottom,
         }}
         showsVerticalScrollIndicator={false}
       >

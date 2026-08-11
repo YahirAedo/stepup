@@ -4,10 +4,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { TaskService } from '../services/TaskService';
 import { ProgressService } from '../services/ProgressService';
 import { Task } from '../types';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import LineChart from '../components/LineChart';
 
 export default function HistoryScreen() {
+  const { contentPaddingBottom } = useBottomLayout();
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const [weekData, setWeekData] = React.useState<{ date: string; count: number }[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -80,7 +81,7 @@ export default function HistoryScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: 100,
+          paddingBottom: contentPaddingBottom,
         }}
       >
         {/* Hero */}

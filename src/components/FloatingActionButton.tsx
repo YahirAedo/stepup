@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, StyleProp, ViewStyle, TextStyle, Text as RNText, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, shadows, useResponsive } from '../theme';
+import { colors, typography, shadows, useResponsive, useBottomLayout } from '../theme';
 
 interface FloatingActionButtonProps {
   onPress: () => void;
@@ -21,15 +20,12 @@ export function FloatingActionButton({
   style,
 }: FloatingActionButtonProps) {
   const { scale: s } = useResponsive();
-  const insets = useSafeAreaInsets();
+  const { fabSize, fabOffset } = useBottomLayout();
 
   if (!visible) return null;
 
-  const FAB_SIZE = s(56);
   const iconSize = s(26);
   const rightMargin = s(24);
-  const BAR_HEIGHT = s(56);
-  const bottomMargin = insets.bottom + s(16) + BAR_HEIGHT + s(8);
 
   const bgColor = variant === 'primary' ? colors['primary-container'] : colors['secondary-container'];
   const textColor = variant === 'primary' ? colors['on-primary-container'] : colors['on-secondary-container'];
@@ -41,10 +37,10 @@ export function FloatingActionButton({
         {
           position: 'absolute',
           right: rightMargin,
-          bottom: bottomMargin,
-          width: FAB_SIZE,
-          height: FAB_SIZE,
-          borderRadius: FAB_SIZE / 2,
+          bottom: fabOffset,
+          width: fabSize,
+          height: fabSize,
+          borderRadius: fabSize / 2,
           backgroundColor: bgColor,
           justifyContent: 'center',
           alignItems: 'center',
