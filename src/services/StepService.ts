@@ -9,6 +9,7 @@ type ApiStep = {
   orderIndex: number;
   status: 'pending' | 'completed';
   completedAt: string | null;
+  updatedAt: string;
 };
 
 function toStep(step: ApiStep): Step {
@@ -20,6 +21,9 @@ function toStep(step: ApiStep): Step {
     order_index: step.orderIndex,
     status: step.status,
     completed_at: step.completedAt,
+    server_id: null,
+    dirty: 0,
+    updated_at: step.updatedAt,
   };
 }
 

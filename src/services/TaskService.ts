@@ -7,6 +7,7 @@ type ApiTask = {
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
+  updatedAt: string;
   completedAt: string | null;
 };
 
@@ -18,6 +19,9 @@ function toTask(task: ApiTask): Task {
     status: task.status,
     created_at: task.createdAt,
     completed_at: task.completedAt,
+    server_id: null,
+    dirty: 0,
+    updated_at: task.updatedAt,
   };
 }
 
