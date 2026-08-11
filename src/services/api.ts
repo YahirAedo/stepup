@@ -5,7 +5,7 @@ import { getToken } from './session';
 const API_PORT = 3000;
 
 export const ENDPOINTS = {
-  health: '/health',
+  health: '/api/health',
   auth: {
     register: '/api/auth/register',
     login: '/api/auth/login',
