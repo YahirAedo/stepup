@@ -28,6 +28,7 @@ import StepCompleteScreen from './src/screens/StepCompleteScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import BadgesScreen from './src/screens/BadgesScreen';
+import SyncConflictScreen from './src/screens/SyncConflictScreen';
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
@@ -78,6 +79,7 @@ function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="Badges" component={BadgesScreen} />
+      <Stack.Screen name="SyncConflict" component={SyncConflictScreen} />
     </Stack.Navigator>
   );
 }

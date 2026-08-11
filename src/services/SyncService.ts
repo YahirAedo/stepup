@@ -4,16 +4,20 @@ import {
   applyServerIds,
   getAllSteps,
   getAllTasks,
+  getConflicts as getStoredConflicts,
   getDirtySteps,
   getDirtyTasks,
   getLastSyncAt,
   getTaskIdByServerId,
   nowIso,
+  resolveConflictKeepLocal as resolveLocalConflict,
+  resolveConflictKeepServer as resolveServerConflict,
   setLastSyncAt,
   upsertServerStep,
   upsertServerTask,
   type ServerStep,
   type ServerTask,
+  type SyncConflict,
 } from '../database/sync';
 import { apiFetch, ENDPOINTS } from './api';
 import { hasSession, saveSession, type SessionUser } from './session';
@@ -179,6 +183,22 @@ export const SyncService = {
 
     await setLastSyncAt(db, marker);
     return { tasks: result.tasks.length, steps: appliedSteps };
+  },
+
+  async getConflicts(): Promise<SyncConflict[]> {
+    const db = await getDb();
+    return getStoredConflicts(db);
+  },
+
+  async resolveConflictKeepLocal(conflictId: number): Promise<void> {
+    const db = await getDb();
+    await resolveLocalConflict(db, conflictId);
+    await syncNow();
+  },
+
+  async resolveConflictKeepServer(conflictId: number): Promise<void> {
+    const db = await getDb();
+    await resolveServerConflict(db, conflictId);
   },
 
   async migrate(name: string, email: string, password: string): Promise<PushSummary> {

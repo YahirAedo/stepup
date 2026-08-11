@@ -50,9 +50,23 @@ const OFFLINE_SYNC_V2: string[] = [
    );`,
 ];
 
+const CONFLICTS_V3: string[] = [
+  `CREATE TABLE IF NOT EXISTS sync_conflicts (
+     id             INTEGER PRIMARY KEY AUTOINCREMENT,
+     table_name     TEXT NOT NULL,
+     local_id       INTEGER NOT NULL,
+     server_id      TEXT NOT NULL,
+     local_payload  TEXT NOT NULL,
+     server_payload TEXT NOT NULL,
+     created_at     TEXT NOT NULL,
+     UNIQUE (table_name, local_id)
+   );`,
+];
+
 const MIGRATIONS: Migration[] = [
   { version: 1, statements: BASE_SCHEMA_V1 },
   { version: 2, statements: OFFLINE_SYNC_V2 },
+  { version: 3, statements: CONFLICTS_V3 },
 ];
 
 export async function runMigrations(db: MigrationDb): Promise<void> {

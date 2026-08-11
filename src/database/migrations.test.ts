@@ -52,6 +52,21 @@ describe('runMigrations — schema de SQLite local', () => {
     expect(meta.length).toBe(1);
     const metaCols = await tableColumns(raw, 'sync_meta');
     expect(metaCols.map((c) => c.name)).toEqual(['id', 'last_sync_at']);
+
+    const conflicts = raw.exec(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sync_conflicts'`,
+    );
+    expect(conflicts.length).toBe(1);
+    const conflictCols = await tableColumns(raw, 'sync_conflicts');
+    expect(conflictCols.map((c) => c.name)).toEqual([
+      'id',
+      'table_name',
+      'local_id',
+      'server_id',
+      'local_payload',
+      'server_payload',
+      'created_at',
+    ]);
   });
 
   it('deja user_version en la última migración y es idempotente', async () => {
@@ -61,7 +76,7 @@ describe('runMigrations — schema de SQLite local', () => {
     await runMigrations(db);
 
     const [row] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-    expect(row.user_version).toBe(2);
+    expect(row.user_version).toBe(3);
   });
 
   it('actualiza una base con el schema viejo sin perder datos', async () => {
