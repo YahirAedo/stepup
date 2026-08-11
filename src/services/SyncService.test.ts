@@ -33,12 +33,14 @@ vi.mock('./api', () => {
 
 vi.mock('./session', () => ({
   hasSession: vi.fn(() => true),
+  saveSession: vi.fn(),
 }));
 
-import { hasSession } from './session';
+import { hasSession, saveSession } from './session';
 import { SyncService } from './SyncService';
 
 const mockedHasSession = vi.mocked(hasSession);
+const mockedSaveSession = vi.mocked(saveSession);
 
 let db: MigrationDb;
 
@@ -49,6 +51,7 @@ beforeEach(async () => {
   mocks.getDb.mockResolvedValue(db);
   mocks.apiFetch.mockReset();
   mockedHasSession.mockReturnValue(true);
+  mockedSaveSession.mockReset();
 });
 
 async function insertTask(overrides: { server_id?: string | null; dirty?: number } = {}) {
@@ -280,5 +283,70 @@ describe('SyncService.pull', () => {
       [taskId],
     );
     expect(task).toEqual({ name: 'Tarea', dirty: 1 });
+  });
+});
+
+describe('SyncService.migrate', () => {
+  it('envía todos los datos locales, guarda sesión y aplica los maps', async () => {
+    const taskId = await insertTask();
+    const stepId = await insertStep(taskId);
+    mocks.apiFetch.mockResolvedValueOnce({
+      user: { id: 'u1', name: 'Ana', email: 'ana@x.com' },
+      token: 'jwt-migrate',
+      taskMap: { [String(taskId)]: 'uuid-task' },
+      stepMap: { [String(stepId)]: 'uuid-step' },
+    });
+
+    await expect(SyncService.migrate('Ana', 'ana@x.com', 'secreto123')).resolves.toEqual({
+      tasks: 1,
+      steps: 1,
+    });
+
+    expect(mocks.apiFetch).toHaveBeenCalledWith(
+      '/api/sync/migrate',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    const body = JSON.parse(
+      String((mocks.apiFetch.mock.calls[0][1] as RequestInit).body),
+    ) as { name: string; email: string; tasks: Array<Record<string, unknown>>; steps: Array<Record<string, unknown>> };
+    expect(body).toMatchObject({ name: 'Ana', email: 'ana@x.com' });
+    expect(body.tasks[0]).toMatchObject({ localId: taskId, name: 'Tarea' });
+    expect(body.steps[0]).toMatchObject({ localId: stepId, taskLocalId: taskId });
+
+    expect(mockedSaveSession).toHaveBeenCalledWith('jwt-migrate', {
+      id: 'u1',
+      name: 'Ana',
+      email: 'ana@x.com',
+    });
+
+    const [task] = await db.getAllAsync<{ server_id: string | null; dirty: number }>(
+      `SELECT server_id, dirty FROM tasks WHERE id = ?`,
+      [taskId],
+    );
+    const [step] = await db.getAllAsync<{ server_id: string | null; dirty: number }>(
+      `SELECT server_id, dirty FROM steps WHERE id = ?`,
+      [stepId],
+    );
+    expect(task).toEqual({ server_id: 'uuid-task', dirty: 0 });
+    expect(step).toEqual({ server_id: 'uuid-step', dirty: 0 });
+  });
+
+  it('migra también registros sin dirty y exige taskLocalId en cada paso', async () => {
+    const taskId = await insertTask();
+    await insertStep(taskId);
+    mocks.apiFetch.mockResolvedValueOnce({
+      user: { id: 'u1', name: 'Ana', email: 'ana@x.com' },
+      token: 'jwt-migrate',
+      taskMap: {},
+      stepMap: {},
+    });
+
+    await SyncService.migrate('Ana', 'ana@x.com', 'secreto123');
+
+    const body = JSON.parse(
+      String((mocks.apiFetch.mock.calls[0][1] as RequestInit).body),
+    ) as { tasks: Array<Record<string, unknown>>; steps: Array<Record<string, unknown>> };
+    expect(body.tasks).toHaveLength(1);
+    expect(body.steps[0]).toMatchObject({ taskLocalId: taskId });
   });
 });

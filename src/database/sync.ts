@@ -59,6 +59,14 @@ export async function getDirtySteps(db: MigrationDb): Promise<Step[]> {
   return db.getAllAsync<Step>(`SELECT * FROM steps WHERE dirty = 1 ORDER BY id`, []);
 }
 
+export async function getAllTasks(db: MigrationDb): Promise<Task[]> {
+  return db.getAllAsync<Task>(`SELECT * FROM tasks ORDER BY id`, []);
+}
+
+export async function getAllSteps(db: MigrationDb): Promise<Step[]> {
+  return db.getAllAsync<Step>(`SELECT * FROM steps ORDER BY id`, []);
+}
+
 export async function applyServerIds(
   db: MigrationDb,
   table: SyncTable,

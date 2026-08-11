@@ -2,6 +2,8 @@ import type { Task } from '../types';
 import { getDb } from '../database/db';
 import {
   applyServerIds,
+  getAllSteps,
+  getAllTasks,
   getDirtySteps,
   getDirtyTasks,
   getLastSyncAt,
@@ -14,7 +16,7 @@ import {
   type ServerTask,
 } from '../database/sync';
 import { apiFetch, ENDPOINTS } from './api';
-import { hasSession } from './session';
+import { hasSession, saveSession, type SessionUser } from './session';
 
 type PushTask = {
   id?: string;
@@ -46,6 +48,36 @@ type PushResult = {
 };
 
 export type PushSummary = { tasks: number; steps: number };
+
+type MigrateTask = {
+  id?: string;
+  localId: number;
+  name: string;
+  dueDate: string | null;
+  status: 'active' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+};
+
+type MigrateStep = {
+  localId: number;
+  taskId?: string;
+  taskLocalId: number;
+  name: string;
+  durationMin: number | null;
+  orderIndex: number;
+  status: 'pending' | 'completed';
+  updatedAt: string;
+  completedAt: string | null;
+};
+
+type MigrateResponse = {
+  user: SessionUser;
+  token: string;
+  taskMap: Record<string, string>;
+  stepMap: Record<string, string>;
+};
 
 export const SyncService = {
   async push(): Promise<PushSummary> {
@@ -138,5 +170,54 @@ export const SyncService = {
 
     await setLastSyncAt(db, marker);
     return { tasks: result.tasks.length, steps: appliedSteps };
+  },
+
+  async migrate(name: string, email: string, password: string): Promise<PushSummary> {
+    const db = await getDb();
+    const tasks = await getAllTasks(db);
+    const steps = await getAllSteps(db);
+
+    const taskByLocal = new Map<number, Task>();
+    for (const task of tasks) taskByLocal.set(task.id, task);
+
+    const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        tasks: tasks.map((task): MigrateTask => ({
+          ...(task.server_id ? { id: task.server_id } : {}),
+          localId: task.id,
+          name: task.name,
+          dueDate: task.due_date,
+          status: task.status,
+          createdAt: task.created_at,
+          updatedAt: task.updated_at,
+          completedAt: task.completed_at,
+        })),
+        steps: steps.map((step): MigrateStep => {
+          const parent = taskByLocal.get(step.task_id);
+          const taskServerId = parent?.server_id ?? null;
+          return {
+            localId: step.id,
+            ...(taskServerId ? { taskId: taskServerId } : {}),
+            taskLocalId: step.task_id,
+            name: step.name,
+            durationMin: step.duration_min,
+            orderIndex: step.order_index,
+            status: step.status,
+            updatedAt: step.updated_at,
+            completedAt: step.completed_at,
+          };
+        }),
+      }),
+    });
+
+    await saveSession(result.token, result.user);
+    await applyServerIds(db, 'tasks', result.taskMap);
+    await applyServerIds(db, 'steps', result.stepMap);
+
+    return { tasks: tasks.length, steps: steps.length };
   },
 };
