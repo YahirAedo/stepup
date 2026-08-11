@@ -1,0 +1,100 @@
+import type { Task } from '../types';
+import { getDb } from '../database/db';
+import { applyServerIds, getDirtySteps, getDirtyTasks } from '../database/sync';
+import { apiFetch, ENDPOINTS } from './api';
+import { hasSession } from './session';
+
+type PushTask = {
+  id?: string;
+  localId: number;
+  name: string;
+  dueDate: string | null;
+  status: 'active' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+};
+
+type PushStep = {
+  id?: string;
+  localId: number;
+  taskId?: string;
+  taskLocalId?: number;
+  name: string;
+  durationMin: number | null;
+  orderIndex: number;
+  status: 'pending' | 'completed';
+  updatedAt: string;
+  completedAt: string | null;
+};
+
+type PushResult = {
+  tasks: Array<{ id: string; applied: boolean; localId?: number }>;
+  steps: Array<{ id: string; applied: boolean; localId?: number }>;
+};
+
+export type PushSummary = { tasks: number; steps: number };
+
+export const SyncService = {
+  async push(): Promise<PushSummary> {
+    if (!hasSession()) {
+      return { tasks: 0, steps: 0 };
+    }
+
+    const db = await getDb();
+    const tasks = await getDirtyTasks(db);
+    const steps = await getDirtySteps(db);
+
+    if (tasks.length === 0 && steps.length === 0) {
+      return { tasks: 0, steps: 0 };
+    }
+
+    const taskByLocal = new Map<number, Task>();
+    for (const task of tasks) taskByLocal.set(task.id, task);
+
+    const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
+      method: 'POST',
+      body: JSON.stringify({
+        tasks: tasks.map((task): PushTask => ({
+          ...(task.server_id ? { id: task.server_id } : {}),
+          localId: task.id,
+          name: task.name,
+          dueDate: task.due_date,
+          status: task.status,
+          createdAt: task.created_at,
+          updatedAt: task.updated_at,
+          completedAt: task.completed_at,
+        })),
+        steps: steps.map((step): PushStep => {
+          const parent = taskByLocal.get(step.task_id);
+          const taskServerId = parent?.server_id ?? null;
+          return {
+            ...(step.server_id ? { id: step.server_id } : {}),
+            localId: step.id,
+            ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
+            name: step.name,
+            durationMin: step.duration_min,
+            orderIndex: step.order_index,
+            status: step.status,
+            updatedAt: step.updated_at,
+            completedAt: step.completed_at,
+          };
+        }),
+      }),
+    });
+
+    const taskMap: Record<string, string> = {};
+    for (const item of result.tasks) {
+      if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
+    }
+    const stepMap: Record<string, string> = {};
+    for (const item of result.steps) {
+      if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
+    }
+
+    await applyServerIds(db, 'tasks', taskMap);
+    await applyServerIds(db, 'steps', stepMap);
+
+    return { tasks: result.tasks.length, steps: result.steps.length };
+  },
+};

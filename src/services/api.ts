@@ -11,6 +11,11 @@ export const ENDPOINTS = {
     login: '/api/auth/login',
     me: '/api/auth/me',
   },
+  sync: {
+    push: '/api/sync/push',
+    pull: '/api/sync/pull',
+    migrate: '/api/sync/migrate',
+  },
   tasks: {
     list: '/api/tasks',
     completed: '/api/tasks/completed',
