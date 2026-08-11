@@ -1,9 +1,13 @@
 # B1 — Backend scaffold + Railway deploy (checklist de cierre)
 
+# B1 — Backend scaffold + Railway deploy (checklist de cierre)
+
+> **ESTADO: ✅ COMPLETO (cerrado 2026-08-11)**
+>
 > Issue: https://github.com/YahirAedo/stepup/issues/17
 > Etiquetas: `backend`, `E2 API (Express/Prisma)`, `ready-for-agent`
 > Rama base de código: `feature/backend-express-prisma-postgres` (commit `ca0912d`)
-> Última actualización: 2026-08-11 (Fases A–C completadas; deploy en Railway verificado)
+> Última actualización: 2026-08-11 (B1 terminado; deploy verificado en producción)
 > URL de producción: https://stepup-backend-api-production.up.railway.app
 
 ## Qué pide el issue (acceptance criteria)
@@ -113,17 +117,19 @@ Nota: el código de B1 ya vive en `feature/backend-express-prisma-postgres` (anc
 2. Merge en orden: express → auth-sync → offline-first → `feature/b1-finish`.
 3. Push de `develop2`.
 
-### Fase E — Cierre del issue
-1. Verificación final local + Railway (`prisma migrate status`, health).
-2. Setear `EXPO_PUBLIC_API_URL` con la URL pública en la app.
-3. Actualizar docs (Arquitectura E2, PRD, Contexto cambiable) y marcar la checklist.
-4. Cerrar issue #17 cuando esté mergeado.
+### Fase E — Cierre del issue ✅ HECHA
+1. ✅ Verificación final local + Railway (`prisma migrate status`, health).
+2. ✅ Setear `EXPO_PUBLIC_API_URL` con la URL pública en la app.
+3. ✅ Actualizar docs (Arquitectura E2, PRD, Contexto cambiable) y marcar la checklist.
+4. ✅ Cerrar issue #17 (mergeado en `develop2`; cierre documentado el 2026-08-11).
 
 ### Decisiones a tomar antes de Fase A
 - [x] `/api/health` convive con `/health`; la app migra a `/api/health` (tomado)
 - [x] Entry point: se mantiene `src/server.ts` documentado como válido (tomado)
 - [x] Para Railway: CLI (`railway up`) desde `backend/` (tomado; deploy verificado en producción)
 
-## Decisiones pendientes del equipo
+## Decisiones pendientes del equipo (no bloquean B1 — pertenecen a B3/B4)
+> B1 está cerrado: los criterios de aceptación del issue #17 se cumplen independientemente de estas decisiones.
+> Quedan anotadas para alinear el código ya mergeado con la spec si el equipo lo decide.
 - [ ] ¿`PUT` o `PATCH` para update (B3 usa PATCH hoy, spec dice PUT)?
 - [ ] ¿Rutas anidadas `/api/tasks/:taskId/steps` o planas `/api/steps?taskId=` (spec dice anidadas)?
