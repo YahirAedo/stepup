@@ -8,6 +8,8 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { storage } from './src/services/storage';
 import { startSyncLifecycle } from './src/services/syncLifecycle';
+import { loadSession, hasSession } from './src/services/session';
+import type { RootStackParamList } from './src/types/navigation';
 
 import {
   Manrope_800ExtraBold,
@@ -32,13 +34,15 @@ import SyncConflictScreen from './src/screens/SyncConflictScreen';
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 import { colors, typography } from './src/theme';
 
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const RootStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const screenOpts = {
   headerStyle: { backgroundColor: colors['inverse-surface'] },
@@ -153,7 +157,7 @@ export default function App() {
     PlusJakartaSans_700Bold,
   });
 
-  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
 
   useEffect(() => {
     const stopSync = startSyncLifecycle();
@@ -161,9 +165,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    storage.getItem(ONBOARDING_KEY).then((val) => {
-      setInitialRoute(val === 'true' ? 'MainTabs' : 'Onboarding1');
-    });
+    (async () => {
+      await loadSession();
+      const hasSeenOnboarding = await storage.getItem(ONBOARDING_KEY);
+      if (hasSeenOnboarding !== 'true') {
+        setInitialRoute('Onboarding1');
+      } else if (hasSession()) {
+        setInitialRoute('MainTabs');
+      } else {
+        setInitialRoute('Login');
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -198,6 +210,8 @@ export default function App() {
           <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
           <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
           <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
+          <RootStack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="Register" component={RegisterScreen} />
           <RootStack.Screen name="MainTabs" component={MainTabs} />
         </RootStack.Navigator>
       </NavigationContainer>

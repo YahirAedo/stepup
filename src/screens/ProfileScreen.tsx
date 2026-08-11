@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
+import { AuthService } from '../services/AuthService';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -25,6 +26,11 @@ export default function ProfileScreen({ navigation }: Props) {
   const { scale: s } = useResponsive();
   const [defaultDuration, setDefaultDuration] = useState(10);
   const [notifications, setNotifications] = useState(true);
+
+  const handleLogout = async () => {
+    await AuthService.logout();
+    navigation.getParent()?.getParent()?.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -205,6 +211,11 @@ export default function ProfileScreen({ navigation }: Props) {
               <TouchableOpacity
                 key={row.label}
                 activeOpacity={0.6}
+                onPress={() => {
+                  if (row.label === 'Cerrar sesión') {
+                    void handleLogout();
+                  }
+                }}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
