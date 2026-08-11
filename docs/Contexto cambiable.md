@@ -422,7 +422,7 @@ El plan de migración está desglosado en 12 issues en GitHub con label `ready-f
 - [ ] **Slice 6:** Perfil + Insignias (issue #9)
 - [ ] **Slice 7:** GlassTabBar + reestructuración navegación (issue #10)
 - [ ] **Slice 8:** Animaciones y polish (issue #11)
-- [ ] **Slice 9:** Auth Flow — Login + Register (issue #13)
+- [x] **Slice 9:** Auth Flow — Login + Register (issue #13) — ver `docs/B2 - Auth flow checklist.md`
 - [ ] **Slice 10:** XP/Level + Notificaciones v2 (issue #12)
 - [ ] **Slice 11:** SyncConflictScreen (issue #14)
 
@@ -435,6 +435,7 @@ El plan de migración está desglosado en 12 issues en GitHub con label `ready-f
 - [x] Endpoints de sync (push + pull)
 - [x] Hosting funcionando en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
 - [x] B1 (issue #17) cerrado — ver `docs/B1 - Railway deploy checklist.md`
+- [x] B2 (issue #18) + Slice 9 (issue #13) cerrados — ver `docs/B2 - Auth flow checklist.md`
 
 ### Integración
 - [ ] Conectar app al backend cuando hay sesión activa
