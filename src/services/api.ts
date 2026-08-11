@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-import { getToken } from './session';
+import { getToken, clearSession } from './session';
 
 const API_PORT = 3000;
 
@@ -87,6 +87,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   if (res.status === 204) {
     return undefined as T;
+  }
+
+  if (res.status === 401) {
+    void clearSession();
   }
 
   const body = await res.json().catch(() => null);

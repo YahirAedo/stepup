@@ -434,6 +434,7 @@ El plan de migración está desglosado en 12 issues en GitHub con label `ready-f
 - [x] Endpoints de pasos (CRUD)
 - [x] Endpoints de sync (push + pull)
 - [x] Hosting funcionando en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
+- [x] B1 (issue #17) cerrado — ver `docs/B1 - Railway deploy checklist.md`
 
 ### Integración
 - [ ] Conectar app al backend cuando hay sesión activa
