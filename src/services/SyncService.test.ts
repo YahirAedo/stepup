@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runMigrations, type MigrationDb } from '../database/migrations';
 import { makeSqlJsDb } from '../database/testDb';
-import { getDirtySteps, getDirtyTasks } from '../database/sync';
+import { getDirtySteps, getDirtyTasks, getLastSyncAt, setLastSyncAt, type ServerStep, type ServerTask } from '../database/sync';
 
 const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
@@ -170,5 +170,115 @@ describe('SyncService.push', () => {
       [taskId],
     );
     expect(task).toEqual({ server_id: 'uuid-task', dirty: 0 });
+  });
+});
+
+describe('SyncService.pull', () => {
+  it('no hace nada sin sesión', async () => {
+    mockedHasSession.mockReturnValue(false);
+
+    await expect(SyncService.pull()).resolves.toEqual({ tasks: 0, steps: 0 });
+    expect(mocks.apiFetch).not.toHaveBeenCalled();
+  });
+
+  it('aplica tareas y pasos del servidor y avanza last_sync_at', async () => {
+    const serverTask: ServerTask = {
+      id: 'uuid-task',
+      name: 'Remota',
+      dueDate: null,
+      status: 'active',
+      createdAt: '2026-08-01T00:00:00.000Z',
+      updatedAt: '2026-08-02T00:00:00.000Z',
+      completedAt: null,
+    };
+    const serverStep: ServerStep = {
+      id: 'uuid-step',
+      taskId: 'uuid-task',
+      name: 'Paso',
+      durationMin: 10,
+      orderIndex: 0,
+      status: 'pending',
+      createdAt: '2026-08-01T00:00:00.000Z',
+      updatedAt: '2026-08-02T00:00:00.000Z',
+      completedAt: null,
+    };
+    mocks.apiFetch.mockResolvedValueOnce({ tasks: [serverTask], steps: [serverStep] });
+
+    await expect(SyncService.pull()).resolves.toEqual({ tasks: 1, steps: 1 });
+
+    const [task] = await db.getAllAsync<{ name: string; server_id: string | null; dirty: number }>(
+      `SELECT name, server_id, dirty FROM tasks`,
+      [],
+    );
+    const [step] = await db.getAllAsync<{ task_id: number; server_id: string | null; dirty: number }>(
+      `SELECT task_id, server_id, dirty FROM steps`,
+      [],
+    );
+    expect(task).toEqual({ name: 'Remota', server_id: 'uuid-task', dirty: 0 });
+    expect(step).toEqual({ task_id: 1, server_id: 'uuid-step', dirty: 0 });
+    await expect(getLastSyncAt(db)).resolves.not.toBeNull();
+  });
+
+  it('manda ?since= cuando ya hay una sync previa', async () => {
+    await setLastSyncAt(db, '2026-08-01T00:00:00.000Z');
+    mocks.apiFetch.mockResolvedValueOnce({ tasks: [], steps: [] });
+
+    await SyncService.pull();
+
+    expect(mocks.apiFetch).toHaveBeenCalledWith(expect.stringContaining('/api/sync/pull?since='));
+  });
+
+  it('salta pasos cuya tarea no existe localmente', async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [],
+      steps: [
+        {
+          id: 'uuid-step',
+          taskId: 'uuid-desconocida',
+          name: 'Huerfano',
+          durationMin: 5,
+          orderIndex: 0,
+          status: 'pending',
+          createdAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-02T00:00:00.000Z',
+          completedAt: null,
+        },
+      ],
+    });
+
+    await expect(SyncService.pull()).resolves.toEqual({ tasks: 0, steps: 0 });
+
+    const rows = await db.getAllAsync<{ id: number }>(`SELECT id FROM steps`, []);
+    expect(rows).toEqual([]);
+  });
+
+  it('no pisa un cambio local más nuevo (LWW)', async () => {
+    const taskId = await insertTask({ server_id: 'uuid-task', dirty: 1 });
+    await db.runAsync(`UPDATE tasks SET updated_at = ? WHERE id = ?`, [
+      '2026-08-10T00:00:00.000Z',
+      taskId,
+    ]);
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [
+        {
+          id: 'uuid-task',
+          name: 'Version servidor',
+          dueDate: null,
+          status: 'active',
+          createdAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-01T00:00:00.000Z',
+          completedAt: null,
+        },
+      ],
+      steps: [],
+    });
+
+    await SyncService.pull();
+
+    const [task] = await db.getAllAsync<{ name: string; dirty: number }>(
+      `SELECT name, dirty FROM tasks WHERE id = ?`,
+      [taskId],
+    );
+    expect(task).toEqual({ name: 'Tarea', dirty: 1 });
   });
 });

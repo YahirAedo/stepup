@@ -7,8 +7,13 @@ import {
   getDirtySteps,
   getDirtyTasks,
   getLastSyncAt,
+  getTaskIdByServerId,
   markDirty,
   setLastSyncAt,
+  upsertServerStep,
+  upsertServerTask,
+  type ServerStep,
+  type ServerTask,
 } from './sync';
 
 describe('sync — capa de datos local', () => {
@@ -107,5 +112,116 @@ describe('sync — capa de datos local', () => {
       [],
     );
     expect(rows).toEqual([{ id: 1, last_sync_at: '2026-08-10T13:00:00.000Z' }]);
+  });
+});
+
+describe('sync — upserts desde el servidor (pull)', () => {
+  const serverTask: ServerTask = {
+    id: 'uuid-task',
+    name: 'Tarea del servidor',
+    dueDate: null,
+    status: 'active',
+    createdAt: '2026-08-01T00:00:00.000Z',
+    updatedAt: '2026-08-02T00:00:00.000Z',
+    completedAt: null,
+  };
+
+  const serverStep: ServerStep = {
+    id: 'uuid-step',
+    taskId: 'uuid-task',
+    name: 'Paso del servidor',
+    durationMin: 15,
+    orderIndex: 0,
+    status: 'pending',
+    createdAt: '2026-08-01T00:00:00.000Z',
+    updatedAt: '2026-08-02T00:00:00.000Z',
+    completedAt: null,
+  };
+
+  it('upsertServerTask inserta un registro nuevo con server_id y dirty=0', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+
+    await upsertServerTask(db, serverTask);
+
+    const rows = await db.getAllAsync<{ name: string; server_id: string | null; dirty: number }>(
+      `SELECT name, server_id, dirty FROM tasks`,
+      [],
+    );
+    expect(rows).toEqual([{ name: 'Tarea del servidor', server_id: 'uuid-task', dirty: 0 }]);
+  });
+
+  it('upsertServerTask actualiza si el servidor es más nuevo', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+    await upsertServerTask(db, serverTask);
+
+    await upsertServerTask(db, {
+      ...serverTask,
+      name: 'Renombrada',
+      updatedAt: '2026-08-03T00:00:00.000Z',
+    });
+
+    const [row] = await db.getAllAsync<{ name: string }>(`SELECT name FROM tasks`, []);
+    expect(row.name).toBe('Renombrada');
+  });
+
+  it('upsertServerTask no pisa un cambio local más nuevo (LWW)', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('Local nueva', NULL, 'active', ?, NULL, 'uuid-task', 1, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-05T00:00:00.000Z'],
+    );
+
+    await upsertServerTask(db, serverTask);
+
+    const [row] = await db.getAllAsync<{ name: string; dirty: number }>(
+      `SELECT name, dirty FROM tasks`,
+      [],
+    );
+    expect(row).toEqual({ name: 'Local nueva', dirty: 1 });
+  });
+
+  it('getTaskIdByServerId resuelve el id local a partir del UUID', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+    await upsertServerTask(db, serverTask);
+
+    await expect(getTaskIdByServerId(db, 'uuid-task')).resolves.toBe(1);
+    await expect(getTaskIdByServerId(db, 'no-existe')).resolves.toBeNull();
+  });
+
+  it('upsertServerStep inserta con task_id resuelto y dirty=0', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+    await upsertServerTask(db, serverTask);
+    const taskId = (await getTaskIdByServerId(db, 'uuid-task')) as number;
+
+    await upsertServerStep(db, serverStep, taskId);
+
+    const rows = await db.getAllAsync<{ task_id: number; server_id: string | null; dirty: number }>(
+      `SELECT task_id, server_id, dirty FROM steps`,
+      [],
+    );
+    expect(rows).toEqual([{ task_id: taskId, server_id: 'uuid-step', dirty: 0 }]);
+  });
+
+  it('upsertServerStep actualiza si el servidor es más nuevo', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+    await upsertServerTask(db, serverTask);
+    const taskId = (await getTaskIdByServerId(db, 'uuid-task')) as number;
+    await upsertServerStep(db, serverStep, taskId);
+
+    await upsertServerStep(
+      db,
+      { ...serverStep, name: 'Paso actualizado', updatedAt: '2026-08-04T00:00:00.000Z' },
+      taskId,
+    );
+
+    const [row] = await db.getAllAsync<{ name: string }>(`SELECT name FROM steps`, []);
+    expect(row.name).toBe('Paso actualizado');
   });
 });

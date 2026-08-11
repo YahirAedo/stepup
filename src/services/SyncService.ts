@@ -1,6 +1,18 @@
 import type { Task } from '../types';
 import { getDb } from '../database/db';
-import { applyServerIds, getDirtySteps, getDirtyTasks } from '../database/sync';
+import {
+  applyServerIds,
+  getDirtySteps,
+  getDirtyTasks,
+  getLastSyncAt,
+  getTaskIdByServerId,
+  nowIso,
+  setLastSyncAt,
+  upsertServerStep,
+  upsertServerTask,
+  type ServerStep,
+  type ServerTask,
+} from '../database/sync';
 import { apiFetch, ENDPOINTS } from './api';
 import { hasSession } from './session';
 
@@ -96,5 +108,35 @@ export const SyncService = {
     await applyServerIds(db, 'steps', stepMap);
 
     return { tasks: result.tasks.length, steps: result.steps.length };
+  },
+
+  async pull(): Promise<PushSummary> {
+    if (!hasSession()) {
+      return { tasks: 0, steps: 0 };
+    }
+
+    const db = await getDb();
+    const previousSync = await getLastSyncAt(db);
+    const marker = nowIso();
+    const query = previousSync ? `?since=${encodeURIComponent(previousSync)}` : '';
+
+    const result = await apiFetch<{ tasks: ServerTask[]; steps: ServerStep[] }>(
+      `${ENDPOINTS.sync.pull}${query}`,
+    );
+
+    for (const task of result.tasks) {
+      await upsertServerTask(db, task);
+    }
+
+    let appliedSteps = 0;
+    for (const step of result.steps) {
+      const taskId = await getTaskIdByServerId(db, step.taskId);
+      if (taskId === null) continue;
+      await upsertServerStep(db, step, taskId);
+      appliedSteps++;
+    }
+
+    await setLastSyncAt(db, marker);
+    return { tasks: result.tasks.length, steps: appliedSteps };
   },
 };
