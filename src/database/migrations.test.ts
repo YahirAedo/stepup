@@ -1,34 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import initSqlJs, { type Database } from 'sql.js';
-import { runMigrations, type MigrationDb, type SqlParam } from './migrations';
-
-const SQL_PROMISE = initSqlJs();
-
-async function makeMigrationDb(): Promise<{ db: MigrationDb; raw: Database }> {
-  const instance = await SQL_PROMISE;
-  const raw = new instance.Database();
-  const db: MigrationDb = {
-    execAsync: async (sql: string) => {
-      raw.exec(sql);
-    },
-    getAllAsync: async <T>(sql: string, params: SqlParam[] = []) => {
-      const stmt = raw.prepare(sql);
-      stmt.bind(params);
-      const rows: T[] = [];
-      while (stmt.step()) {
-        rows.push(stmt.getAsObject() as T);
-      }
-      stmt.free();
-      return rows;
-    },
-    runAsync: async (sql: string, params: SqlParam[] = []) => {
-      raw.run(sql, params);
-      const res = raw.exec('SELECT last_insert_rowid() AS id');
-      return { lastInsertRowId: (res[0]?.values[0][0] as number) ?? 0 };
-    },
-  };
-  return { db, raw };
-}
+import type { Database } from 'sql.js';
+import { runMigrations } from './migrations';
+import { makeSqlJsDb } from './testDb';
 
 type Column = { name: string; type: string; notnull: number; dflt_value: string | null };
 
@@ -45,7 +18,7 @@ async function tableColumns(raw: Database, table: string): Promise<Column[]> {
 
 describe('runMigrations — schema de SQLite local', () => {
   it('crea las tablas base con las columnas de sync (v1 + v2)', async () => {
-    const { db, raw } = await makeMigrationDb();
+    const { db, raw } = await makeSqlJsDb();
     await runMigrations(db);
 
     const taskCols = await tableColumns(raw, 'tasks');
@@ -82,7 +55,7 @@ describe('runMigrations — schema de SQLite local', () => {
   });
 
   it('deja user_version en la última migración y es idempotente', async () => {
-    const { db } = await makeMigrationDb();
+    const { db } = await makeSqlJsDb();
 
     await runMigrations(db);
     await runMigrations(db);
@@ -92,7 +65,7 @@ describe('runMigrations — schema de SQLite local', () => {
   });
 
   it('actualiza una base con el schema viejo sin perder datos', async () => {
-    const { db, raw } = await makeMigrationDb();
+    const { db, raw } = await makeSqlJsDb();
     raw.exec(`
       CREATE TABLE tasks (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,7 +107,7 @@ describe('runMigrations — schema de SQLite local', () => {
   });
 
   it('sync_meta es de una sola fila (singleton con id = 1)', async () => {
-    const { db, raw } = await makeMigrationDb();
+    const { db, raw } = await makeSqlJsDb();
     await runMigrations(db);
 
     await db.runAsync(
