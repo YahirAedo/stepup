@@ -1,13 +1,17 @@
 import React from 'react';
 import { View, StyleProp, ViewStyle, Pressable, Text as RNText, TextStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets, EdgeInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { colors, typography, borderRadius, shadows, useResponsive } from '../theme';
+import {
+  colors,
+  typography,
+  borderRadius,
+  shadows,
+  useResponsive,
+  useBottomLayout,
+} from '../theme';
 
-type GlassTabBarProps = BottomTabBarProps & {
-  insets?: EdgeInsets;
-};
+type GlassTabBarProps = BottomTabBarProps;
 
 const Tab = createBottomTabNavigator();
 
@@ -18,38 +22,35 @@ const TABS = [
   { name: 'Profile', label: 'Perfil', icon: 'account-circle-outline' },
 ] as const;
 
-export function GlassTabBar({ state, navigation, insets }: GlassTabBarProps) {
+export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
   const { scale: s } = useResponsive();
-  const safeInsets = insets ?? useSafeAreaInsets();
+  const { tabBarHeight, tabBarOffset } = useBottomLayout();
 
-  const BAR_HEIGHT = s(56);
   const iconSize = s(22);
-  const horizontalPadding = s(16);
+  const horizontalPadding = s(8);
   const labelMarginTop = s(2);
-  const containerHeight = BAR_HEIGHT + safeInsets.bottom;
 
   return (
     <View
       style={{
         position: 'absolute',
-        bottom: safeInsets.bottom + 16,
+        bottom: tabBarOffset,
         left: 16,
         right: 16,
-        height: containerHeight,
+        height: tabBarHeight,
         pointerEvents: 'box-none',
       } as StyleProp<ViewStyle>}
     >
       <View
         style={{
           flex: 1,
-          height: BAR_HEIGHT,
+          height: tabBarHeight,
           flexDirection: 'row',
           justifyContent: 'space-around',
           alignItems: 'center',
           backgroundColor: 'rgba(255,255,255,0.7)',
           borderRadius: borderRadius.full,
           ...shadows.ambient,
-          paddingBottom: safeInsets.bottom,
         }}
       >
         {state.routes.map((route: { name: string; key: string }, index: number) => {
@@ -112,7 +113,11 @@ export function GlassTabBar({ state, navigation, insets }: GlassTabBarProps) {
                     {
                       color: isFocused ? colors['on-primary-container'] : colors['on-surface-variant'],
                     } as TextStyle,
-                  ]}>
+                  ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.85}
+                  >
                     {tabInfo.label}
                   </RNText>
                 </View>
@@ -182,12 +187,10 @@ function ProfileStack() {
 }
 
 export function MainTabs() {
-  const insets = useSafeAreaInsets();
-
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
-      tabBar={(props) => <GlassTabBar {...props} insets={insets} />}
+      tabBar={(props) => <GlassTabBar {...props} />}
     >
       <Tab.Screen name="Focus" component={FocusStack} />
       <Tab.Screen name="Tasks" component={TasksStack} />

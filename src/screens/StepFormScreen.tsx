@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, StatusBar } from 'react-native';
 import { StepService } from '../services/StepService';
 import { Step } from '../types';
-import { colors, typography, spacing, borderRadius } from '../theme';
+import { colors, typography, spacing, borderRadius, useBottomLayout } from '../theme';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
 
@@ -14,6 +14,7 @@ type Props = {
 const DURATION_PILLS = [5, 10, 15, 20, 30];
 
 export default function StepFormScreen({ navigation, route }: Props) {
+  const { contentPaddingBottom } = useBottomLayout();
   const { taskId, stepId } = route.params;
   const isEditing = !!stepId;
 
@@ -70,7 +71,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
         contentContainerStyle={{
           paddingHorizontal: spacing['container-padding'],
           paddingTop: spacing['container-padding'],
-          paddingBottom: 120,
+          paddingBottom: contentPaddingBottom,
           gap: spacing['section-gap'],
         }}
       >

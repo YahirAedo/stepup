@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
+import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -21,7 +20,7 @@ const settingsRows = [
 ];
 
 export default function ProfileScreen({ navigation }: Props) {
-  const insets = useSafeAreaInsets();
+  const { insets, contentPaddingBottom } = useBottomLayout();
   const { scale: s } = useResponsive();
   const [defaultDuration, setDefaultDuration] = useState(10);
   const [notifications, setNotifications] = useState(true);
@@ -95,7 +94,7 @@ export default function ProfileScreen({ navigation }: Props) {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: spacing['container-padding'],
-          paddingBottom: insets.bottom + spacing['container-padding'],
+          paddingBottom: contentPaddingBottom,
           gap: spacing['section-gap'],
         }}
       >

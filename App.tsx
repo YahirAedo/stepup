@@ -41,9 +41,11 @@ function AppContent() {
   const tabsState = mainTabsRoute?.state;
   const activeTabRoute = tabsState?.routes[tabsState?.index ?? 0];
   const activeTabName = activeTabRoute?.name;
-  
-  // Show FAB only when 'Tasks' tab is active
-  const showFAB = activeTabName === 'Tasks';
+  // Inside the Tasks stack, the FAB only makes sense on the root screen (TaskList).
+  const tasksStackIndex = activeTabRoute?.state?.index ?? 0;
+
+  // Show FAB only on the Tasks tab root screen (TaskList)
+  const showFAB = activeTabName === 'Tasks' && tasksStackIndex === 0;
 
   return (
     <>

@@ -7,7 +7,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { TaskService } from '../services/TaskService';
 import { Task } from '../types';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
 
@@ -17,6 +17,7 @@ type Props = {
 };
 
 export default function TaskFormScreen({ navigation, route }: Props) {
+  const { contentPaddingBottom } = useBottomLayout();
   const existingTask: Task | undefined = route.params?.task;
   const isEditing = !!existingTask;
 
@@ -112,7 +113,13 @@ export default function TaskFormScreen({ navigation, route }: Props) {
       style={{ flex: 1, backgroundColor: colors.surface }}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={{ padding: spacing['container-padding'], gap: spacing['section-gap'] }}>
+      <View
+        style={{
+          padding: spacing['container-padding'],
+          paddingBottom: contentPaddingBottom,
+          gap: spacing['section-gap'],
+        }}
+      >
         {/* Task name */}
         <TextField
           label="Nombre de la tarea *"
