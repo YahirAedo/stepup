@@ -427,13 +427,13 @@ El plan de migración está desglosado en 12 issues en GitHub con label `ready-f
 - [ ] **Slice 11:** SyncConflictScreen (issue #14)
 
 ### Track B — Backend
-- [ ] Setup del proyecto Node.js + Express + TypeScript
-- [ ] Configurar Prisma + PostgreSQL en Railway
-- [ ] Endpoints de autenticación (register + login + JWT)
-- [ ] Endpoints de tareas (CRUD)
-- [ ] Endpoints de pasos (CRUD)
-- [ ] Endpoints de sync (push + pull)
-- [ ] Hosting funcionando en Railway
+- [x] Setup del proyecto Node.js + Express + TypeScript
+- [x] Configurar Prisma + PostgreSQL en Railway
+- [x] Endpoints de autenticación (register + login + JWT)
+- [x] Endpoints de tareas (CRUD)
+- [x] Endpoints de pasos (CRUD)
+- [x] Endpoints de sync (push + pull)
+- [x] Hosting funcionando en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
 
 ### Integración
 - [ ] Conectar app al backend cuando hay sesión activa

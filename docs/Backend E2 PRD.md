@@ -194,8 +194,8 @@ Módulos a testear:
 
 ## Further Notes
 
-- Backend hosteado en Railway (tier gratuito). URL base como env var en la app.
-- PostgreSQL provisionado desde Railway dashboard. Prisma Migrate corre en deploy.
+- Backend hosteado en Railway (tier gratuito). URL de producción: `https://stepup-backend-api-production.up.railway.app`. En la app se usa como `EXPO_PUBLIC_API_URL`.
+- PostgreSQL provisionado desde Railway dashboard. Prisma Migrate corre en deploy (`startCommand: npx prisma migrate deploy && node dist/server.js`).
 - Puerto via `PORT` env var (default 3000).
 - `JWT_SECRET` via env var. En desarrollo, valor fijo.
 - Pantallas de Login, Register y SyncConflict tienen prototipos en `stitch_stepup_design_system/` — implementar en la app.

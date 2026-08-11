@@ -55,8 +55,8 @@ Deploy:
 - [x] Confirmar en el dashboard que el deploy está "Deployed" y que hay una URL pública (`https://stepup-backend-api-production.up.railway.app`)
 
 Env vars en la app (para que la app apunte al backend público):
-- [ ] Setear `EXPO_PUBLIC_API_URL=https://<proyecto>.up.railway.app` en la app (override en `src/services/api.ts::resolveBaseUrl`)
-- [ ] Actualizar `docs/Arquitectura E2.md` y `docs/Backend E2 PRD.md` con la URL real de producción
+- [x] Setear `EXPO_PUBLIC_API_URL=https://stepup-backend-api-production.up.railway.app` en la app (override en `src/services/api.ts::resolveBaseUrl`). Documentado en `.env.example` (producción); en `.env` local se mantiene la IP LAN para desarrollo.
+- [x] Actualizar `docs/Arquitectura E2.md`, `docs/Backend E2 PRD.md` y `docs/Contexto cambiable.md` con la URL real de producción
 
 ### 4. Verificación final de B1 (criterios de aceptación)
 ```bash
@@ -68,7 +68,7 @@ Invoke-RestMethod http://localhost:3000/api/health   # {"status":"ok"}
 Invoke-RestMethod http://localhost:3000/health        # {"status":"ok"} (si se mantiene)
 
 # 3. Health en producción
-Invoke-RestMethod https://<proyecto>.up.railway.app/api/health   # 200 OK
+Invoke-RestMethod https://stepup-backend-api-production.up.railway.app/api/health   # 200 OK
 
 # 4. Migraciones aplicadas en Railway
 cd backend && $env:DATABASE_URL="<url-railway>"; npx prisma migrate status   # "Database schema is up to date"
@@ -108,7 +108,7 @@ Nota: el código de B1 ya vive en `feature/backend-express-prisma-postgres` (anc
 4. `npx prisma migrate deploy` contra la DB de Railway.
 5. Verificar URL pública + `GET /api/health` → 200.
 
-### Fase D — Integración (agente)
+### Fase D — Integración (agente) ✅ HECHA
 1. Crear `develop2` desde `develop`.
 2. Merge en orden: express → auth-sync → offline-first → `feature/b1-finish`.
 3. Push de `develop2`.

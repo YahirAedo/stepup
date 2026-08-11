@@ -321,8 +321,8 @@ Scripts disponibles: `dev`, `build` (tsc → dist/), `start`, `prisma:migrate`,
 - [x] Conexión de la app móvil al backend (servicios refactorizados a HTTP)
 - [x] Autenticación JWT (register + login) + modelo `User`
 - [x] Endpoints de sync (pull / push) con last-write-wins
-- [ ] Sincronización del lado app (`SyncService` + columnas `server_id`/`dirty`/`updated_at` + `sync_meta`)
-- [ ] Hosting en Railway
+- [x] Sincronización del lado app (`SyncService` + columnas `server_id`/`dirty`/`updated_at` + `sync_meta`)
+- [x] Hosting en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
 
 ---
 
