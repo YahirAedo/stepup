@@ -613,27 +613,7 @@ export default function TaskListScreen({ navigation }: Props) {
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('TaskForm', {})}
-        activeOpacity={0.85}
-        style={{
-          position: 'absolute',
-          bottom: 24,
-          right: 24,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          backgroundColor: colors['primary-container'],
-          justifyContent: 'center',
-          alignItems: 'center',
-          ...shadows.fab,
-        }}
-      >
-        <Text style={{ fontSize: 26, color: '#FFFFFF', transform: [{ translateY: -3 }] }}>+</Text>
-      </TouchableOpacity>
-    </View>
+        </ScrollView>
+      </View>
   );
 }
