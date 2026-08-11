@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app, resetDb, registerUser, authHeader } from './helpers';
+import { app, resetDb, registerUser, authHeader, createTask } from './helpers';
 
 describe('API de sincronización — push, pull y migrate', () => {
   let token: string;
@@ -215,5 +215,93 @@ describe('API de sincronización — push, pull y migrate', () => {
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe('El email ya está registrado');
+  });
+
+  it('POST /api/sync/migrate con id de tarea ya existente devuelve 409 y hace rollback', async () => {
+    const task = await createTask(token);
+
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Colisión',
+      email: 'colision@stepup.app',
+      password: 'secret123',
+      tasks: [{ id: task.id, localId: 1, name: 'Duplicada', updatedAt: new Date().toISOString() }],
+      steps: [],
+    });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe('El registro ya existe');
+
+    const retry = await request(app).post('/api/sync/migrate').send({
+      name: 'Colisión 2',
+      email: 'colision@stepup.app',
+      password: 'secret123',
+      tasks: [],
+      steps: [],
+    });
+    expect(retry.status).toBe(201);
+  });
+
+  it('push no puede completar una tarea con pasos pendientes (409) y hace rollback', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const create = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+    expect(create.status).toBe(200);
+
+    const bad = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [
+          {
+            id: taskId,
+            name: 'Tarea',
+            status: 'completed',
+            updatedAt: new Date(Date.now() + 10_000).toISOString(),
+          },
+        ],
+        steps: [{ id: stepId, taskId, name: 'Paso', orderIndex: 0, updatedAt: now }],
+      });
+
+    expect(bad.status).toBe(409);
+    expect(bad.body.message).toBe('No se puede completar una tarea con pasos pendientes');
+
+    const afterBad = await request(app).get(`/api/tasks/${taskId}`).set(authHeader(token));
+    expect(afterBad.body.status).toBe('active');
+    expect(afterBad.body.steps).toHaveLength(0);
+
+    const good = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [
+          {
+            id: taskId,
+            name: 'Tarea',
+            status: 'completed',
+            updatedAt: new Date(Date.now() + 30_000).toISOString(),
+          },
+        ],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: new Date(Date.now() + 20_000).toISOString(),
+          },
+        ],
+      });
+
+    expect(good.status).toBe(200);
+    expect(good.body.tasks[0].applied).toBe(true);
+
+    const afterGood = await request(app).get(`/api/tasks/${taskId}`).set(authHeader(token));
+    expect(afterGood.body.status).toBe('completed');
   });
 });

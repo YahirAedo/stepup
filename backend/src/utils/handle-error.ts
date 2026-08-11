@@ -23,7 +23,15 @@ export function handleError(res: Response, error: unknown) {
     return res.status(400).json({ message: error.issues[0]?.message ?? 'Datos inválidos' });
   }
 
-  const prismaError = error as { code?: string };
+  const prismaError = error as { code?: string; meta?: unknown };
+  if (prismaError.code === 'P2002') {
+    const meta = prismaError.meta as { target?: string | string[] } | undefined;
+    const target = Array.isArray(meta?.target) ? meta.target : meta?.target ? [meta.target] : [];
+    if (target.some((field) => field === 'email')) {
+      return res.status(409).json({ message: 'El email ya está registrado' });
+    }
+    return res.status(409).json({ message: 'El registro ya existe' });
+  }
   if (prismaError.code === 'P2025') {
     return res.status(404).json({ message: 'Registro no encontrado' });
   }

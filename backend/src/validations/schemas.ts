@@ -19,17 +19,31 @@ export const updateTaskSchema = z.object({
 export const createStepSchema = z.object({
   taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
   name: requiredName,
-  durationMin: z.number({ error: 'durationMin debe ser un número' }).int().positive().nullable().optional(),
+  durationMin: z
+    .number({ error: 'durationMin debe ser un número' })
+    .int('durationMin debe ser un número entero')
+    .positive('durationMin debe ser mayor a 0')
+    .nullable()
+    .optional(),
 });
 
 export const updateStepSchema = z.object({
   name: requiredName.optional(),
-  durationMin: z.number({ error: 'durationMin debe ser un número' }).int().positive().nullable().optional(),
+  durationMin: z
+    .number({ error: 'durationMin debe ser un número' })
+    .int('durationMin debe ser un número entero')
+    .positive('durationMin debe ser mayor a 0')
+    .nullable()
+    .optional(),
 });
 
 export const reorderStepsSchema = z.object({
   taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
-  orderedIds: z.array(z.string().uuid('orderedIds debe contener UUIDs válidos')).min(1, 'orderedIds no puede estar vacío'),
+  orderedIds: z
+    .array(z.string().uuid('orderedIds debe contener UUIDs válidos'), {
+      error: 'orderedIds debe ser un array',
+    })
+    .min(1, 'orderedIds no puede estar vacío'),
 });
 
 export const registerSchema = z.object({
@@ -45,7 +59,11 @@ export const loginSchema = z.object({
 
 const syncTaskBase = {
   id: z.string().uuid().optional(),
-  localId: z.number().int().positive().optional(),
+  localId: z
+    .number({ error: 'localId debe ser un número' })
+    .int('localId debe ser un número entero')
+    .positive('localId debe ser mayor a 0')
+    .optional(),
   name: requiredName,
   dueDate: parseableDate,
   status: z.enum(['active', 'completed']).optional(),
@@ -56,12 +74,28 @@ const syncTaskBase = {
 
 const syncStepBase = {
   id: z.string().uuid().optional(),
-  localId: z.number().int().positive().optional(),
+  localId: z
+    .number({ error: 'localId debe ser un número' })
+    .int('localId debe ser un número entero')
+    .positive('localId debe ser mayor a 0')
+    .optional(),
   taskId: z.string().uuid().optional(),
-  taskLocalId: z.number().int().positive().optional(),
+  taskLocalId: z
+    .number({ error: 'taskLocalId debe ser un número' })
+    .int('taskLocalId debe ser un número entero')
+    .positive('taskLocalId debe ser mayor a 0')
+    .optional(),
   name: requiredName,
-  durationMin: z.number().int().positive().nullable().optional(),
-  orderIndex: z.number().int().min(0),
+  durationMin: z
+    .number({ error: 'durationMin debe ser un número' })
+    .int('durationMin debe ser un número entero')
+    .positive('durationMin debe ser mayor a 0')
+    .nullable()
+    .optional(),
+  orderIndex: z
+    .number({ error: 'orderIndex debe ser un número' })
+    .int('orderIndex debe ser un número entero')
+    .min(0, 'orderIndex debe ser mayor o igual a 0'),
   status: z.enum(['pending', 'completed']).optional(),
   createdAt: isoDateTime.optional(),
   updatedAt: isoDateTime,
@@ -69,8 +103,8 @@ const syncStepBase = {
 };
 
 export const syncPushSchema = z.object({
-  tasks: z.array(z.object(syncTaskBase)).default([]),
-  steps: z.array(z.object(syncStepBase)).default([]),
+  tasks: z.array(z.object(syncTaskBase), { error: 'tasks debe ser un array' }).default([]),
+  steps: z.array(z.object(syncStepBase), { error: 'steps debe ser un array' }).default([]),
 });
 
 export const syncMigrateSchema = z.object({
@@ -81,17 +115,28 @@ export const syncMigrateSchema = z.object({
     .array(
       z.object({
         ...syncTaskBase,
-        localId: z.number().int().positive(),
+        localId: z
+          .number({ error: 'localId debe ser un número' })
+          .int('localId debe ser un número entero')
+          .positive('localId debe ser mayor a 0'),
       }),
+      { error: 'tasks debe ser un array' },
     )
     .default([]),
   steps: z
     .array(
       z.object({
         ...syncStepBase,
-        localId: z.number().int().positive(),
-        taskLocalId: z.number().int().positive(),
+        localId: z
+          .number({ error: 'localId debe ser un número' })
+          .int('localId debe ser un número entero')
+          .positive('localId debe ser mayor a 0'),
+        taskLocalId: z
+          .number({ error: 'taskLocalId debe ser un número' })
+          .int('taskLocalId debe ser un número entero')
+          .positive('taskLocalId debe ser mayor a 0'),
       }),
+      { error: 'steps debe ser un array' },
     )
     .default([]),
 });
