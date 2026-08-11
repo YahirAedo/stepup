@@ -1,12 +1,14 @@
 import { prisma } from '../config/prisma';
 
 export class StepRepository {
-  async findById(id: number) {
-    return prisma.step.findUnique({ where: { id } });
+  async findById(userId: string, id: string) {
+    return prisma.step.findFirst({
+      where: { id, task: { userId } },
+    });
   }
 
   async create(data: {
-    taskId: number;
+    taskId: string;
     name: string;
     durationMin?: number | null;
     orderIndex: number;
@@ -21,62 +23,62 @@ export class StepRepository {
     });
   }
 
-  async findByTask(taskId: number) {
+  async findByTask(userId: string, taskId: string) {
     return prisma.step.findMany({
-      where: { taskId },
+      where: { taskId, task: { userId } },
       orderBy: { orderIndex: 'asc' },
     });
   }
 
-  async getMaxOrderIndex(taskId: number) {
+  async getMaxOrderIndex(userId: string, taskId: string) {
     const agg = await prisma.step.aggregate({
-      where: { taskId },
+      where: { taskId, task: { userId } },
       _max: { orderIndex: true },
     });
     return agg._max.orderIndex ?? -1;
   }
 
-  async update(id: number, data: { name?: string; durationMin?: number | null }) {
+  async update(userId: string, id: string, data: { name?: string; durationMin?: number | null }) {
     return prisma.step.update({
-      where: { id },
+      where: { id, task: { userId } },
       data: { name: data.name, durationMin: data.durationMin },
     });
   }
 
-  async delete(id: number) {
-    return prisma.step.delete({ where: { id } });
+  async delete(userId: string, id: string) {
+    return prisma.step.delete({ where: { id, task: { userId } } });
   }
 
-  async reorder(taskId: number, orderedIds: number[]) {
+  async reorder(userId: string, taskId: string, orderedIds: string[]) {
     await prisma.$transaction(
       orderedIds.map((id, index) =>
         prisma.step.updateMany({
-          where: { id, taskId },
+          where: { id, taskId, task: { userId } },
           data: { orderIndex: index },
         }),
       ),
     );
   }
 
-  async completeStep(id: number) {
+  async completeStep(userId: string, id: string) {
     return prisma.step.update({
-      where: { id },
+      where: { id, task: { userId } },
       data: { status: 'completed', completedAt: new Date() },
     });
   }
 
-  async findNextPending(taskId: number) {
+  async findNextPending(userId: string, taskId: string) {
     return prisma.step.findFirst({
-      where: { taskId, status: 'pending' },
+      where: { taskId, status: 'pending', task: { userId } },
       orderBy: { orderIndex: 'asc' },
     });
   }
 
-  async upsertDailyProgress(dateStr: string) {
+  async upsertDailyProgress(userId: string, dateStr: string) {
     return prisma.dailyProgress.upsert({
-      where: { date: dateStr },
+      where: { userId_date: { userId, date: dateStr } },
       update: { stepsCompleted: { increment: 1 } },
-      create: { date: dateStr, stepsCompleted: 1 },
+      create: { userId, date: dateStr, stepsCompleted: 1 },
     });
   }
 }

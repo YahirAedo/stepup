@@ -6,9 +6,13 @@ export class StepService {
   private stepRepo = new StepRepository();
   private taskRepo = new TaskRepository();
 
-  async addStep(input: unknown) {
+  async addStep(userId: string, input: unknown) {
     const data = createStepSchema.parse(input);
-    const maxOrderIndex = await this.stepRepo.getMaxOrderIndex(data.taskId);
+    const task = await this.taskRepo.findById(userId, data.taskId);
+    if (!task) {
+      throw new Error('TASK_NOT_FOUND');
+    }
+    const maxOrderIndex = await this.stepRepo.getMaxOrderIndex(userId, data.taskId);
     return this.stepRepo.create({
       taskId: data.taskId,
       name: data.name,
@@ -17,38 +21,39 @@ export class StepService {
     });
   }
 
-  async getStepsByTask(taskId: number) {
-    return this.stepRepo.findByTask(taskId);
+  async getStepsByTask(userId: string, taskId: string) {
+    return this.stepRepo.findByTask(userId, taskId);
   }
 
-  async updateStep(id: number, input: unknown) {
+  async updateStep(userId: string, id: string, input: unknown) {
     const data = updateStepSchema.parse(input);
-    return this.stepRepo.update(id, {
+    return this.stepRepo.update(userId, id, {
       name: data.name,
       durationMin: data.durationMin,
     });
   }
 
-  async deleteStep(id: number) {
-    const step = await this.stepRepo.findById(id);
+  async deleteStep(userId: string, id: string) {
+    const step = await this.stepRepo.findById(userId, id);
     if (!step) {
       throw new Error('STEP_NOT_FOUND');
     }
-    await this.stepRepo.delete(id);
-    const remaining = await this.stepRepo.findByTask(step.taskId);
+    await this.stepRepo.delete(userId, id);
+    const remaining = await this.stepRepo.findByTask(userId, step.taskId);
     await this.stepRepo.reorder(
+      userId,
       step.taskId,
       remaining.map((s) => s.id),
     );
   }
 
-  async reorder(input: unknown) {
+  async reorder(userId: string, input: unknown) {
     const data = reorderStepsSchema.parse(input);
-    await this.stepRepo.reorder(data.taskId, data.orderedIds);
+    await this.stepRepo.reorder(userId, data.taskId, data.orderedIds);
   }
 
-  async completeStep(stepId: number) {
-    const step = await this.stepRepo.findById(stepId);
+  async completeStep(userId: string, stepId: string) {
+    const step = await this.stepRepo.findById(userId, stepId);
     if (!step) {
       throw new Error('STEP_NOT_FOUND');
     }
@@ -58,21 +63,21 @@ export class StepService {
     }
 
     // 1. Marcar el paso como completado
-    await this.stepRepo.completeStep(stepId);
+    await this.stepRepo.completeStep(userId, stepId);
 
-    // 2. Incrementar métrica diaria (idempotente por fecha)
+    // 2. Incrementar métrica diaria (idempotente por fecha y usuario)
     const todayStr = new Date().toISOString().split('T')[0];
-    await this.stepRepo.upsertDailyProgress(todayStr);
+    await this.stepRepo.upsertDailyProgress(userId, todayStr);
 
     // 3. Buscar el próximo paso pendiente para esa tarea
-    const nextStep = await this.stepRepo.findNextPending(step.taskId);
+    const nextStep = await this.stepRepo.findNextPending(userId, step.taskId);
     let taskCompleted = false;
 
     // 4. Si no quedan pasos pendientes, cerrar la tarea automáticamente
     if (!nextStep) {
-      const pendingCount = await this.taskRepo.findPendingStepsCount(step.taskId);
+      const pendingCount = await this.taskRepo.findPendingStepsCount(userId, step.taskId);
       if (pendingCount === 0) {
-        await this.taskRepo.completeTask(step.taskId);
+        await this.taskRepo.completeTask(userId, step.taskId);
         taskCompleted = true;
       }
     }

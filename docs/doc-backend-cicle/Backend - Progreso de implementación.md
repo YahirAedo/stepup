@@ -1,7 +1,8 @@
 # Backend StepUp — Progreso de implementación
 
 > Documento vivo que registra lo que se construyó en `backend/` hasta ahora (Agosto 2026).
-> Rama de trabajo: `feature/backend-express-prisma-postgres`.
+> Rama de trabajo: `feature/backend-express-prisma-postgres` → Fase E3 en
+> `feature/backend-auth-sync`.
 
 ---
 
@@ -25,6 +26,8 @@ regla de oro del negocio en el servidor.
 | 7 | CRUD completo + validación zod + `GET /api/progress` | ✅ |
 | 8 | App móvil conectada a la API (servicios HTTP) | ✅ |
 | 9 | Pruebas de integración automatizadas (Jest + Supertest) | ✅ |
+| 10 | Auth JWT (register / login / me) + CRUD scopeado por usuario | ✅ |
+| 11 | Endpoints de sync (push / pull / migrate) con last-write-wins | ✅ |
 
 ---
 
@@ -33,16 +36,20 @@ regla de oro del negocio en el servidor.
 ```
 backend/
 ├── docker-compose.yml          # PostgreSQL 16 (contenedor stepup-postgres)
-├── .env                        # PORT y DATABASE_URL (no se commitea)
+├── .env                        # PORT, DATABASE_URL y JWT_SECRET (no se commitea)
+├── .env.example                # plantilla con las variables del backend
 ├── .gitignore
 ├── package.json                # scripts dev/build/start/prisma
 ├── tsconfig.json
 ├── prisma/
-│   ├── schema.prisma           # modelo relacional (espejo del SQLite)
-│   └── migrations/             # migración init aplicada
+│   ├── schema.prisma           # modelo relacional (User, Task, Step, DailyProgress)
+│   └── migrations/             # init + auth_and_sync (UUIDs, userId, updatedAt)
 └── src/
     ├── config/
-    │   └── prisma.ts           # singleton PrismaClient
+    │   ├── prisma.ts           # singleton PrismaClient
+    │   └── env.ts              # JWT_SECRET (env con fallback dev)
+    ├── middleware/
+    │   └── auth.ts             # requireAuth: valida Bearer JWT → req.userId
     ├── repositories/
     │   ├── task.repository.ts
     │   ├── step.repository.ts
@@ -50,29 +57,40 @@ backend/
     ├── services/
     │   ├── task.service.ts
     │   ├── step.service.ts
-    │   └── progress.service.ts
+    │   ├── progress.service.ts
+    │   ├── auth.service.ts     # register/login (bcrypt + JWT)
+    │   └── sync.service.ts     # push (upsert LWW), pull, migrate
     ├── controllers/
     │   ├── task.controller.ts
     │   ├── step.controller.ts
-    │   └── progress.controller.ts
+    │   ├── progress.controller.ts
+    │   ├── auth.controller.ts
+    │   └── sync.controller.ts
     ├── routes/
     │   ├── task.routes.ts
     │   ├── step.routes.ts
-    │   └── progress.routes.ts
+    │   ├── progress.routes.ts
+    │   ├── auth.routes.ts      # register, login, me
+    │   └── sync.routes.ts      # push, pull, migrate
     ├── validations/
-    │   └── schemas.ts            # schemas zod para crear/actualizar
+    │   └── schemas.ts            # schemas zod (CRUD + auth + sync)
+    ├── types/
+    │   └── express.d.ts          # Request.userId tipado
     ├── utils/
-    │   └── handle-error.ts       # mapeo de errores (zod, Prisma P2025, reglas)
-    ├── app.ts                  # createApp(): monta routers
+    │   ├── handle-error.ts       # mapeo de errores (zod, Prisma P2025, reglas)
+    │   └── jwt.ts                # signToken / verifyToken
+    ├── app.ts                  # createApp(): monta routers (auth global en CRUD)
     ├── server.ts               # entry point, arranca el listener
     ├── jest.config.js          # Jest (ts-jest, un solo worker, DB de test)
-    ├── jest.env.setup.js       # setea DATABASE_URL → stepup_test
+    ├── jest.env.setup.js       # setea DATABASE_URL → stepup_test + JWT_SECRET test
     ├── jest.globalSetup.js     # npx prisma db push --force-reset (test DB)
     └── src/tests/
-        ├── helpers.ts          # app, resetDb, createTask, addStep
+        ├── helpers.ts          # app, resetDb, registerUser, authHeader, createTask, addStep
         ├── tasks.test.ts       # invariante 409/200 + validación + CRUD
         ├── steps.test.ts       # nextStep, auto-finalización, reorder, reindex
-        └── progress.test.ts    # métricas diarias
+        ├── progress.test.ts    # métricas diarias
+        ├── auth.test.ts        # register, login, me, 401 del middleware
+        └── sync.test.ts        # push (LWW), pull, migrate, aislamiento
 ```
 
 ---
@@ -141,7 +159,10 @@ routes → controller → service (reglas de negocio) → repository → Prisma 
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Health check del servidor |
-| GET | `/api/tasks` | Tareas activas con sus pasos ordenados |
+| POST | `/api/auth/register` | Crear cuenta `{ name, email, password }` → 201 `{ user, token }` |
+| POST | `/api/auth/login` | Iniciar sesión → 200 `{ user, token }` |
+| GET | `/api/auth/me` | Usuario autenticado (Bearer) → 200 `{ user }` |
+| GET | `/api/tasks` | Tareas activas con sus pasos ordenados (scope por usuario) |
 | GET | `/api/tasks/completed` | Tareas completadas (ordenadas por `completedAt`) |
 | GET | `/api/tasks/:id` | Detalle de una tarea con sus pasos |
 | POST | `/api/tasks` | Crear tarea `{ name, dueDate? }` → 201 |
@@ -154,7 +175,13 @@ routes → controller → service (reglas de negocio) → repository → Prisma 
 | PUT | `/api/steps/reorder` | Reordenar pasos `{ taskId, orderedIds }` |
 | DELETE | `/api/steps/:id` | Eliminar paso (reindexa los restantes) → 204 |
 | PATCH | `/api/steps/:id/complete` | Completar paso + métrica diaria + cierre automático |
-| GET | `/api/progress` | Historial de `daily_progress` (ordenado por fecha) |
+| GET | `/api/progress` | Historial de `daily_progress` del usuario (ordenado por fecha) |
+| POST | `/api/sync/push` | Upsert atómico `{ tasks[], steps[] }` con last-write-wins → 200 `{ tasks[], steps[] }` |
+| GET | `/api/sync/pull?since={ISO}` | Tareas y pasos del usuario modificados después de `since` → 200 `{ tasks[], steps[] }` |
+| POST | `/api/sync/migrate` | Crear cuenta + importar datos locales → 201 `{ user, token, taskMap, stepMap }` |
+
+**Auth:** todas las rutas de datos exigen `Authorization: Bearer <jwt>` (middleware `requireAuth`), excepto
+`/api/auth/register`, `/api/auth/login` y `/api/sync/migrate`. Token JWT de 30 días, contraseñas con bcrypt (cost 10).
 
 Los bodies de entrada se validan con **zod** (errores → HTTP 400 con mensaje en español).
 
@@ -227,7 +254,7 @@ el servidor corriendo en `localhost:3000`.
 
 Lo que antes se validaba a mano con curl ahora está codificado en la suite:
 
-- **3 suites / 20 casos**, contra una base dedicada `stepup_test` (PostgreSQL en
+- **5 suites / 39 casos**, contra una base dedicada `stepup_test` (PostgreSQL en
   el mismo contenedor Docker). El backend real (`createApp`) se ejercita en
   proceso vía Supertest, sin levantar listener ni tocar la DB de desarrollo.
 - **`jest.globalSetup.js`** hace `prisma db push --force-reset --skip-generate`
@@ -243,6 +270,8 @@ Lo que queda cubierto y por qué importa:
 | `tasks.test.ts` | **409** con pasos pendientes vs **200** sin pasos, validación zod (400), cascade en DELETE, listado activas/completadas |
 | `steps.test.ts` | `nextStep` devuelto en orden, auto-finalización al cerrar el último paso, reintento → **400**, `orderIndex` auto y reindexado tras delete |
 | `progress.test.ts` | Métrica diaria incrementa por paso completado; tareas sin pasos no inflan el contador |
+| `auth.test.ts` | Registro → 201, email repetido → **409**, login OK → 200, credenciales inválidas → **401**, `/me` y rutas de datos sin token → **401** |
+| `sync.test.ts` | push crea tareas y devuelve server ids, LWW (versión vieja ignorada), pasos por `taskLocalId`, registro ajeno → **409**, pull por `since`, aislamiento entre usuarios, migrate importa + `taskMap`, email repetido → **409** |
 
 Correr la suite (requiere el contenedor Docker levantado):
 
@@ -290,8 +319,9 @@ Scripts disponibles: `dev`, `build` (tsc → dist/), `start`, `prisma:migrate`,
 - [x] CRUD completo de tareas y pasos (create / update / delete)
 - [x] Validación de entrada con zod
 - [x] Conexión de la app móvil al backend (servicios refactorizados a HTTP)
-- [ ] Autenticación JWT (register + login) + modelo `User`
-- [ ] Endpoints de sync (pull / push) con last-write-wins
+- [x] Autenticación JWT (register + login) + modelo `User`
+- [x] Endpoints de sync (pull / push) con last-write-wins
+- [ ] Sincronización del lado app (`SyncService` + columnas `server_id`/`dirty`/`updated_at` + `sync_meta`)
 - [ ] Hosting en Railway
 
 ---
@@ -328,3 +358,47 @@ sincronización; `src/database/` se conserva para reutilizarlo en la fase de syn
   los tres servicios (`TaskService`, `StepService`, `ProgressService`) los usan —
   no hay rutas hardcodeadas sueltas en los servicios.
 - Cambiar `.env` requiere reiniciar el dev server de Expo (`npx expo start`).
+
+---
+
+## 9. Fase E3 — Autenticación y sincronización (Rama `feature/backend-auth-sync`)
+
+### 9.1 Auth JWT + scopeo por usuario
+
+- Modelo `User` (`id` UUID, `name`, `email` único, `password` hash bcrypt).
+- `Task.userId` → relación 1:N; **todo el CRUD queda scopeado por usuario**
+  (repositorios filtran por `userId`, incluido el progreso diario con
+  `@@unique([userId, date])`).
+- `POST /api/auth/register` y `POST /api/auth/login` devuelven `{ user, token }`;
+  `GET /api/auth/me` requiere Bearer.
+- Middleware `requireAuth` (JWT 30d, `JWT_SECRET` vía env, fallback dev).
+- **Ruptura de contrato para la app E2:** las rutas de datos ahora exigen
+  `Authorization: Bearer <token>`. La app sin cuenta devuelve 401 hasta que se
+  implemente la fase frontend (AuthService + ApiClient).
+
+### 9.2 Sync offline-first (push / pull / migrate)
+
+- **IDs UUID** en `Task`/`Step` (evita colisión con el autoincrement de SQLite).
+  El UUID que genera la app localmente es el mismo `id` que persiste el servidor
+  → el push es **idempotente** (re-envío no duplica).
+- **`updatedAt`** (`@updatedAt`) como base del **last-write-wins**: en el push,
+  solo se aplica el registro si su `updatedAt` es estrictamente más nuevo; si no,
+  responde `applied: false`.
+- `POST /api/sync/push`: upserts atómicos en `$transaction`. Los pasos referencian
+  su tarea por `taskId` (UUID) o por `taskLocalId` cuando la tarea es nueva dentro
+  del mismo batch. Rechaza **409** si el id pertenece a otro usuario.
+- `GET /api/sync/pull?since={ISO}`: tareas y pasos del usuario con
+  `updatedAt > since` (orden ascendente). `since` inválido → 400.
+- `POST /api/sync/migrate`: crea la cuenta e importa los datos locales en una sola
+  transacción; devuelve `{ user, token, taskMap, stepMap }` donde
+  `taskMap = { localId: serverId }` permite a la app reescribir sus IDs locales.
+- Schema: `prisma/migrations/20260810183756_auth_and_sync/` (cambio destructivo de
+  PK `Int → UUID`; en dev se aplicó `prisma migrate reset` antes).
+
+### 9.3 Cómo correr la suite
+
+```bash
+cd backend
+docker compose up -d        # PostgreSQL
+npm test                    # 5 suites / 39 casos (reset automático de stepup_test)
+```

@@ -2,25 +2,25 @@ import { Request, Response } from 'express';
 import { TaskService } from '../services/task.service';
 import { handleError } from '../utils/handle-error';
 
-function parseId(value: string | string[]): number {
-  return Number(Array.isArray(value) ? value[0] : value);
+function parseId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 export class TaskController {
   private taskService = new TaskService();
 
-  list = async (_req: Request, res: Response) => {
+  list = async (req: Request, res: Response) => {
     try {
-      const tasks = await this.taskService.getAllActive();
+      const tasks = await this.taskService.getAllActive(req.userId!);
       return res.status(200).json(tasks);
     } catch (error) {
       return handleError(res, error);
     }
   };
 
-  completed = async (_req: Request, res: Response) => {
+  completed = async (req: Request, res: Response) => {
     try {
-      const tasks = await this.taskService.getCompletedTasks();
+      const tasks = await this.taskService.getCompletedTasks(req.userId!);
       return res.status(200).json(tasks);
     } catch (error) {
       return handleError(res, error);
@@ -29,7 +29,7 @@ export class TaskController {
 
   getById = async (req: Request, res: Response) => {
     try {
-      const task = await this.taskService.getTaskById(parseId(req.params.id));
+      const task = await this.taskService.getTaskById(req.userId!, parseId(req.params.id));
       if (!task) {
         return res.status(404).json({ message: 'La tarea especificada no existe' });
       }
@@ -41,7 +41,7 @@ export class TaskController {
 
   create = async (req: Request, res: Response) => {
     try {
-      const task = await this.taskService.createTask(req.body);
+      const task = await this.taskService.createTask(req.userId!, req.body);
       return res.status(201).json(task);
     } catch (error) {
       return handleError(res, error);
@@ -50,7 +50,7 @@ export class TaskController {
 
   update = async (req: Request, res: Response) => {
     try {
-      const task = await this.taskService.updateTask(parseId(req.params.id), req.body);
+      const task = await this.taskService.updateTask(req.userId!, parseId(req.params.id), req.body);
       return res.status(200).json(task);
     } catch (error) {
       return handleError(res, error);
@@ -59,7 +59,7 @@ export class TaskController {
 
   remove = async (req: Request, res: Response) => {
     try {
-      await this.taskService.deleteTask(parseId(req.params.id));
+      await this.taskService.deleteTask(req.userId!, parseId(req.params.id));
       return res.status(204).send();
     } catch (error) {
       return handleError(res, error);
@@ -68,8 +68,7 @@ export class TaskController {
 
   complete = async (req: Request, res: Response) => {
     try {
-      const taskId = parseId(req.params.id);
-      const result = await this.taskService.completeTask(taskId);
+      const result = await this.taskService.completeTask(req.userId!, parseId(req.params.id));
       return res.status(200).json(result);
     } catch (error) {
       return handleError(res, error);

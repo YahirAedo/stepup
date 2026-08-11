@@ -9,6 +9,13 @@ const KNOWN_MESSAGES: Record<string, { status: number; message: string }> = {
   TASK_NOT_FOUND: { status: 404, message: 'La tarea especificada no existe' },
   STEP_NOT_FOUND: { status: 404, message: 'El paso especificado no existe' },
   STEP_ALREADY_COMPLETED: { status: 400, message: 'El paso ya se encuentra completado' },
+  EMAIL_ALREADY_REGISTERED: { status: 409, message: 'El email ya está registrado' },
+  INVALID_CREDENTIALS: { status: 401, message: 'Credenciales inválidas' },
+  RECORD_BELONGS_TO_OTHER_USER: {
+    status: 409,
+    message: 'El registro pertenece a otro usuario',
+  },
+  INVALID_SINCE: { status: 400, message: 'El parámetro since no es una fecha válida' },
 };
 
 export function handleError(res: Response, error: unknown) {

@@ -2,16 +2,20 @@ import { Request, Response } from 'express';
 import { StepService } from '../services/step.service';
 import { handleError } from '../utils/handle-error';
 
+function parseId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export class StepController {
   private stepService = new StepService();
 
   list = async (req: Request, res: Response) => {
     try {
-      const taskId = Number(req.query.taskId);
-      if (!taskId || Number.isNaN(taskId)) {
+      const taskId = req.query.taskId;
+      if (!taskId || typeof taskId !== 'string') {
         return res.status(400).json({ message: 'taskId es requerido' });
       }
-      const steps = await this.stepService.getStepsByTask(taskId);
+      const steps = await this.stepService.getStepsByTask(req.userId!, taskId);
       return res.status(200).json(steps);
     } catch (error) {
       return handleError(res, error);
@@ -20,7 +24,7 @@ export class StepController {
 
   create = async (req: Request, res: Response) => {
     try {
-      const step = await this.stepService.addStep(req.body);
+      const step = await this.stepService.addStep(req.userId!, req.body);
       return res.status(201).json(step);
     } catch (error) {
       return handleError(res, error);
@@ -29,7 +33,7 @@ export class StepController {
 
   update = async (req: Request, res: Response) => {
     try {
-      const step = await this.stepService.updateStep(Number(req.params.id), req.body);
+      const step = await this.stepService.updateStep(req.userId!, parseId(req.params.id), req.body);
       return res.status(200).json(step);
     } catch (error) {
       return handleError(res, error);
@@ -38,7 +42,7 @@ export class StepController {
 
   remove = async (req: Request, res: Response) => {
     try {
-      await this.stepService.deleteStep(Number(req.params.id));
+      await this.stepService.deleteStep(req.userId!, parseId(req.params.id));
       return res.status(204).send();
     } catch (error) {
       return handleError(res, error);
@@ -47,7 +51,7 @@ export class StepController {
 
   reorder = async (req: Request, res: Response) => {
     try {
-      await this.stepService.reorder(req.body);
+      await this.stepService.reorder(req.userId!, req.body);
       return res.status(200).json({ ok: true });
     } catch (error) {
       return handleError(res, error);
@@ -56,8 +60,7 @@ export class StepController {
 
   complete = async (req: Request, res: Response) => {
     try {
-      const stepId = Number(req.params.id);
-      const result = await this.stepService.completeStep(stepId);
+      const result = await this.stepService.completeStep(req.userId!, parseId(req.params.id));
       return res.status(200).json(result);
     } catch (error) {
       return handleError(res, error);
