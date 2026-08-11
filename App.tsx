@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { storage } from './src/services/storage';
+import { startSyncLifecycle } from './src/services/syncLifecycle';
 
 import {
   Manrope_800ExtraBold,
@@ -151,6 +152,11 @@ export default function App() {
   });
 
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stopSync = startSyncLifecycle();
+    return stopSync;
+  }, []);
 
   useEffect(() => {
     storage.getItem(ONBOARDING_KEY).then((val) => {

@@ -79,6 +79,15 @@ type MigrateResponse = {
   stepMap: Record<string, string>;
 };
 
+export async function syncNow(): Promise<void> {
+  if (!hasSession()) return;
+  try {
+    await SyncService.push();
+  } catch {
+    // offline: los cambios quedan dirty para el próximo ciclo de vida
+  }
+}
+
 export const SyncService = {
   async push(): Promise<PushSummary> {
     if (!hasSession()) {

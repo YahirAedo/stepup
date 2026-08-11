@@ -1,10 +1,4 @@
-import { apiFetch, ENDPOINTS } from './api';
-
-type ApiProgress = {
-  id: number;
-  date: string;
-  stepsCompleted: number;
-};
+import { getDb } from '../database/db';
 
 function today(): string {
   return new Date().toISOString().split('T')[0];
@@ -18,18 +12,25 @@ function getDate(daysAgo: number): string {
 
 export const ProgressService = {
   async increment(): Promise<void> {
-    // El backend incrementa la métrica al completar un paso (PATCH /api/steps/:id/complete).
+    // El progreso se incrementa en StepService.complete (upsert de daily_progress).
   },
 
   async getToday(): Promise<number> {
-    const rows = await apiFetch<ApiProgress[]>(ENDPOINTS.progress.list);
-    const row = rows.find((r) => r.date === today());
-    return row?.stepsCompleted ?? 0;
+    const db = await getDb();
+    const rows = await db.getAllAsync<{ steps_completed: number }>(
+      `SELECT steps_completed FROM daily_progress WHERE date = ?`,
+      [today()],
+    );
+    return rows[0]?.steps_completed ?? 0;
   },
 
   async getWeek(): Promise<{ date: string; count: number }[]> {
-    const rows = await apiFetch<ApiProgress[]>(ENDPOINTS.progress.list);
-    const map = new Map(rows.map((r) => [r.date, r.stepsCompleted]));
+    const db = await getDb();
+    const rows = await db.getAllAsync<{ date: string; steps_completed: number }>(
+      `SELECT date, steps_completed FROM daily_progress WHERE date >= ? ORDER BY date ASC`,
+      [getDate(6)],
+    );
+    const map = new Map(rows.map((r) => [r.date, r.steps_completed]));
     const days = Array.from({ length: 7 }, (_, i) => getDate(6 - i));
     return days.map((date) => ({ date, count: map.get(date) ?? 0 }));
   },

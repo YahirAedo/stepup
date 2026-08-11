@@ -1,48 +1,60 @@
 import { Step, CreateStepInput, UpdateStepInput } from '../types';
-import { apiFetch, ENDPOINTS } from './api';
+import { getDb } from '../database/db';
+import { nowIso } from '../database/sync';
+import type { SqlParam } from '../database/migrations';
+import { ApiError, apiFetch } from './api';
+import { hasSession } from './session';
+import { syncNow } from './SyncService';
 
-type ApiStep = {
-  id: number;
-  taskId: number;
-  name: string;
-  durationMin: number | null;
-  orderIndex: number;
-  status: 'pending' | 'completed';
-  completedAt: string | null;
-  updatedAt: string;
-};
-
-function toStep(step: ApiStep): Step {
+function toStep(row: Record<string, unknown>): Step {
   return {
-    id: step.id,
-    task_id: step.taskId,
-    name: step.name,
-    duration_min: step.durationMin,
-    order_index: step.orderIndex,
-    status: step.status,
-    completed_at: step.completedAt,
-    server_id: null,
-    dirty: 0,
-    updated_at: step.updatedAt,
+    id: row.id as number,
+    task_id: row.task_id as number,
+    name: row.name as string,
+    duration_min: (row.duration_min as number | null) ?? null,
+    order_index: row.order_index as number,
+    status: row.status as Step['status'],
+    completed_at: (row.completed_at as string | null) ?? null,
+    server_id: (row.server_id as string | null) ?? null,
+    dirty: (row.dirty as number) ?? 0,
+    updated_at: row.updated_at as string,
   };
+}
+
+function todayStr(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
 export const StepService = {
   async add(input: CreateStepInput): Promise<Step> {
-    const step = await apiFetch<ApiStep>(ENDPOINTS.steps.create, {
-      method: 'POST',
-      body: JSON.stringify({
-        taskId: input.task_id,
-        name: input.name,
-        durationMin: input.duration_min ?? null,
-      }),
-    });
+    const db = await getDb();
+    const rows = await db.getAllAsync<{ max: number | null }>(
+      `SELECT MAX(order_index) AS max FROM steps WHERE task_id = ?`,
+      [input.task_id],
+    );
+    const orderIndex = (rows[0]?.max ?? -1) + 1;
+    const now = nowIso();
+    const res = await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, dirty, updated_at)
+       VALUES (?, ?, ?, ?, 'pending', NULL, 1, ?)`,
+      [input.task_id, input.name, input.duration_min ?? null, orderIndex, now],
+    );
+    const id = res.lastInsertRowId;
+    const [step] = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM steps WHERE id = ?`,
+      [id],
+    );
+    void syncNow();
     return toStep(step);
   },
 
   async getByTask(task_id: number): Promise<Step[]> {
-    const steps = await apiFetch<ApiStep[]>(ENDPOINTS.steps.list(task_id));
-    return steps.map(toStep);
+    const db = await getDb();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM steps WHERE task_id = ? ORDER BY order_index ASC, id ASC`,
+      [task_id],
+    );
+    return rows.map(toStep);
   },
 
   async getNextPending(task_id: number): Promise<Step | null> {
@@ -51,17 +63,51 @@ export const StepService = {
   },
 
   async update(id: number, input: UpdateStepInput): Promise<void> {
-    const body: Record<string, unknown> = {};
-    if (input.name !== undefined) body.name = input.name;
-    if (input.duration_min !== undefined) body.durationMin = input.duration_min;
-    await apiFetch(ENDPOINTS.steps.update(id), {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    });
+    const db = await getDb();
+    const sets: string[] = [];
+    const params: SqlParam[] = [];
+    if (input.name !== undefined) {
+      sets.push('name = ?');
+      params.push(input.name);
+    }
+    if (input.duration_min !== undefined) {
+      sets.push('duration_min = ?');
+      params.push(input.duration_min);
+    }
+    if (sets.length === 0) return;
+    sets.push('dirty = 1', 'updated_at = ?');
+    params.push(nowIso(), id);
+    await db.runAsync(`UPDATE steps SET ${sets.join(', ')} WHERE id = ?`, params);
+    void syncNow();
   },
 
   async delete(id: number): Promise<void> {
-    await apiFetch(ENDPOINTS.steps.remove(id), { method: 'DELETE' });
+    const db = await getDb();
+    const rows = await db.getAllAsync<{ task_id: number; server_id: string | null }>(
+      `SELECT task_id, server_id FROM steps WHERE id = ?`,
+      [id],
+    );
+    const step = rows[0];
+    if (!step) return;
+    await db.runAsync(`DELETE FROM steps WHERE id = ?`, [id]);
+    const remaining = await db.getAllAsync<{ id: number }>(
+      `SELECT id FROM steps WHERE task_id = ? ORDER BY order_index ASC, id ASC`,
+      [step.task_id],
+    );
+    for (let i = 0; i < remaining.length; i++) {
+      await db.runAsync(`UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`, [
+        i,
+        nowIso(),
+        remaining[i].id,
+      ]);
+    }
+    if (hasSession() && step.server_id) {
+      try {
+        await apiFetch(`/api/steps/${step.server_id}`, { method: 'DELETE' });
+      } catch {
+        // offline: el servidor lo reconcilia en el próximo pull
+      }
+    }
   },
 
   async getStepCounts(task_id: number): Promise<{ total: number; completed: number }> {
@@ -73,20 +119,57 @@ export const StepService = {
   },
 
   async reorder(task_id: number, orderedIds: number[]): Promise<void> {
-    await apiFetch(ENDPOINTS.steps.reorder, {
-      method: 'PUT',
-      body: JSON.stringify({ taskId: task_id, orderedIds }),
-    });
+    const db = await getDb();
+    for (let i = 0; i < orderedIds.length; i++) {
+      await db.runAsync(
+        `UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`,
+        [i, nowIso(), orderedIds[i]],
+      );
+    }
+    void syncNow();
   },
 
   async complete(id: number): Promise<{ nextStep: Step | null; taskCompleted: boolean }> {
-    const result = await apiFetch<{ nextStep: ApiStep | null; taskCompleted: boolean }>(
-      ENDPOINTS.steps.complete(id),
-      { method: 'PATCH' },
+    const db = await getDb();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM steps WHERE id = ?`,
+      [id],
     );
-    return {
-      nextStep: result.nextStep ? toStep(result.nextStep) : null,
-      taskCompleted: result.taskCompleted,
-    };
+    const step = rows[0] ? toStep(rows[0]) : null;
+    if (!step) throw new ApiError(404, 'STEP_NOT_FOUND');
+    if (step.status === 'completed') throw new ApiError(400, 'STEP_ALREADY_COMPLETED');
+
+    const now = nowIso();
+
+    await db.runAsync(
+      `UPDATE steps SET status = 'completed', completed_at = ?, dirty = 1, updated_at = ?
+       WHERE id = ?`,
+      [now, now, id],
+    );
+
+    await db.runAsync(
+      `INSERT INTO daily_progress (date, steps_completed) VALUES (?, 1)
+       ON CONFLICT(date) DO UPDATE SET steps_completed = steps_completed + 1`,
+      [todayStr()],
+    );
+
+    const pending = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM steps WHERE task_id = ? AND status = 'pending' ORDER BY order_index ASC, id ASC`,
+      [step.task_id],
+    );
+    const nextStep = pending.length > 0 ? toStep(pending[0]) : null;
+
+    let taskCompleted = false;
+    if (!nextStep) {
+      await db.runAsync(
+        `UPDATE tasks SET status = 'completed', completed_at = ?, dirty = 1, updated_at = ?
+         WHERE id = ?`,
+        [now, now, step.task_id],
+      );
+      taskCompleted = true;
+    }
+
+    void syncNow();
+    return { nextStep, taskCompleted };
   },
 };
