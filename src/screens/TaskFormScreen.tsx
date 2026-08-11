@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Alert, ScrollView } from 'react-native';
+import { View, Text, Alert, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { TaskService } from '../services/TaskService';
 import { Task } from '../types';
-import { colors, typography, spacing, borderRadius } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
 
@@ -18,6 +23,56 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   const [name, setName] = useState(existingTask?.name ?? '');
   const [dueDate, setDueDate] = useState(existingTask?.due_date ?? '');
   const [saving, setSaving] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(() => new Date());
+
+  function parseISODate(dateStr: string): Date {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function toISODate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function formatDateForDisplay(dateStr: string): string {
+    if (!dateStr) return '';
+    const opt: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    };
+    return parseISODate(dateStr).toLocaleDateString('es-AR', opt);
+  }
+
+  function openDatePicker() {
+    setPickerDate(dueDate ? parseISODate(dueDate) : new Date());
+
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: dueDate ? parseISODate(dueDate) : new Date(),
+        mode: 'date',
+        onChange: onDateChange,
+      });
+      return;
+    }
+
+    setShowDatePicker(true);
+  }
+
+  function onDateChange(event: DateTimePickerEvent, selectedDate?: Date) {
+    if (event.type === 'set' && selectedDate) {
+      setDueDate(toISODate(selectedDate));
+    }
+  }
+
+  function handleClearDate() {
+    setDueDate('');
+    setShowDatePicker(false);
+  }
 
   useEffect(() => {
     navigation.setOptions({
@@ -29,17 +84,6 @@ export default function TaskFormScreen({ navigation, route }: Props) {
     if (!name.trim()) {
       Alert.alert('Campo requerido', 'El nombre de la tarea no puede estar vacío.');
       return;
-    }
-
-    if (dueDate.trim()) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(dueDate.trim())) {
-        Alert.alert(
-          'Formato inválido',
-          'La fecha debe tener el formato AAAA-MM-DD.\nEjemplo: 2026-05-30',
-        );
-        return;
-      }
     }
 
     setSaving(true);
@@ -95,26 +139,67 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           >
             Fecha límite
           </Text>
-          <TextInput
+          <TouchableOpacity
+            onPress={openDatePicker}
+            activeOpacity={0.7}
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: colors['surface-container-lowest'],
               borderWidth: 1,
               borderColor: colors['outline-variant'],
               borderRadius: borderRadius.lg,
-              padding: spacing['stack-gap'] - 4,
-              fontSize: 16,
-              color: colors['on-surface'],
+              paddingHorizontal: spacing['stack-gap'] - 4,
+              height: 56,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing['stack-gap'] - 4,
+              ...shadows.ambient,
             }}
-            placeholder="AAAA-MM-DD  (Ej: 2026-05-30)"
-            placeholderTextColor={colors['on-surface-variant']}
-            value={dueDate}
-            onChangeText={setDueDate}
-            keyboardType="numeric"
-            maxLength={10}
-          />
+          >
+            <MaterialCommunityIcons
+              name="calendar-month-outline"
+              size={22}
+              color={dueDate ? colors['primary-container'] : colors['on-surface-variant']}
+            />
+            <Text
+              style={[
+                dueDate ? typography['body-md'] : typography['body-md'],
+                {
+                  color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
+                  flex: 1,
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {dueDate ? formatDateForDisplay(dueDate) : 'Seleccionar fecha'}
+            </Text>
+            {dueDate ? (
+              <TouchableOpacity onPress={handleClearDate} hitSlop={8}>
+                <MaterialCommunityIcons
+                  name="close-circle"
+                  size={20}
+                  color={colors['on-surface-variant']}
+                />
+              </TouchableOpacity>
+            ) : (
+              <MaterialCommunityIcons
+                name="chevron-down"
+                size={20}
+                color={colors['on-surface-variant']}
+              />
+            )}
+          </TouchableOpacity>
           <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
             Opcional. Ayuda a priorizar.
           </Text>
+
+          {showDatePicker && Platform.OS === 'ios' && (
+            <DateTimePicker
+              value={pickerDate}
+              mode="date"
+              display="inline"
+              onChange={onDateChange}
+            />
+          )}
         </View>
 
         {/* Tip */}

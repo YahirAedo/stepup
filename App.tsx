@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useEffect, useState, createRef } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { NavigationContainer, useNavigationState } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -18,128 +17,55 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 
-import FocusScreen from './src/screens/FocusScreen';
-import TaskListScreen from './src/screens/TaskListScreen';
-import TaskDetailScreen from './src/screens/TaskDetailScreen';
-import TaskFormScreen from './src/screens/TaskFormScreen';
-import StepFormScreen from './src/screens/StepFormScreen';
-import StepCompleteScreen from './src/screens/StepCompleteScreen';
-import HistoryScreen from './src/screens/HistoryScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import BadgesScreen from './src/screens/BadgesScreen';
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
-import { colors, typography } from './src/theme';
+import { colors } from './src/theme';
+import { MainTabs } from './src/components/GlassTabBar';
+import { FloatingActionButton } from './src/components/FloatingActionButton';
 
 SplashScreen.preventAutoHideAsync();
 
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator();
 
-const screenOpts = {
-  headerStyle: { backgroundColor: colors['inverse-surface'] },
-  headerTintColor: colors['inverse-on-surface'],
-  headerTitleStyle: { fontWeight: '600' as const },
-};
-
-function TasksStack() {
-  return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="TaskList" component={TaskListScreen} options={{ title: 'Tareas' }} />
-      <Stack.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
-      <Stack.Screen name="TaskForm" component={TaskFormScreen} options={{ title: 'Nueva tarea' }} />
-      <Stack.Screen name="StepForm" component={StepFormScreen} options={{ title: 'Nuevo paso' }} />
-      <Stack.Screen name="StepComplete" component={StepCompleteScreen} options={{ title: 'Progreso', headerShown: false }} />
-    </Stack.Navigator>
-  );
-}
-
-function FocusStack() {
-  return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="FocusMain" component={FocusScreen} options={{ title: 'Ahora' }} />
-    </Stack.Navigator>
-  );
-}
-
-function HistoryStack() {
-  return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="HistoryMain" component={HistoryScreen} options={{ title: 'Historial' }} />
-    </Stack.Navigator>
-  );
-}
-
-function ProfileStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
-      <Stack.Screen name="Badges" component={BadgesScreen} />
-    </Stack.Navigator>
-  );
-}
-
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.tertiary,
-        tabBarInactiveTintColor: colors['on-surface-variant'],
-        tabBarStyle: {
-          borderTopColor: colors['outline-variant'],
-          paddingBottom: 4,
-          height: 58,
-        },
-      }}
-    >
-      <Tab.Screen
-        name="Focus"
-        component={FocusStack}
-        options={{
-          tabBarLabel: 'Ahora',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>▶</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Tasks"
-        component={TasksStack}
-        options={{
-          tabBarLabel: 'Tareas',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>☑</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="History"
-        component={HistoryStack}
-        options={{
-          tabBarLabel: 'Historial',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>📋</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileStack}
-        options={{
-          tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>👤</Text>
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-}
-
 const ONBOARDING_KEY = 'hasSeenOnboarding';
+
+const rootNavigationRef = createRef<any>();
+
+function AppContent() {
+  // Get the root navigation state (which includes the tab navigator state)
+  const navigationState = useNavigationState((state) => state);
+  
+  // Find the MainTabs route and get its state
+  const mainTabsRoute = navigationState?.routes.find((r) => r.name === 'MainTabs');
+  const tabsState = mainTabsRoute?.state;
+  const activeTabRoute = tabsState?.routes[tabsState?.index ?? 0];
+  const activeTabName = activeTabRoute?.name;
+  
+  // Show FAB only when 'Tasks' tab is active
+  const showFAB = activeTabName === 'Tasks';
+
+  return (
+    <>
+      <MainTabs />
+      {showFAB && (
+        <FloatingActionButton
+          onPress={() => {
+            // Navigate to TaskForm through the Tasks stack using root navigation
+            if (rootNavigationRef.current) {
+              rootNavigationRef.current.navigate('MainTabs', {
+                screen: 'Tasks',
+                params: { screen: 'TaskForm', params: {} }
+              });
+            }
+          }}
+          icon="+"
+          variant="primary"
+        />
+      )}
+    </>
+  );
+}
 
 export default function App() {
   const [fontsLoaded, fontsError] = useFonts({
@@ -153,9 +79,13 @@ export default function App() {
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     storage.getItem(ONBOARDING_KEY).then((val) => {
-      setInitialRoute(val === 'true' ? 'MainTabs' : 'Onboarding1');
+      if (mounted) {
+        setInitialRoute(val === 'true' ? 'MainTabs' : 'Onboarding1');
+      }
     });
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -182,7 +112,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={rootNavigationRef}>
         <RootStack.Navigator
           initialRouteName={initialRoute}
           screenOptions={{ headerShown: false }}
@@ -190,7 +120,7 @@ export default function App() {
           <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
           <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
           <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
-          <RootStack.Screen name="MainTabs" component={MainTabs} />
+          <RootStack.Screen name="MainTabs" component={AppContent} />
         </RootStack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
