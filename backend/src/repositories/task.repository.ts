@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma';
+import { prisma, Db } from '../config/prisma';
 
 export class TaskRepository {
   async create(userId: string, data: { name: string; dueDate?: Date | null }) {
@@ -30,8 +30,13 @@ export class TaskRepository {
     });
   }
 
-  async update(userId: string, id: string, data: { name?: string; dueDate?: Date | null }) {
-    return prisma.task.update({
+  async update(
+    userId: string,
+    id: string,
+    data: { name?: string; dueDate?: Date | null },
+    db: Db = prisma,
+  ) {
+    return db.task.update({
       where: { id, userId },
       data: { name: data.name, dueDate: data.dueDate },
     });

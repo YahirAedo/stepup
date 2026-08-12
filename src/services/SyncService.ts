@@ -20,6 +20,7 @@ import {
   type SyncConflict,
 } from '../database/sync';
 import { apiFetch, ENDPOINTS } from './api';
+import { generateIdempotencyKey } from './idempotency';
 import { hasSession, saveSession, type SessionUser } from './session';
 
 type PushTask = {
@@ -93,7 +94,7 @@ export async function syncNow(): Promise<void> {
 }
 
 export const SyncService = {
-  async push(): Promise<PushSummary> {
+  async push(idempotencyKey: string = generateIdempotencyKey()): Promise<PushSummary> {
     if (!hasSession()) {
       return { tasks: 0, steps: 0 };
     }
@@ -111,6 +112,7 @@ export const SyncService = {
 
     const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
       method: 'POST',
+      idempotencyKey,
       body: JSON.stringify({
         tasks: tasks.map((task): PushTask => ({
           ...(task.server_id ? { id: task.server_id } : {}),
@@ -201,7 +203,12 @@ export const SyncService = {
     await resolveServerConflict(db, conflictId);
   },
 
-  async migrate(name: string, email: string, password: string): Promise<PushSummary> {
+  async migrate(
+    name: string,
+    email: string,
+    password: string,
+    idempotencyKey: string = generateIdempotencyKey(),
+  ): Promise<PushSummary> {
     const db = await getDb();
     const tasks = await getAllTasks(db);
     const steps = await getAllSteps(db);
@@ -211,6 +218,7 @@ export const SyncService = {
 
     const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
       method: 'POST',
+      idempotencyKey,
       body: JSON.stringify({
         name,
         email,

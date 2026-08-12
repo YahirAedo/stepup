@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { ZodError } from 'zod';
+import { IdempotencyConflictError, IdempotencyNotReadyError } from '../services/idempotency.service';
 
 const KNOWN_MESSAGES: Record<string, { status: number; message: string }> = {
   CANNOT_COMPLETE_WITH_PENDING_STEPS: {
@@ -21,6 +22,14 @@ const KNOWN_MESSAGES: Record<string, { status: number; message: string }> = {
 export function handleError(res: Response, error: unknown) {
   if (error instanceof ZodError) {
     return res.status(400).json({ message: error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  if (error instanceof IdempotencyConflictError) {
+    return res.status(409).json({ message: error.message });
+  }
+
+  if (error instanceof IdempotencyNotReadyError) {
+    return res.status(503).json({ message: error.message });
   }
 
   const prismaError = error as { code?: string; meta?: unknown };

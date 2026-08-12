@@ -66,16 +66,20 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export type ApiFetchOptions = RequestInit & { idempotencyKey?: string };
+
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { idempotencyKey, ...rest } = options;
   const token = getToken();
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
+      ...rest,
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(options.headers ?? {}),
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+        ...(rest.headers ?? {}),
       },
     });
   } catch {

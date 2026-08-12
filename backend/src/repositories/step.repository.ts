@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma';
+import { prisma, Db } from '../config/prisma';
 
 export class StepRepository {
   async findById(userId: string, id: string) {
@@ -38,8 +38,13 @@ export class StepRepository {
     return agg._max.orderIndex ?? -1;
   }
 
-  async update(userId: string, id: string, data: { name?: string; durationMin?: number | null }) {
-    return prisma.step.update({
+  async update(
+    userId: string,
+    id: string,
+    data: { name?: string; durationMin?: number | null },
+    db: Db = prisma,
+  ) {
+    return db.step.update({
       where: { id, task: { userId } },
       data: { name: data.name, durationMin: data.durationMin },
     });

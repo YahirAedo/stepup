@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { StepService } from '../services/step.service';
+import { IdempotencyService } from '../services/idempotency.service';
 import { handleError } from '../utils/handle-error';
 
 function parseId(value: string | string[]): string {
@@ -8,6 +9,7 @@ function parseId(value: string | string[]): string {
 
 export class StepController {
   private stepService = new StepService();
+  private idempotencyService = new IdempotencyService();
 
   list = async (req: Request, res: Response) => {
     try {
@@ -33,8 +35,22 @@ export class StepController {
 
   update = async (req: Request, res: Response) => {
     try {
-      const step = await this.stepService.updateStep(req.userId!, parseId(req.params.id), req.body);
-      return res.status(200).json(step);
+      const userId = req.userId!;
+      const id = parseId(req.params.id);
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'PATCH',
+          path: `/api/steps/${id}`,
+          body: req.body,
+        },
+        async (db) => {
+          const step = await this.stepService.updateStep(userId, id, req.body, db);
+          return { statusCode: 200, responseBody: JSON.stringify(step) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }

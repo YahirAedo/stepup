@@ -1,5 +1,6 @@
 import { TaskRepository } from '../repositories/task.repository';
 import { createTaskSchema, updateTaskSchema } from '../validations/schemas';
+import { prisma, Db } from '../config/prisma';
 
 function parseOptionalDate(value?: string | null): Date | null | undefined {
   if (value === undefined) return undefined;
@@ -30,12 +31,12 @@ export class TaskService {
     return this.taskRepo.findCompleted(userId);
   }
 
-  async updateTask(userId: string, id: string, input: unknown) {
+  async updateTask(userId: string, id: string, input: unknown, db: Db = prisma) {
     const data = updateTaskSchema.parse(input);
     return this.taskRepo.update(userId, id, {
       name: data.name,
       dueDate: parseOptionalDate(data.dueDate),
-    });
+    }, db);
   }
 
   async deleteTask(userId: string, id: string) {

@@ -28,6 +28,7 @@ model User {
 
   tasks Task[]
   dailyProgress DailyProgress[]
+  idempotencyKeys IdempotencyKey[]
 
   @@map("users")
 }
@@ -75,4 +76,23 @@ model DailyProgress {
 
   @@unique([userId, date])
   @@map("daily_progress")
+}
+
+model IdempotencyKey {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id")
+  key          String
+  requestHash  String   @map("request_hash")
+  method       String
+  path         String
+  statusCode   Int      @map("status_code")
+  responseBody String   @map("response_body")
+  createdAt    DateTime @default(now()) @map("created_at")
+  expiresAt    DateTime @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
 }

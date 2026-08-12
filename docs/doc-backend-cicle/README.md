@@ -10,5 +10,6 @@
 | [03 — El Orquestador y los Invariantes](03-orquestador-invariantes.md) | `TaskService.completeTask` (HTTP 409), `StepService.completeStep`, métrica idempotente |
 | [04 — Estrategia de Testing](04-estrategia-testing.md) | Jest + Supertest, base efímera `stepup_test`, `maxWorkers: 1`, 20 casos |
 | [05 — Integración y Manejo de Red en el Cliente](05-integracion-red-cliente.md) | `apiFetch`, `EXPO_PUBLIC_API_URL`, `ApiError`, estados de carga/error/reintento |
+| [06 — Idempotencia segura en PATCH](06-idempotencia-patch.md) | `Idempotency-Key`, transacción atómica, replay de respuestas, plan de implementación |
 
 Todos los documentos citan archivos y líneas del repositorio real.

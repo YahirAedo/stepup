@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TaskService } from '../services/task.service';
+import { IdempotencyService } from '../services/idempotency.service';
 import { handleError } from '../utils/handle-error';
 
 function parseId(value: string | string[]): string {
@@ -8,6 +9,7 @@ function parseId(value: string | string[]): string {
 
 export class TaskController {
   private taskService = new TaskService();
+  private idempotencyService = new IdempotencyService();
 
   list = async (req: Request, res: Response) => {
     try {
@@ -50,8 +52,22 @@ export class TaskController {
 
   update = async (req: Request, res: Response) => {
     try {
-      const task = await this.taskService.updateTask(req.userId!, parseId(req.params.id), req.body);
-      return res.status(200).json(task);
+      const userId = req.userId!;
+      const id = parseId(req.params.id);
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'PATCH',
+          path: `/api/tasks/${id}`,
+          body: req.body,
+        },
+        async (db) => {
+          const task = await this.taskService.updateTask(userId, id, req.body, db);
+          return { statusCode: 200, responseBody: JSON.stringify(task) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }

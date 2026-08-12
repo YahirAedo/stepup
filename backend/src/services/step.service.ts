@@ -1,6 +1,7 @@
 import { StepRepository } from '../repositories/step.repository';
 import { TaskRepository } from '../repositories/task.repository';
 import { createStepSchema, updateStepSchema, reorderStepsSchema } from '../validations/schemas';
+import { prisma, Db } from '../config/prisma';
 
 export class StepService {
   private stepRepo = new StepRepository();
@@ -25,12 +26,12 @@ export class StepService {
     return this.stepRepo.findByTask(userId, taskId);
   }
 
-  async updateStep(userId: string, id: string, input: unknown) {
+  async updateStep(userId: string, id: string, input: unknown, db: Db = prisma) {
     const data = updateStepSchema.parse(input);
     return this.stepRepo.update(userId, id, {
       name: data.name,
       durationMin: data.durationMin,
-    });
+    }, db);
   }
 
   async deleteStep(userId: string, id: string) {
