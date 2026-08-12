@@ -215,10 +215,16 @@ model IdempotencyKey {
       `{"message":"Idempotency-Key reutilizada con un payload distinto"}` (esperado).
     - Server detenido tras el smoke test.
 
-### Fase 10 — Integración
+### Fase 10 — Integración ✅ HECHA
 
-17. Commit convencional: `feat: idempotency-keys para PATCH (reintentos seguros)`.
-18. Push y PR a `develop2`. Actualizar el índice de este doc (README) y la checklist B1:134 si aplica.
+17. Commit convencional: `feat: idempotency-keys para PATCH (reintentos seguros)` (`57b0384`,
+    solo archivos relacionados; leftovers `package-lock.json`/`migration_lock.toml` excluidos).
+18. Push de `feature/idempotency-key` + PR → **https://github.com/YahirAedo/stepup/pull/63**
+    (base `develop2`).
+19. Índice del README de `docs/doc-backend-cicle/` actualizado con el doc 06.
+
+> Estado: feature implementada de punta a punta (migración → repo → service → middleware →
+> wiring → errores → tests → cliente → verificación → PR). Pendiente solo el review/merge de la PR.
 
 ---
 
