@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TaskService } from '../services/task.service';
+import { StepService } from '../services/step.service';
 import { IdempotencyService } from '../services/idempotency.service';
 import { handleError } from '../utils/handle-error';
 
@@ -9,6 +10,7 @@ function parseId(value: string | string[]): string {
 
 export class TaskController {
   private taskService = new TaskService();
+  private stepService = new StepService();
   private idempotencyService = new IdempotencyService();
 
   list = async (req: Request, res: Response) => {
@@ -58,7 +60,7 @@ export class TaskController {
         {
           userId,
           key: req.idempotencyKey,
-          method: 'PATCH',
+          method: 'PUT',
           path: `/api/tasks/${id}`,
           body: req.body,
         },
@@ -86,6 +88,33 @@ export class TaskController {
     try {
       const result = await this.taskService.completeTask(req.userId!, parseId(req.params.id));
       return res.status(200).json(result);
+    } catch (error) {
+      return handleError(res, error);
+    }
+  };
+
+  listSteps = async (req: Request, res: Response) => {
+    try {
+      const taskId = parseId(req.params.taskId);
+      const task = await this.taskService.getTaskById(req.userId!, taskId);
+      if (!task) {
+        return res.status(404).json({ message: 'La tarea especificada no existe' });
+      }
+      const steps = await this.stepService.getStepsByTask(req.userId!, taskId);
+      return res.status(200).json(steps);
+    } catch (error) {
+      return handleError(res, error);
+    }
+  };
+
+  createStep = async (req: Request, res: Response) => {
+    try {
+      const step = await this.stepService.addStepToTask(
+        req.userId!,
+        parseId(req.params.taskId),
+        req.body,
+      );
+      return res.status(201).json(step);
     } catch (error) {
       return handleError(res, error);
     }

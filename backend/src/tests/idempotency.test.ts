@@ -5,7 +5,7 @@ import { prisma } from '../config/prisma';
 const KEY_A = '11111111-1111-4111-8111-111111111111';
 const KEY_B = '22222222-2222-4222-8222-222222222222';
 
-describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
+describe('Idempotencia segura en PUT (Idempotency-Key)', () => {
   let token: string;
 
   beforeEach(async () => {
@@ -18,7 +18,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     const task = await createTask(token, 'Original');
 
     const first = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'Renombrada' });
@@ -27,7 +27,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     expect(first.body.name).toBe('Renombrada');
 
     const second = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'Renombrada' });
@@ -44,7 +44,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     const task = await createTask(token, 'Original');
 
     const first = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'Primero' });
@@ -52,7 +52,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     expect(first.status).toBe(200);
 
     const second = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'Segundo' });
@@ -69,12 +69,12 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
 
     const [a, b] = await Promise.all([
       request(app)
-        .patch(`/api/tasks/${task.id}`)
+        .put(`/api/tasks/${task.id}`)
         .set(authHeader(token))
         .set('Idempotency-Key', KEY_A)
         .send({ name: 'Concurrente' }),
       request(app)
-        .patch(`/api/tasks/${task.id}`)
+        .put(`/api/tasks/${task.id}`)
         .set(authHeader(token))
         .set('Idempotency-Key', KEY_A)
         .send({ name: 'Concurrente' }),
@@ -95,13 +95,13 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     const task2 = await createTask(user2.token, 'Tarea user2');
 
     const res1 = await request(app)
-      .patch(`/api/tasks/${task1.id}`)
+      .put(`/api/tasks/${task1.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'U1' });
 
     const res2 = await request(app)
-      .patch(`/api/tasks/${task2.id}`)
+      .put(`/api/tasks/${task2.id}`)
       .set(authHeader(user2.token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'U2' });
@@ -119,7 +119,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     const task = await createTask(token, 'Original');
 
     const first = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'Expirada' });
@@ -132,7 +132,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     });
 
     const second = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_A)
       .send({ name: 'Expirada' });
@@ -148,7 +148,7 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     const task = await createTask(token, 'Original');
 
     const res = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .send({ name: 'Sin key' });
 
@@ -156,11 +156,11 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     expect(res.body.name).toBe('Sin key');
   });
 
-  it('key no UUID en PATCH → 400', async () => {
+  it('key no UUID en PUT → 400', async () => {
     const task = await createTask(token, 'Original');
 
     const res = await request(app)
-      .patch(`/api/tasks/${task.id}`)
+      .put(`/api/tasks/${task.id}`)
       .set(authHeader(token))
       .set('Idempotency-Key', 'no-soy-un-uuid')
       .send({ name: 'x' });
@@ -178,22 +178,22 @@ describe('Idempotencia segura en PATCH (Idempotency-Key)', () => {
     expect(res.status).toBe(200);
   });
 
-  it('PATCH con key valida en steps tambien aplica idempotencia', async () => {
+  it('PUT con key valida en steps tambien aplica idempotencia', async () => {
     const task = await createTask(token, 'Tarea con paso');
     const stepRes = await request(app)
-      .post('/api/steps')
+      .post(`/api/tasks/${task.id}/steps`)
       .set(authHeader(token))
-      .send({ taskId: task.id, name: 'Paso original' });
+      .send({ name: 'Paso original' });
     const stepId = stepRes.body.id;
 
     const first = await request(app)
-      .patch(`/api/steps/${stepId}`)
+      .put(`/api/steps/${stepId}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_B)
       .send({ name: 'Paso renombrado' });
 
     const second = await request(app)
-      .patch(`/api/steps/${stepId}`)
+      .put(`/api/steps/${stepId}`)
       .set(authHeader(token))
       .set('Idempotency-Key', KEY_B)
       .send({ name: 'Paso renombrado' });

@@ -26,8 +26,8 @@ export const ENDPOINTS = {
     complete: (id: number) => `/api/tasks/${id}/complete`,
   },
   steps: {
-    list: (taskId: number) => `/api/steps?taskId=${taskId}`,
-    create: '/api/steps',
+    list: (taskId: number) => `/api/tasks/${taskId}/steps`,
+    create: (taskId: number) => `/api/tasks/${taskId}/steps`,
     update: (id: number) => `/api/steps/${id}`,
     remove: (id: number) => `/api/steps/${id}`,
     complete: (id: number) => `/api/steps/${id}/complete`,

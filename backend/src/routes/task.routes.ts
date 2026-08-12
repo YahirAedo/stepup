@@ -9,8 +9,10 @@ router.get('/', taskController.list);
 router.get('/completed', taskController.completed);
 router.get('/:id', taskController.getById);
 router.post('/', taskController.create);
-router.patch('/:id', requireIdempotencyKey, taskController.update);
+router.put('/:id', requireIdempotencyKey, taskController.update);
 router.patch('/:id/complete', requireIdempotencyKey, taskController.complete);
 router.delete('/:id', taskController.remove);
+router.get('/:taskId/steps', taskController.listSteps);
+router.post('/:taskId/steps', requireIdempotencyKey, taskController.createStep);
 
 export const taskRoutes = router;

@@ -16,8 +16,7 @@ export const updateTaskSchema = z.object({
   dueDate: parseableDate,
 });
 
-export const createStepSchema = z.object({
-  taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
+export const createStepToTaskSchema = z.object({
   name: requiredName,
   durationMin: z
     .number({ error: 'durationMin debe ser un número' })
@@ -25,6 +24,10 @@ export const createStepSchema = z.object({
     .positive('durationMin debe ser mayor a 0')
     .nullable()
     .optional(),
+});
+
+export const createStepSchema = createStepToTaskSchema.extend({
+  taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
 });
 
 export const updateStepSchema = z.object({

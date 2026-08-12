@@ -10,7 +10,7 @@ describe('API de pasos — ejecución y orden', () => {
     token = user.token;
   });
 
-  it('POST /api/steps asigna orderIndex automático (max + 1)', async () => {
+  it('POST /api/tasks/:taskId/steps asigna orderIndex automático (max + 1)', async () => {
     const task = await createTask(token, 'Tarea con pasos');
 
     const step1 = await addStep(token, task.id, 'Primero');
@@ -20,13 +20,13 @@ describe('API de pasos — ejecución y orden', () => {
     expect(step2.orderIndex).toBe(1);
   });
 
-  it('GET /api/steps?taskId=N devuelve los pasos en orden', async () => {
+  it('GET /api/tasks/:taskId/steps devuelve los pasos en orden', async () => {
     const task = await createTask(token, 'Tarea');
     await addStep(token, task.id, 'A');
     await addStep(token, task.id, 'B');
     await addStep(token, task.id, 'C');
 
-    const res = await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token));
+    const res = await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token));
 
     expect(res.status).toBe(200);
     expect(res.body.map((s: { name: string }) => s.name)).toEqual(['A', 'B', 'C']);
@@ -38,7 +38,7 @@ describe('API de pasos — ejecución y orden', () => {
     await addStep(token, task.id, 'Crear endpoints');
 
     const step1 = (
-      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
     ).body[0];
     const res = await request(app).patch(`/api/steps/${step1.id}/complete`).set(authHeader(token));
 
@@ -92,7 +92,7 @@ describe('API de pasos — ejecución y orden', () => {
     expect(res.status).toBe(200);
 
     const steps = (
-      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
     ).body;
     expect(steps[0].name).toBe('B');
     expect(steps[0].orderIndex).toBe(0);
@@ -111,7 +111,7 @@ describe('API de pasos — ejecución y orden', () => {
     expect(res.status).toBe(204);
 
     const steps = (
-      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
     ).body;
     expect(steps.map((s: { name: string }) => s.name)).toEqual(['B', 'C']);
     expect(steps[0].orderIndex).toBe(0);
@@ -125,7 +125,7 @@ describe('API de pasos — ejecución y orden', () => {
     const step = await addStep(token, task.id, 'Paso de A');
 
     const patch = await request(app)
-      .patch(`/api/steps/${step.id}`)
+      .put(`/api/steps/${step.id}`)
       .set(authHeader(other.token))
       .send({ name: 'Robado' });
     expect(patch.status).toBe(404);
@@ -139,10 +139,22 @@ describe('API de pasos — ejecución y orden', () => {
     expect(del.status).toBe(404);
 
     const steps = (
-      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
     ).body;
     expect(steps).toHaveLength(1);
     expect(steps[0].name).toBe('Paso de A');
+  });
+
+  it('crear un paso en una tarea ajena devuelve 404', async () => {
+    const other = await registerUser('Otro', 'otro-step-create@stepup.app');
+    const task = await createTask(token, 'Tarea de A');
+
+    const res = await request(app)
+      .post(`/api/tasks/${task.id}/steps`)
+      .set(authHeader(other.token))
+      .send({ name: 'Paso robado' });
+
+    expect(res.status).toBe(404);
   });
 
   it('reorder sobre una tarea ajena no altera el orden real', async () => {
@@ -158,7 +170,7 @@ describe('API de pasos — ejecución y orden', () => {
       .expect(200);
 
     const steps = (
-      await request(app).get(`/api/steps?taskId=${task.id}`).set(authHeader(token))
+      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
     ).body;
     expect(steps[0].name).toBe('A');
     expect(steps[1].name).toBe('B');
