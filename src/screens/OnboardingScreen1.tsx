@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
 import ProgressDots from '../components/ProgressDots';
+import type { RootStackParamList } from '../types/navigation';
 
 type Props = {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: NativeStackNavigationProp<RootStackParamList>;
 };
 
 export default function OnboardingScreen1({ navigation }: Props) {
@@ -24,7 +25,7 @@ export default function OnboardingScreen1({ navigation }: Props) {
           zIndex: 10,
         }}
       >
-        <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+        <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
           Saltar
         </Text>
       </TouchableOpacity>
@@ -151,7 +152,7 @@ export default function OnboardingScreen1({ navigation }: Props) {
 
         <Text
           style={[
-            typography['headline-lg-mobile'] as any,
+            typography['headline-lg-mobile'] as TextStyle,
             {
               color: colors['on-surface'],
               textAlign: 'center',
@@ -164,7 +165,7 @@ export default function OnboardingScreen1({ navigation }: Props) {
 
         <Text
           style={[
-            typography['body-lg'] as any,
+            typography['body-lg'] as TextStyle,
             {
               color: colors['on-surface-variant'],
               textAlign: 'center',
@@ -196,7 +197,7 @@ export default function OnboardingScreen1({ navigation }: Props) {
             alignItems: 'center',
           }}
         >
-          <Text style={[typography['label-md'] as any, { color: colors['on-primary'] }]}>
+          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
             Siguiente
           </Text>
         </TouchableOpacity>
