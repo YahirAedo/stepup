@@ -1,0 +1,52 @@
+name: Bug report
+description: Reportar un comportamiento incorrecto de la app o del backend
+title: "bug: <descripción breve>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Completá los campos. Sin evidencia reproducible el issue puede cerrarse como `invalid`.
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema / Contexto
+      description: Qué pasa, pasos para reproducir y comportamiento esperado vs actual.
+      placeholder: |
+        1. Ir a ...
+        2. Tocar ...
+        3. Se rompe (esperado: ...)
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Frontend (app RN / Expo)
+        - Backend (E2 / API)
+        - Design System
+        - CI / GitHub
+        - Otro
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia requerida
+      description: Capturas, logs, dispositivo/versión de la app donde se reproduce.
+      placeholder: |
+        - Captura o video
+        - Logs (consola / Metro / servidor)
+        - Device + OS + versión de la app
+    validations:
+      required: false
+  - type: checkboxes
+    id: notas
+    attributes:
+      label: Notas
+      description: Convenciones del equipo.
+      options:
+        - label: Auto-asignarse al tomarla (pull rule)
+        - label: No usar `ready-for-agent`
+        - label: Rama `feature/fix/<numero>-<descripcion>`
