@@ -204,6 +204,32 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body[0].name).toBe('Migrada');
   });
 
+  it('POST /api/sync/migrate con password corta devuelve 400', async () => {
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Nuevo',
+      email: 'corta@stepup.app',
+      password: '1234567',
+      tasks: [],
+      steps: [],
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Mínimo 8 caracteres');
+  });
+
+  it('POST /api/sync/migrate recorta espacios del email', async () => {
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Nuevo',
+      email: '  migrado.trim@stepup.app  ',
+      password: 'secret123',
+      tasks: [],
+      steps: [],
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.user.email).toBe('migrado.trim@stepup.app');
+  });
+
   it('POST /api/sync/migrate con email existente devuelve 409', async () => {
     const res = await request(app).post('/api/sync/migrate').send({
       name: 'Duplicado',
