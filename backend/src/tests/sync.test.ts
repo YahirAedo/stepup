@@ -148,6 +148,35 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(past.body.tasks[0].id).toBe(id);
   });
 
+  it('POST /api/sync/push con updatedAt inválido devuelve 400', async () => {
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ name: 'Sin timestamp', updatedAt: 'ayer' }], steps: [] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe ser un timestamp ISO válido');
+  });
+
+  it('POST /api/sync/push con dueDate inválida devuelve 400', async () => {
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [
+          {
+            name: 'Fecha rota',
+            updatedAt: new Date().toISOString(),
+            dueDate: '32/13/2026',
+          },
+        ],
+        steps: [],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe ser un timestamp ISO válido');
+  });
+
   it('GET /api/sync/pull con since inválido devuelve 400', async () => {
     const res = await request(app).get('/api/sync/pull?since=not-a-date').set(authHeader(token));
 
