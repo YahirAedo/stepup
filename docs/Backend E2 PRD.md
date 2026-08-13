@@ -52,48 +52,15 @@ stepup/
     └── Backend E2 PRD.md      — este documento
 ```
 
-### Schema — Prisma (PostgreSQL)
+### Schema — Prisma (PostgreSQL) — versión implementada
 
-```prisma
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  tasks     Task[]
-}
+El schema real en `backend/prisma/schema.prisma` es: `User` (id uuid, name, email unique, password, createdAt), `Task` (id uuid, userId, name, dueDate `DateTime?`, status enum `active|completed`, createdAt, updatedAt, completedAt), `Step` (id uuid, taskId, name, durationMin?, orderIndex, status enum `pending|completed`, timestamps), `DailyProgress` (userId, date, stepsCompleted, `@@unique([userId, date])`) e `IdempotencyKey` (userId, key, requestHash, method, path, statusCode, responseBody, expiresAt, `@@unique([userId, key])`).
 
-model Task {
-  id          String   @id @default(uuid())
-  userId      String
-  name        String
-  dueDate     String?
-  status      String   @default("active")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  completedAt DateTime?
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  steps       Step[]
-}
+Frente a la primera versión de este PRD cambió: IDs UUID del lado servidor (se mantiene la decisión de evitar colisiones con los IDs enteros de SQLite local), `dueDate` como `DateTime?` (no string), se agregaron los modelos `DailyProgress` e `IdempotencyKey`, enums tipados en lugar de strings, e índices compuestos (`userId, updatedAt`) para el pull de sync.
 
-model Step {
-  id           String   @id @default(uuid())
-  taskId       String
-  name         String
-  durationMin  Int?
-  orderIndex   Int
-  status       String   @default("pending")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  completedAt  DateTime?
-  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-}
-```
+Se planea el backfill seguro de la migración (issue #69) y los índices adicionales de `Step` (`taskId + orderIndex/status/updatedAt`, issue #77).
 
-Se usan UUIDs como IDs del lado servidor para evitar colisiones con los IDs enteros autoincrementales de SQLite local.
-
-### API Endpoints
+### API Endpoints — versión implementada (ciclo 2026)
 
 ```
 POST   /api/auth/register    Body: { name, email, password }     → 201 { user, token }
@@ -102,12 +69,15 @@ GET    /api/auth/me          Header: Authorization: Bearer <jwt> → 200 { user 
 
 GET    /api/tasks                                                → 200 Task[]
 POST   /api/tasks            Body: { name, dueDate? }            → 201 Task
-PUT    /api/tasks/:id        Body: { name?, dueDate? }           → 200 Task
+PATCH  /api/tasks/:id        Body: { name?, dueDate? }           → 200 Task
+PATCH  /api/tasks/:id/complete                                   → 200 Task
 DELETE /api/tasks/:id                                            → 204
 
 GET    /api/tasks/:taskId/steps                                  → 200 Step[]
-POST   /api/tasks/:taskId/steps Body: { name, durationMin? }     → 201 Step
-PUT    /api/steps/:id        Body: { name?, durationMin? }       → 200 Step
+POST   /api/steps            Body: { taskId, name, durationMin?, orderIndex? } → 201 Step
+PATCH  /api/steps/:id        Body: { name?, durationMin? }       → 200 Step
+PUT    /api/steps/reorder    Body: { taskId, orderedIds[] }      → 200 { ok }
+PATCH  /api/steps/:id/complete                                   → 200 { nextStep, taskCompleted }
 DELETE /api/steps/:id                                            → 204
 
 POST   /api/sync/push        Body: { tasks[], steps[] }          → 200 { tasks[], steps[] }
@@ -116,7 +86,9 @@ POST   /api/sync/migrate     Body: { tasks[], steps[], email, password, name }
                                                                  → 201 { user, token, taskMap }
 ```
 
-**Auth middleware** en todas las rutas excepto `/api/auth/register` y `/api/auth/login`. Retorna 401 si el token falta o es inválido.
+Diferencias frente al diseño original: PATCH en vez de PUT en `tasks/:id`/`steps/:id`, `POST /api/steps` plano (no anidado bajo `tasks/:taskId/steps`), endpoints nuevos `/complete`, reordenamiento propio con `PUT /api/steps/reorder`, y `Idempotency-Key` obligatoria (UUID, 400 si inválida) en POST/PUT/PATCH para writes (ver issue #67).
+
+**Auth middleware** en todas las rutas excepto `/api/auth/register`, `/api/auth/login` y `/api/sync/migrate`. Retorna 401 si el token falta o es inválido. JWT fail-closed: el backend no arranca sin `JWT_SECRET` seguro (issue #65).
 
 ### Sync: Cómo conecta con la app actual
 
@@ -197,5 +169,5 @@ Módulos a testear:
 - Backend hosteado en Railway (tier gratuito). URL base como env var en la app.
 - PostgreSQL provisionado desde Railway dashboard. Prisma Migrate corre en deploy.
 - Puerto via `PORT` env var (default 3000).
-- `JWT_SECRET` via env var. En desarrollo, valor fijo.
+- `JWT_SECRET` via env var, obligatorio y fail-closed: el servidor **no arranca** si falta o es un placeholder conocido (issue #65). En desarrollo hay que definir uno propio.
 - Pantallas de Login, Register y SyncConflict tienen prototipos en `stitch_stepup_design_system/` — implementar en la app.
