@@ -284,11 +284,126 @@ Cuando un agente de IA genere código para este proyecto:
 
 1. **Siempre** leer `docs/CONVENCIONES.md` antes de escribir código
 2. **Siempre** cargar el skill del Design System antes de tocar UI
-3. **Siempre** leer `docs/Contexto cambiable.md` si es la primera vez en el proyecto
+3. **Siempre** leer `docs/Contexto.md` si es la primera vez en el proyecto
 4. **Nunca** hardcodear colores, fuentes, o spacing
 5. **Nunca** usar `as any` para tipografía — pedir que se arregle el tipo
 6. **Siempre** tipar `navigation` y `route` props
 7. **Nunca** llamar `getDb()` desde una pantalla
+8. **Siempre** registrar los avances en la documentación (ver §7.9): contexto,
+   log de decisiones y PRD cuando el cambio los toca
+
+---
+
+## 7. Flujo de resolución de issues
+
+> Reglas para cerrar una issue de punta a punta: quién la toma, cómo se nombra
+> la rama, qué se exige antes del PR, cómo se review y mergea, y cómo se integran
+> las ramas. Aprobadas por el equipo (13/08/2026).
+
+### 7.1 Ramas actuales
+
+```
+main        ← Entrega final. Solo recibe merges desde develop.
+develop     ← Frontend (app RN). Rama base para issues de frontend.
+develop2    ← TRANSIORIO: backend (E2) mientras no esté integrado a develop.
+              En el futuro se unifica con develop y desaparece.
+```
+
+- Issue de **backend** → rama desde `develop2` → PR a `develop2`.
+- Issue de **frontend** → rama desde `develop` → PR a `develop`.
+- `main` nunca recibe commits directos.
+
+### 7.2 Cómo se toma una issue (pull rule)
+
+- Cualquier integrante o agente puede tomar una issue **abierta** y **sin assignee**.
+- Al tomarla, se **auto-asigna** (assignee en GitHub). No hace falta comentario.
+- Labels: se usan las **correspondientes al tipo** (`bug`, `backend`, `frontend`,
+  `auth`, `database`, `docs`, `chore`, `refactor`, `feature`, `epic`, `prd`).
+  No se usa `ready-for-agent`.
+
+### 7.3 Rama y punto de partida
+
+Formato: `feature/<tipo>/<numero>-<descripcion>` desde la rama correcta.
+
+```bash
+# Backend (desde develop2)
+git checkout develop2 && git pull
+git checkout -b fix/67-idempotencia-push
+
+# Frontend (desde develop)
+git checkout develop && git pull
+git checkout -b feat/78-pantalla-x
+```
+
+> El número de issue va en la rama para mantener la trazabilidad con el PR.
+
+### 7.4 Definición de "done" (antes de abrir el PR)
+
+1. La rama toca **solo archivos relacionados a la issue**.
+2. Commits con formato convencional (`feat:`, `fix:`, `docs:`, `refactor:`,
+   `chore:`, `test:`).
+3. `npm run lint` sin errores + `npm run format` aplicado.
+4. Tests en verde (backend `npm test`, app `npm test`).
+5. Sin scope creep: si durante el trabajo aparece un alcance nuevo (archivo,
+   feature, cambio fuera de la issue), **se crea una issue específica primero**
+   y se deja para otro PR.
+
+### 7.5 Apertura del PR
+
+1. Cumplir el template `.github/PULL_REQUEST_TEMPLATE.md` (Propósito, Issues
+   relacionadas con `Closes #N`, Cambios, Prueba/Evidencia, Checklist pre-merge).
+2. PR a la rama correcta (backend → `develop2`, frontend → `develop`).
+3. Título con el número de issue: `fix: idempotencia real en push/migrate (#67)`.
+4. Body del template completo, incluyendo la **evidencia real** (tests corridos,
+   endpoints probados, capturas para UI).
+5. El autor **no mergea su propio PR**.
+
+### 7.6 Review y merge
+
+1. Mínimo **1 aprobación de otro integrante**. Los comentarios de review señalan
+   puntos que **bloquean** hasta resolverse y responderse.
+2. Merge con **squash and merge** (la rama destino queda lineal).
+3. La issue se cierra con `Closes #N` (automatizado por CI al mergear a
+   `develop`; al mergear a `develop2` el PR **no** se cierra solo, se cierra
+   manualmente o al integrar).
+
+### 7.7 Integración `develop2` → `develop`
+
+- La integración la hace **un integrante designado** en cada **checkpoint**
+  alcanzado (ej. al terminar un grupo de fixes) y **antes del cierre de E2**.
+- Estrategia: **squash de `develop2` → `develop` como PR único**, resolviendo
+  los conflictos conocidos (`App.tsx`, `theme`, `api.ts`) en la rama de
+  integración, no directo en `develop2` ni en ramas feature.
+- Después de la integración, `develop2` se **congela y se elimina**; las issues
+  de backend nuevas van a `develop`.
+
+### 7.8 Estados de una issue
+
+1. **Abierta sin label** → recién creada o a la espera de ser pulida.
+2. **Con labels** (`bug`, `backend`, etc.) → especificada y accionable.
+3. **Con assignee** → en trabajo (pull rule).
+4. **Cerrada** → al mergear el PR que la resuelve, o cerrada con motivo si no
+   es accionable o se duplica (sin esperar a merge).
+
+### 7.9 Registro de avances (documentación del proyecto)
+
+Cada PR que se mergea (a `develop` o `develop2`) debe acompañarse del registro
+del avance en la documentación del proyecto, para que los docs reflejen el
+momento actual del repo:
+
+- **`docs/Contexto.md`** — actualizar estado/código, checklist de E2 y
+  decisiones nuevas, solo en los puntos que tocó el cambio. Si el cambio está en
+  la app o el backend, marcar/desmarcar los ítems del checklist correspondiente.
+- **`docs/Log Decisiones Tecnicas E2.md`** — si el cambio implica una decisión de
+  diseño nueva (técnica, contrato, patrón), agregar una entrada nueva en formato
+  ADR (DT-XX) al final y sumarla a la tabla de resumen.
+- **`docs/Backend E2 PRD.md`** — si el backend cambió endpoints, schema o
+  contratos, sincronizar la sección correspondiente (el PRD refleja lo
+  implementado, no solo la intención).
+
+Regla de oro: **los docs se actualizan DENTRO de la rama del PR** (son archivos
+del cambio, no un post-proceso), o en un commit `docs:` inmediatamente después
+del merge. Un PR que cambia el backend y no toca ni PRD ni contexto se rechaza.
 
 ---
 
