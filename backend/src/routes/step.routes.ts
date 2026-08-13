@@ -6,8 +6,8 @@ const router = Router();
 const stepController = new StepController();
 
 router.get('/', stepController.list);
-router.post('/', stepController.create);
-router.put('/reorder', stepController.reorder);
+router.post('/', requireIdempotencyKey, stepController.create);
+router.put('/reorder', requireIdempotencyKey, stepController.reorder);
 router.patch('/:id', requireIdempotencyKey, stepController.update);
 router.patch('/:id/complete', requireIdempotencyKey, stepController.complete);
 router.delete('/:id', stepController.remove);

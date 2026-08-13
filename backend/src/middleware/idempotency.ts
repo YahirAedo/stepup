@@ -4,7 +4,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export function requireIdempotencyKey(req: Request, res: Response, next: NextFunction) {
   const method = req.method.toUpperCase();
-  if (method !== 'PATCH' && method !== 'POST') {
+  if (method !== 'PATCH' && method !== 'POST' && method !== 'PUT') {
     return next();
   }
 

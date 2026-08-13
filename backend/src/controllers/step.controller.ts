@@ -26,8 +26,21 @@ export class StepController {
 
   create = async (req: Request, res: Response) => {
     try {
-      const step = await this.stepService.addStep(req.userId!, req.body);
-      return res.status(201).json(step);
+      const userId = req.userId!;
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'POST',
+          path: '/api/steps',
+          body: req.body,
+        },
+        async () => {
+          const step = await this.stepService.addStep(userId, req.body);
+          return { statusCode: 201, responseBody: JSON.stringify(step) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }
@@ -67,8 +80,21 @@ export class StepController {
 
   reorder = async (req: Request, res: Response) => {
     try {
-      await this.stepService.reorder(req.userId!, req.body);
-      return res.status(200).json({ ok: true });
+      const userId = req.userId!;
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'PUT',
+          path: '/api/steps/reorder',
+          body: req.body,
+        },
+        async () => {
+          await this.stepService.reorder(userId, req.body);
+          return { statusCode: 200, responseBody: JSON.stringify({ ok: true }) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }
@@ -76,8 +102,22 @@ export class StepController {
 
   complete = async (req: Request, res: Response) => {
     try {
-      const result = await this.stepService.completeStep(req.userId!, parseId(req.params.id));
-      return res.status(200).json(result);
+      const userId = req.userId!;
+      const id = parseId(req.params.id);
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'PATCH',
+          path: `/api/steps/${id}/complete`,
+          body: req.body,
+        },
+        async () => {
+          const payload = await this.stepService.completeStep(userId, id);
+          return { statusCode: 200, responseBody: JSON.stringify(payload) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }

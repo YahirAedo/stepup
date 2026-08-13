@@ -43,8 +43,21 @@ export class TaskController {
 
   create = async (req: Request, res: Response) => {
     try {
-      const task = await this.taskService.createTask(req.userId!, req.body);
-      return res.status(201).json(task);
+      const userId = req.userId!;
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'POST',
+          path: '/api/tasks',
+          body: req.body,
+        },
+        async () => {
+          const task = await this.taskService.createTask(userId, req.body);
+          return { statusCode: 201, responseBody: JSON.stringify(task) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }
@@ -84,8 +97,22 @@ export class TaskController {
 
   complete = async (req: Request, res: Response) => {
     try {
-      const result = await this.taskService.completeTask(req.userId!, parseId(req.params.id));
-      return res.status(200).json(result);
+      const userId = req.userId!;
+      const id = parseId(req.params.id);
+      const result = await this.idempotencyService.runIdempotent(
+        {
+          userId,
+          key: req.idempotencyKey,
+          method: 'PATCH',
+          path: `/api/tasks/${id}/complete`,
+          body: req.body,
+        },
+        async () => {
+          const task = await this.taskService.completeTask(userId, id);
+          return { statusCode: 200, responseBody: JSON.stringify(task) };
+        },
+      );
+      return res.status(result.statusCode).type('json').send(result.responseBody);
     } catch (error) {
       return handleError(res, error);
     }
