@@ -202,7 +202,7 @@ export default function FocusScreen({ navigation }: Props) {
           headline="Mente clara, espacio libre"
           subtext="No tienes tareas pendientes para ahora. ¿Quieres planear algo nuevo?"
           cta="Crear Tarea"
-          onCtaPress={() => navigation.navigate('TaskForm')}
+          onCtaPress={() => navigation.navigate('Tasks', { screen: 'TaskForm' })}
         />
       </View>
     );
@@ -212,7 +212,7 @@ export default function FocusScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
       {/* Ambient gradient blurs */}
-      <View style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <View
           style={{
             position: 'absolute',
