@@ -38,7 +38,11 @@ export default function RegisterScreen({ navigation }: Props) {
       return;
     }
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres');
+      setError('Mínimo 8 caracteres');
+      return;
+    }
+    if (new TextEncoder().encode(password).length > 72) {
+      setError('La contraseña no puede superar 72 bytes');
       return;
     }
     setLoading(true);

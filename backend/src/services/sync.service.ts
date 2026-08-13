@@ -114,7 +114,7 @@ export class SyncService {
 
   async migrate(input: unknown) {
     const data = syncMigrateSchema.parse(input);
-    const email = data.email.toLowerCase();
+    const email = data.email.trim().toLowerCase();
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
