@@ -168,10 +168,10 @@ export default function App() {
     (async () => {
       await loadSession();
       const hasSeenOnboarding = await storage.getItem(ONBOARDING_KEY);
-      if (hasSeenOnboarding !== 'true') {
-        setInitialRoute('Onboarding1');
-      } else if (hasSession()) {
+      if (hasSession()) {
         setInitialRoute('MainTabs');
+      } else if (hasSeenOnboarding !== 'true') {
+        setInitialRoute('Onboarding1');
       } else {
         setInitialRoute('Login');
       }
