@@ -81,7 +81,7 @@ Antes de escribir código, leer en este orden:
 
 | Orden | Documento | Por qué |
 |-------|-----------|---------|
-| 1 | `docs/Contexto cambiable.md` | Contexto completo, entregas, decisiones técnicas |
+| 1 | `docs/Contexto.md` | Contexto completo, entregas, decisiones técnicas |
 | 2 | `docs/CONVENCIONES.md` | Reglas de estilo, arquitectura, git y calidad |
 | 3 | `.claude/skills/zenith-vitality-ds/SKILL.md` | Design System: tokens, componentes, anti-patterns |
 | 4 | `AGENTS.md` | Guía rápida para agentes de IA |
@@ -188,7 +188,7 @@ stepup/
 ├── .claude/skills/zenith-vitality-ds/  # Design System skill para IA
 ├── docs/
 │   ├── CONVENCIONES.md            # Reglas del equipo
-│   ├── Contexto cambiable.md      # Contexto completo del proyecto
+│   ├── Contexto.md                 # Contexto completo del proyecto
 │   └── practicas-recomendadas.md  # Prácticas de ingeniería
 ├── App.tsx                        # Entry point + navegación bottom tabs
 ├── AGENTS.md                      # Guía para agentes de IA

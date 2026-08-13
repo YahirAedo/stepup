@@ -25,6 +25,12 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-13 | Diseño visual: Sistema Zenith Vitality | Julio 2026 | En curso |
 | DT-14 | Fuentes: Manrope + Plus Jakarta Sans vía @expo-google-fonts | Julio 2026 | En curso |
 | DT-15 | Navegación: GlassTabBar flotante con 3-4 tabs | Julio 2026 | En curso |
+| DT-16 | Rama `develop2` transitoria para el backend | Agosto 2026 | En curso |
+| DT-17 | JWT fail-closed: rechazar arranque sin secret o con placeholder | Agosto 2026 | Confirmada |
+| DT-18 | Contrato de password unificado: min 8, max 72 bytes, email trim | Agosto 2026 | Confirmada |
+| DT-19 | Validación ISO real de fechas (400 vs 500) | Agosto 2026 | Confirmada |
+| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | En curso (ver hallazgo IDOR en migrate) |
+| DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada |
 
 # Decisiones detalladas
 
@@ -126,6 +132,92 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Alternativas descartadas** | BottomTabBar estándar de React Navigation (descartado: no soporta glassmorphism, no es flotante). Tab bar personalizado sin React Navigation (descartado: pierde integración con los navigators existentes). 3 tabs fijos sin Perfil (descartado: Perfil es necesario para configuración y logout). | |
 | **Consecuencias** | Positivo: apariencia moderna y distintiva. Positivo: soporta ambas configuraciones (3 o 4 tabs). Positivo: integrado con React Navigation. Negativo: requiere implementar un navigator personalizado. A monitorear: comportamiento en dispositivos con notch o indicadores de navegación del sistema. | |
 
-*StepUp — Log Decisiones Técnicas E2 — Versión 1.0 — Julio 2026*
+| **Consecuencias** | Positivo: apariencia moderna y distintiva. Positivo: soporta ambas configuraciones (3 o 4 tabs). Positivo: integrado con React Navigation. Negativo: requiere implementar un navigator personalizado. A monitorear: comportamiento en dispositivos con notch o indicadores de navegación del sistema. |
+
+---
+
+## DT-16 Rama `develop2` transitoria para el backend
+*Agosto 2026 — Sprint 2 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **En curso** | |
+| **Contexto** | El frontend vive en `develop` y el backend se desarrolló en paralelo. La rama `develop` del repo no tiene el backend, y unir todo en `develop` antes de tiempo mezclaba dos tracks en conflicto (App.tsx, theme, api.ts). | |
+| **Decisión** | Usar `develop2` como rama base para el backend mientras esté separado. Issues de backend → ramas `feature/<tipo>/<numero>-<desc>` desde `develop2` → PR a `develop2`. Un integrante designado integra `develop2` → `develop` en cada checkpoint alcanzado y antes del cierre de E2 (18/08). Después de la integración, `develop2` se congela y se elimina: todo pasa a `develop`. | |
+| **Razonamiento** | Mantener los dos tracks aislados evita conflictos constantes durante el desarrollo activo de ambos. La integración puntual en checkpoints (con squash como PR único) es más revisable y estable que una unión continua. La transitoriedad evita una estrategia de ramas permanente con dos develop. | |
+| **Alternativas descartadas** | Backend en `develop` desde el inicio (descartado: conflicto constante con el track visual y ramas viejas). Rama única `dev-backend` permanente (descartado: agregaría una tercera línea de integración para siempre). | |
+| **Consecuencias** | Positivo: tracks aislados y revisión estable. Positivo: red de integración conocida. Negativo: el workflow de CI que cierra issues solo aplica a `develop`, por lo que PRs mergeados a `develop2` no cierran la issue automáticamente (cerrar manual o al integrar). | |
+
+---
+
+## DT-17 JWT fail-closed: rechazar arranque si el secret no es seguro
+*Agosto 2026 — Sprint 2 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | El backend arrancaba con un JWT_SECRET por defecto hackeable (`dev-secret-stepup`), y cualquiera podía firmar tokens válidos. El PR #80 resuelve la issue #65. | |
+| **Decisión** | `resolveJwtSecret()` falla en producción si `JWT_SECRET` falta o está en una blacklist de placeholders conocidos (`''`, `dev-secret-stepup`, `cambiar-en-produccion`, etc.). En `test` se permite un secret de prueba. `jwt.verify` solo acepta `HS256`. | |
+| **Razonamiento** | Fail-closed: el sistema no arranca con configuración insegura en vez de funcionar con un secreto público. Restringir el algoritmo evita ataques de confusión de algoritmo. | |
+| **Alternativas descartadas** | Generar un secret automático (descartado: cambia en cada reinicio, invalida sesiones). Advertir en logs (descartado: no es un control, cualquiera puede ignorarlo). | |
+| **Consecuencias** | Negativo: exige configurar `JWT_SECRET` en todos los entornos (Railway, local). GOTCHA pendiente: el placeholder del `.env.example` (`genera-un-secreto-largo-y-unico`) no está en la blacklist (sugerido agregarlo o exigir longitud mínima). | |
+
+---
+
+## DT-18 Contrato de password y email unificado
+*Agosto 2026 — Sprint 2 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | El front pedía password 8+ pero el backend validaba 6+, desincronización que generaba errores confusos. El PR #81 resuelve la issue #66. | |
+| **Decisión** | En `schemas.ts`: password min 8 y max 72 bytes (límite de bcrypt), email con `trim().toLowerCase()`, name max 120, email max 254. Aplica a register, login y migrate. El RegisterScreen se alinea (min 8 + 72 bytes). | |
+| **Razonamiento** | Un contrato único evita fricción cliente/servidor. El límite de 72 bytes respeta el truncamiento de bcrypt (evita hashes inconsistentes). El trim evita duplicados por espacios. | |
+| **Alternativas descartadas** | Mantener validación por capa (descartado: origen de la desincronización). | |
+| **Consecuencias** | GOTCHA: `loginSchema` no aplica el límite de 72 bytes (solo min 1), asimetría menor vs register/migrate (comentado en review del #81). | |
+
+---
+
+## DT-19 Validación ISO real de fechas
+*Agosto 2026 — Sprint 2 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | `parseableDate`/`isoDateTime` aceptaban cualquier string; fechas inválidas pasaban zod → Invalid Date en Prisma → 500, o skip silencioso en sync (pérdida de datos). El PR #78 resuelve la issue #70. | |
+| **Decisión** | Validar con `Date.parse` (`isParseableIso`) en ambos schemas y rechazar con 400 (mensaje "Debe ser un timestamp ISO válido"). | |
+| **Razonamiento** | Corta el 500 y el skip silencioso con un contrato claro. | |
+| **Alternativas descartadas** | — | |
+| **Consecuencias** | GOTCHA: `Date.parse` no es ISO 8601 estricto (acepta `"March 1 2026"`, `"2026/12/31"`); si se quiere validación estricta, usar `z.datetime()` o regex ISO (comentado en review del #78). | |
+
+---
+
+## DT-20 Idempotencia por `Idempotency-Key` en writes
+*Agosto 2026 — Sprint 2 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **En curso** | |
+| **Contexto** | Reintentos de la app (timeouts, doble tap) podían duplicar creates o corromper complete. El PR #82 (issue #67) envuelve create/complete/reorder/push/migrate en `runIdempotent` (reserva con `ON CONFLICT DO NOTHING`, replay de respuesta o 409 si el payload cambió). | |
+| **Decisión** | Middleware `requireIdempotencyKey` en POST/PUT/PATCH (UUID válido o 400); `runIdempotent` con TTL 24h y respuesta byte-idéntica en replay. | |
+| **Razonamiento** | Patrón Stripe: idempotencia por key del cliente sin estado global complejo. | |
+| **Alternativas descartadas** | — | |
+| **Consecuencias** | HALLAZGO CRÍTICO en review: `/api/sync/migrate` usa un scope de idempotencia fijo y público (`MIGRATE_IDEMPOTENCY_SCOPE`), por lo que todos los usuarios comparten el mismo `user_id` en `idempotency_keys` → posible IDOR (replay de token/taskMap de otro usuario). Y `ensureMigrateScopeUser()` hace upsert de un usuario fake en `users` de producción. Pendiente: corregir scope (email del payload), no usar usuario fake, y hacer `completeStep` transaccional (DT-21). | |
+
+---
+
+## DT-21 `completeStep` debe ser transaccional
+*Agosto 2026 — Sprint 2 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | `completeStep` hace 4 writes secuenciales sin transacción (marcar completo, upsert daily_progress, next pending, completar task). Dos requests concurrentes pueden doble-incrementar `daily_progress`, o un fallo intermedio deja la base a mitad de estado. Issue #71. | |
+| **Decisión** | Envolver el flujo en `prisma.$transaction` y hacer el update del step condicional (`updatedMany where status='pending'` + verificación de count) para decidir el incremento. El retry (misma key o nueva) no debe re-incrementar. | |
+| **Razonamiento** | Atómico y el incremento depende de la transición real, no de la llegada de la request. | |
+| **Alternativas descartadas** | — | |
+| **Consecuencias** | Pendiente de implementar (issue #71 para `develop2`). El `runIdempotent` del #82 solo protege replay con misma key; no cubre keys distintas ni dos dispositivos. | |
+
+*StepUp — Log Decisiones Técnicas E2 — Versión 1.1 — Agosto 2026*
 
 *Ingeniería en Sistemas de Información*

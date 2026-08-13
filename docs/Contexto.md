@@ -190,7 +190,7 @@ stepup/
 
 ---
 
-## Estado actual del código (Julio 2026)
+## Estado actual del código (Agosto 2026)
 
 ### ✅ E1 completada — todo funcional
 - `src/types/index.ts` — interfaces Task, Step, DailyProgress, CreateTaskInput, UpdateTaskInput, CreateStepInput, UpdateStepInput
@@ -216,12 +216,15 @@ stepup/
 - `src/components/` — componentes reutilizables (Button, Card, Badge, TextField, GlassTabBar, etc.)
 - Rediseño de las 6 pantallas existentes + 7 nuevas pantallas
 - Carga de fuentes Manrope + Plus Jakarta Sans
+- **Avance:** Slice 7 (GlassTabBar + FAB + date picker) ya mergeado (#58), resposive scaling aplicado (#42-#46), Onboarding (#50), Perfil (#52). Quedan slices de polish/animaciones.
 
-**Track B — Backend (a implementar):**
-- API REST en Node.js + Express + Prisma + PostgreSQL
-- Autenticación JWT
-- Sync offline-first híbrido
-- Hosting en Railway
+**Track B — Backend (implementado, en fixing):**
+- API REST en Node.js + Express + Prisma + PostgreSQL ✅
+- Autenticación JWT (registro + login) ✅
+- Sync offline-first híbrido (push/pull/migrate) ✅
+- CRUD de tasks y steps ✅
+- Hosting en Railway ✅
+- **Estado:** PRs abiertos a `develop2`: #78 (fechas ISO), #80 (JWT fail-closed), #81 (password 8), #82 (idempotencia real). Epics #64 + issues #65-#77 de endurecimiento. **`develop2` es transitorio:** cuando los fixes estén integrados se unifica con `develop` y desaparece.
 
 ### Sistema operativo de desarrollo
 **Windows**
@@ -308,19 +311,23 @@ Todo el código de la sección anterior. Ya está hecho, listo para copiar al re
 
 ```
 main        ← Entrega final, siempre estable. Solo recibe merges desde develop.
-develop     ← Integración diaria. Todo pasa por acá antes de main.
-feature/*   ← Una rama por cambio. Ej: feature/docs/actualizar-contexto-E2
+develop     ← Frontend (app RN). Rama base para issues de frontend.
+develop2    ← TRANSIORIO: backend (E2). Se unifica con develop y desaparece.
+feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripcion>
 ```
 
-**Flujo de trabajo (obligatorio):**
-1. Crear rama desde `develop`: `git checkout -b feature/<nombre>`
-2. Hacer commits en la rama
-3. Push a origin: `git push origin feature/<nombre>`
-4. Crear Pull Request a `develop`
-5. Mergear a `develop`
-6. (Al final de la entrega) Merge `develop` → `main`
+**Flujo de trabajo (obligatorio, ver `docs/CONVENCIONES.md` §7):**
+1. Tomar una issue abierta sin assignee y **auto-asignarse** (pull rule).
+2. Crear rama desde la rama correcta:
+   - Backend → `git checkout develop2 && git pull && git checkout -b fix/67-idempotencia-push`
+   - Frontend → `git checkout develop && git pull && git checkout -b feat/78-pantalla-x`
+3. Hacer commits con formato convencional
+4. Push a origin
+5. Crear Pull Request a la rama correcta siguiendo `.github/PULL_REQUEST_TEMPLATE.md`
+6. Alguien más revisa y mergea con squash (nadie mergea su propio PR)
+7. (Backend) En cada checkpoint, un integrante designado integra `develop2` → `develop`; luego `develop2` se congela y se elimina
 
-**Regla de oro:** nunca commitear directo a `main`. Todo cambio entra por `feature/*` → `develop` → `main`.
+**Regla de oro:** nunca commitear directo a `main` ni a `develop`/`develop2`. Todo cambio entra por `feature/*` → rama destino (según área) → (integración) → `main`.
 
 **Formato de commits:**
 ```
@@ -406,7 +413,7 @@ El sistema de diseño completo está en `stitch_stepup_design_system/` con proto
 | `registro_nueva_cuenta/` | Registro "Comienza tu camino" | ⏳ A implementar |
 | `conflicto_de_sincronizaci_n/` | Resolución de conflictos de sync | ⏳ A implementar |
 
-El plan de migración está desglosado en 12 issues en GitHub con label `ready-for-agent`.
+El plan de migración está desglosado en 12 issues en GitHub (labels por tipo: `feat`, `backend`, `refactor`, etc.; no se usa `ready-for-agent`).
 
 ---
 
@@ -426,14 +433,21 @@ El plan de migración está desglosado en 12 issues en GitHub con label `ready-f
 - [ ] **Slice 10:** XP/Level + Notificaciones v2 (issue #12)
 - [ ] **Slice 11:** SyncConflictScreen (issue #14)
 
-### Track B — Backend
-- [ ] Setup del proyecto Node.js + Express + TypeScript
-- [ ] Configurar Prisma + PostgreSQL en Railway
-- [ ] Endpoints de autenticación (register + login + JWT)
-- [ ] Endpoints de tareas (CRUD)
-- [ ] Endpoints de pasos (CRUD)
-- [ ] Endpoints de sync (push + pull)
-- [ ] Hosting funcionando en Railway
+### Track B — Backend (implementado, en fixing)
+- [x] Setup del proyecto Node.js + Express + TypeScript
+- [x] Configurar Prisma + PostgreSQL en Railway
+- [x] Endpoints de autenticación (register + login + JWT)
+- [x] Endpoints de tareas (CRUD)
+- [x] Endpoints de pasos (CRUD)
+- [x] Endpoints de sync (push + pull + migrate)
+- [x] Hosting funcionando en Railway
+- [ ] PRs #78-#82 de endurecimiento reviewados y mergeados a `develop2`
+- [ ] Integrar `develop2` → `develop` (checkpoint) y eliminar `develop2`
+
+### Problem discovery (13/08/2026)
+- Judgment Day del backend en `develop2` → epic #64 + issues #65-#77 (JWT fail-closed, password 8, idempotencia, migración segura, fechas ISO, completeStep transaccional, orderIndex, reorder, zona horaria, PATCH vacío, error middleware, índices).
+- Revisión de PRs #78-#82 y comentarios de review publicados (el #82 tiene un hallazgo CRÍTICO de IDOR en `/api/sync/migrate` por scope fijo).
+- Flujo de resolución de issues definido en `docs/CONVENCIONES.md` §7.
 
 ### Integración
 - [ ] Conectar app al backend cuando hay sesión activa
@@ -469,6 +483,6 @@ El modelo puede retomar cualquier parte del proyecto con este documento como bas
 - Expo Go requiere SDK 54. No usar SDK 55.
 - Repositorio GitHub: https://github.com/YahirAedo/stepup
 - Hosting backend: Railway (tier gratuito)
-- Los issues de E2 están en GitHub con label `ready-for-agent`
+- Los issues de E2 están en GitHub con labels por tipo (frontend, backend, auth, database).
 - Este documento se actualiza cada vez que cambia el contexto del proyecto.
 - Para retomar el proyecto en un nuevo chat, pegar este documento como contexto inicial.

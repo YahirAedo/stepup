@@ -12,7 +12,7 @@
 
 | Orden | Documento | Por qué |
 |-------|-----------|---------|
-| 1 | `docs/Contexto cambiable.md` | Contexto completo del proyecto, entregas, decisiones técnicas |
+| 1 | `docs/Contexto.md` | Contexto completo del proyecto, entregas, decisiones técnicas |
 | 2 | `docs/CONVENCIONES.md` | Reglas de estilo, arquitectura, git y calidad para el equipo |
 | 3 | `.claude/skills/zenith-vitality-ds/SKILL.md` | Design System: tokens, componentes, anti-patterns |
 
@@ -32,23 +32,29 @@ Nunca commitear directo a `main`.
 
 ```
 main        ← Entrega final. Solo recibe merges desde develop.
-develop     ← Integración diaria. Rama base para todo.
-feature/*   ← Una rama por cambio.
+develop     ← Frontend (app RN). Rama base para issues de frontend.
+develop2    ← TRANSIORIO: backend (E2). Se unifica con develop y desaparece.
+feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripcion>
 ```
+
+Regla de ramas:
+- Issue de **backend** → rama desde `develop2` → PR a `develop2`.
+- Issue de **frontend** → rama desde `develop` → PR a `develop`.
 
 Pasos para cada cambio:
 
-1. `git checkout develop && git pull`
-2. `git checkout -b feature/<nombre-del-cambio>`
+1. `git checkout <rama-correcta> && git pull` (develop2 para backend, develop para frontend)
+2. `git checkout -b feature/<tipo>/<numero>-<descripcion>` (ej. `fix/67-idempotencia-push`)
 3. Hacer commits con formato convencional: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`
-4. **Solo stagear archivos relacionados al cambio** — prohibido `git add -A`, `git add .`, `git commit -a`
-5. `git push origin feature/<nombre-del-cambio>`
-6. Crear Pull Request a `develop`
-7. Mergear a `develop`
+4. **Solo stagear archivos relacionados al cambio** — prohibido `git add -A`, `git add .`, `git commit -a`. Si aparece un alcance nuevo, crear una issue aparte.
+5. `git push origin feature/<tipo>/<numero>-<descripcion>`
+6. Crear Pull Request a la rama correcta siguiendo `.github/PULL_REQUEST_TEMPLATE.md`
+7. Alguien más revisa y mergea con squash (nadie mergea su propio PR)
 
 ## Issues
 
-Los issues de E2 están en GitHub con label `ready-for-agent`.
+Los issues de E2 están en GitHub. Al tomar una issue: auto-asignarse (pull rule),
+usar las labels correspondientes al tipo. No se usa `ready-for-agent`.
 Referencia: https://github.com/YahirAedo/stepup/issues
 
 ## Expo
