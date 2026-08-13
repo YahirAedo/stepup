@@ -9,7 +9,7 @@ export function signToken(userId: string): string {
 
 export function verifyToken(token: string): string | null {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { sub?: string };
+    const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as { sub?: string };
     return payload.sub ?? null;
   } catch {
     return null;
