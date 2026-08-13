@@ -1,0 +1,73 @@
+name: Feature / Refactor / Chore
+description: Proponer una feature, refactor o chore con criterios de aceptación
+title: "<tipo>: <descripción breve>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tipos de título: `feat:`, `refactor:`, `chore:`, `test:`, `docs:`.
+        Elegí las labels en el selector de abajo.
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Problema / Contexto
+      description: Qué problema resuelve o qué se quiere construir. Una o dos frases, sin humo.
+    validations:
+      required: true
+  - type: textarea
+    id: construir
+    attributes:
+      label: Qué construir
+      description: Alcance concreto del trabajo.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Criterios verificables, uno por línea.
+      placeholder: |
+        - [ ] Criterio verificable 1
+        - [ ] Criterio verificable 2
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia requerida
+      description: Qué adjunta el PR que la resuelve.
+      placeholder: |
+        - typecheck/lint en verde
+        - Tests pasando (si aplica)
+        - Capturas de UI o endpoints probados (backend)
+    validations:
+      required: false
+  - type: input
+    id: blockedby
+    attributes:
+      label: Blocked by
+      description: "Número de issue de la que depende, o 'None - can start immediately'"
+      placeholder: None - can start immediately
+    validations:
+      required: false
+  - type: dropdown
+    id: labels
+    attributes:
+      label: Labels
+      multiple: true
+      options:
+        - frontend
+        - backend
+        - auth
+        - database
+        - design-system
+        - testing
+        - ci
+        - chore
+        - refactor
+        - docs
+        - epic
+        - prd
+    validations:
+      required: false
