@@ -2,9 +2,22 @@ import { z } from 'zod';
 
 const requiredName = z.string({ error: 'El nombre es obligatorio' }).min(1, 'El nombre es obligatorio');
 
-const isoDateTime = z.string({ error: 'Debe ser un timestamp ISO' }).min(1, 'Debe ser un timestamp ISO');
+function isParseableIso(value: string): boolean {
+  return !Number.isNaN(Date.parse(value));
+}
 
-const parseableDate = z.string().nullable().optional();
+const isoDateTime = z
+  .string({ error: 'Debe ser un timestamp ISO' })
+  .min(1, 'Debe ser un timestamp ISO')
+  .refine(isParseableIso, { message: 'Debe ser un timestamp ISO válido' });
+
+const parseableDate = z
+  .string()
+  .nullable()
+  .optional()
+  .refine((value) => value == null || value === '' || isParseableIso(value), {
+    message: 'Debe ser un timestamp ISO válido',
+  });
 
 export const createTaskSchema = z.object({
   name: requiredName,

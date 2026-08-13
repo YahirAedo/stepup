@@ -22,6 +22,16 @@ describe('API de tareas — invariante de negocio', () => {
     expect(res.body.dueDate).toBe('2026-08-10T00:00:00.000Z');
   });
 
+  it('POST /api/tasks con dueDate inválida devuelve 400', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .send({ name: 'Con fecha rota', dueDate: 'not-a-date' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe ser un timestamp ISO válido');
+  });
+
   it('POST /api/tasks con body inválido devuelve 400 (zod)', async () => {
     const res = await request(app).post('/api/tasks').set(authHeader(token)).send({});
 
