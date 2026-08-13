@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive, moderateScale } from '../theme';
 import { storage } from '../services/storage';
+import type { RootStackParamList } from '../types/navigation';
 
 type Props = {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: NativeStackNavigationProp<RootStackParamList>;
 };
 
 const ONBOARDING_KEY = 'hasSeenOnboarding';
@@ -121,7 +122,7 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
 
         <Text
           style={[
-            typography['headline-lg-mobile'] as any,
+            typography['headline-lg-mobile'] as TextStyle,
             {
               color: colors['on-surface'],
               textAlign: 'center',
@@ -134,7 +135,7 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
 
         <Text
           style={[
-            typography['body-lg'] as any,
+            typography['body-lg'] as TextStyle,
             {
               color: colors['on-surface-variant'],
               textAlign: 'center',
@@ -166,7 +167,7 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
             alignItems: 'center',
           }}
         >
-          <Text style={[typography['label-md'] as any, { color: colors['on-tertiary'] }]}>
+          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-tertiary'] }]}>
             Activar Notificaciones
           </Text>
         </TouchableOpacity>
@@ -180,7 +181,7 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
             alignItems: 'center',
           }}
         >
-          <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
             Ahora no
           </Text>
         </TouchableOpacity>

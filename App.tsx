@@ -1,6 +1,6 @@
 import React, { useEffect, useState, createRef } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { NavigationContainer, useNavigationState } from '@react-navigation/native';
+import { NavigationContainer, useNavigationState, type NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -23,6 +23,7 @@ import NotificationPermissionScreen from './src/screens/NotificationPermissionSc
 import { colors } from './src/theme';
 import { MainTabs } from './src/components/GlassTabBar';
 import { FloatingActionButton } from './src/components/FloatingActionButton';
+import type { RootStackParamList } from './src/types/navigation';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,7 +31,7 @@ const RootStack = createNativeStackNavigator();
 
 const ONBOARDING_KEY = 'hasSeenOnboarding';
 
-const rootNavigationRef = createRef<any>();
+const rootNavigationRef = createRef<NavigationContainerRef<RootStackParamList>>();
 
 function AppContent() {
   // Get the root navigation state (which includes the tab navigator state)
