@@ -31,6 +31,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-19 | Validación ISO real de fechas (400 vs 500) | Agosto 2026 | Confirmada |
 | DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | En curso (ver hallazgo IDOR en migrate) |
 | DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada |
+| DT-22 | GitHub: protección de ramas y gestión de herramientas del repo | Agosto 2026 | Confirmada |
 
 # Decisiones detalladas
 
@@ -217,6 +218,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | Atómico y el incremento depende de la transición real, no de la llegada de la request. | |
 | **Alternativas descartadas** | — | |
 | **Consecuencias** | Pendiente de implementar (issue #71 para `develop2`). El `runIdempotent` del #82 solo protege replay con misma key; no cubre keys distintas ni dos dispositivos. | |
+
+---
+
+## DT-22 GitHub: protección de ramas y gestión de herramientas del repo
+*Agosto 2026 — Housekeeping del repo*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | Las convenciones de Git (§5/§7 de CONVENCIONES.md) dependían de disciplina manual: `main` y `develop` sin protección, sin Dependabot, sin milestones ni releases, y sin verificación de secrets. El repo es público. | |
+| **Decisión** | Activar: (1) branch protection en `main` y `develop` (PR obligatorio + 1 aprobación + linear history + force-push/borrado bloqueado, admins incluidos; sin status checks hasta que CI #90 mergee); (2) Dependabot semanal (`npm` + `github-actions`); (3) vulnerability alerts, Dependabot security updates, secret scanning y push protection; (4) issue forms (`bug_report.yml`, `feature_request.yml`); (5) milestones E1-E3 y releases por entrega (tag `entrega-1` ya publicado). Rollback documentado en CONVENCIONES §7.10. | |
+| **Razonamiento** | Enforcear convenciones existentes sin fricción adicional para el flujo normal, y proteger un repo público. El review ya era regla del equipo (§7.6), ahora GitHub lo exige. | |
+| **Alternativas descartadas** | Seguir con convención manual (fracasa en el largo plazo); esperar a tener CI para proteger las ramas (pérdida de valor inmediato); habilitar secret scanning por API (no existe endpoint REST, solo UI). | |
+| **Consecuencias** | Ningún integrante (ni admin) puede pushear directo a `main`/`develop`. Dependabot solo escanea la default branch (`main`): las deps del backend en `develop2` quedan sin cobertura hasta la unificación. Al mergear la #90, marcar los checks del CI como required. | |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.1 — Agosto 2026*
 

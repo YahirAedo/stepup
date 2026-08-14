@@ -245,6 +245,11 @@ develop     ← Base para feature branches
 feature/*   ← Una rama por cambio
 ```
 
+> **Protección activa:** desde el 13/08/2026 `main` y `develop` tienen branch
+> protection en GitHub: PR obligatorio + 1 aprobación + linear history, sin
+> force-push ni commits directos (incluye admins). Los status checks de CI se
+> agregan como required al mergear la issue #90. Ver §7.10.
+
 ### 5.2 Ciclo de un cambio
 
 1. `git checkout develop && git pull`
@@ -313,13 +318,16 @@ develop2    ← TRANSIORIO: backend (E2) mientras no esté integrado a develop.
 - Issue de **frontend** → rama desde `develop` → PR a `develop`.
 - `main` nunca recibe commits directos.
 
+> `main` y `develop` están protegidos en GitHub: PR obligatorio + 1 aprobación +
+> linear history, sin force-push ni commits directos (ni admin).
+
 ### 7.2 Cómo se toma una issue (pull rule)
 
 - Cualquier integrante o agente puede tomar una issue **abierta** y **sin assignee**.
 - Al tomarla, se **auto-asigna** (assignee en GitHub). No hace falta comentario.
 - Labels: se usan las **correspondientes al tipo** (`bug`, `backend`, `frontend`,
-  `auth`, `database`, `docs`, `chore`, `refactor`, `feature`, `epic`, `prd`).
-  No se usa `ready-for-agent`.
+  `auth`, `database`, `docs`, `chore`, `refactor`, `feature`, `epic`, `prd`,
+  `testing`, `ci`). No se usa `ready-for-agent`.
 
 ### 7.3 Rama y punto de partida
 
@@ -366,6 +374,10 @@ git checkout -b feat/78-pantalla-x
 3. La issue se cierra con `Closes #N` (automatizado por CI al mergear a
    `develop`; al mergear a `develop2` el PR **no** se cierra solo, se cierra
    manualmente o al integrar).
+4. La aprobación de 1 integrante la exige GitHub (branch protection), no solo la
+   convención: sin la aprobación el merge queda bloqueado.
+5. Los status checks de CI (lint/typecheck/test) se activan como required al
+   mergear la issue #90. Hasta entonces no hay checks obligatorios.
 
 ### 7.7 Integración `develop2` → `develop`
 
@@ -404,6 +416,39 @@ momento actual del repo:
 Regla de oro: **los docs se actualizan DENTRO de la rama del PR** (son archivos
 del cambio, no un post-proceso), o en un commit `docs:` inmediatamente después
 del merge. Un PR que cambia el backend y no toca ni PRD ni contexto se rechaza.
+
+### 7.10 Gestión del repo en GitHub (activada el 13/08/2026)
+
+Herramientas de GitHub activadas y cómo afectan el flujo:
+
+- **Branch protection** en `main` y `develop`: PR obligatorio + 1 aprobación +
+  linear history; force-push y commits directos bloqueados (incluye admins).
+  Los status checks del CI se agregan como required al mergear la issue #90.
+- **Dependabot** (`.github/dependabot.yml`): PRs semanales de updates de `npm` y
+  `github-actions`. ⚠️ Solo escanea la default branch (`main`): las dependencias
+  del backend en `develop2` no quedan cubiertas hasta la unificación.
+- **Seguridad**: vulnerability alerts, Dependabot security updates, secret
+  scanning y push protection activos. Push protection bloquea el push si se
+  intenta commitear un secret.
+- **Issue forms**: `.github/ISSUE_TEMPLATE/` (`bug_report.yml` +
+  `feature_request.yml`) reemplazan el single-file. Al crear una issue se elige
+  el tipo de plantilla.
+- **Milestones**: `Entrega 1` (cerrada), `Entrega 2` (18/08), `Entrega 3`. Cada
+  issue se asigna al milestone de su entrega.
+- **Releases**: al cerrar una entrega se publica un release desde el tag (ej.
+  `entrega-1`) con notas. La convención sigue siendo: merge a `main` + tag.
+
+Rollback (volver al estado anterior si algo se rompe):
+
+```bash
+gh api -X DELETE repos/YahirAedo/stepup/branches/{main,develop}/protection
+gh api -X DELETE repos/YahirAedo/stepup/vulnerability-alerts
+gh api -X DELETE repos/YahirAedo/stepup/automated-security-fixes
+gh api -X DELETE repos/YahirAedo/stepup/milestones/{1,2,3}
+gh release delete entrega-1
+# revertir los archivos del repo (dependabot.yml, ISSUE_TEMPLATE/, SECURITY.md, .gitattributes):
+git revert d2c8138
+```
 
 ---
 

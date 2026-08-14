@@ -275,6 +275,7 @@ Todo el código de la sección anterior. Ya está hecho, listo para copiar al re
 | DT-13 | Diseño visual: Sistema Zenith Vitality (glassmorphism, paleta verde/naranja/azul) | En curso (E2) |
 | DT-14 | Fuentes: Manrope (títulos) + Plus Jakarta Sans (cuerpo) vía @expo-google-fonts | En curso (E2) |
 | DT-15 | Navegación: GlassTabBar flotante tipo glassmorph con 3-4 tabs | En curso (E2) |
+| DT-16 | Gestión de GitHub: protección de ramas (main/develop), Dependabot, milestones y releases por entrega | Confirmada (Agosto 2026) |
 
 ---
 
@@ -339,7 +340,10 @@ refactor: separar logica del timer en TimerService
 chore: instalar expo-sqlite y configurar
 ```
 
-Al cerrar cada entrega: merge develop → main, crear tag (ej: v1.0-E1, v2.0-E2).
+Al cerrar cada entrega: merge develop → main, crear tag (ej: v1.0-E1, v2.0-E2)
+y publicar el release correspondiente con notas (ver release `entrega-1`). Las
+issues de cada entrega se agrupan en su milestone (E1/E2/E3) — ver DT-16 y
+CONVENCIONES §7.10.
 
 ---
 
