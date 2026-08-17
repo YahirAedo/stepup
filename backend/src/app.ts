@@ -6,6 +6,7 @@ import { progressRoutes } from './routes/progress.routes';
 import { authRoutes } from './routes/auth.routes';
 import { syncRoutes } from './routes/sync.routes';
 import { requireAuth } from './middleware/auth';
+import { errorHandler } from './middleware/error-handler';
 
 export function createApp() {
   const app = express();
@@ -26,6 +27,8 @@ export function createApp() {
   app.use('/api/steps', requireAuth, stepRoutes);
   app.use('/api/progress', requireAuth, progressRoutes);
   app.use('/api/sync', syncRoutes);
+
+  app.use(errorHandler);
 
   return app;
 }

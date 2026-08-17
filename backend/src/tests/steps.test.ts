@@ -79,6 +79,16 @@ describe('API de pasos — ejecución y orden', () => {
     expect(res.status).toBe(404);
   });
 
+  it('PUT /api/steps/:id con body vacío devuelve 400', async () => {
+    const task = await createTask(token, 'Tarea');
+    const step = await addStep(token, task.id, 'Paso');
+
+    const res = await request(app).put(`/api/steps/${step.id}`).set(authHeader(token)).send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe enviar al menos un campo para actualizar');
+  });
+
   it('PUT /api/steps/reorder reordena los pasos', async () => {
     const task = await createTask(token, 'Tarea');
     const stepA = await addStep(token, task.id, 'A');

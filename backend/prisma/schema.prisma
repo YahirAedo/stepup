@@ -63,6 +63,9 @@ model Step {
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
+  @@index([taskId, orderIndex])
+  @@index([taskId, status])
+  @@index([taskId, updatedAt])
   @@map("steps")
 }
 

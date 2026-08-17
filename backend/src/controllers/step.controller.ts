@@ -113,7 +113,7 @@ export class StepController {
           body: req.body,
         },
         async () => {
-          const payload = await this.stepService.completeStep(userId, id);
+          const payload = await this.stepService.completeStep(userId, id, req.body);
           return { statusCode: 200, responseBody: JSON.stringify(payload) };
         },
       );

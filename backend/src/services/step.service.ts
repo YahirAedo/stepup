@@ -5,6 +5,7 @@ import {
   createStepToTaskSchema,
   updateStepSchema,
   reorderStepsSchema,
+  completeStepSchema,
 } from '../validations/schemas';
 import { prisma, Db } from '../config/prisma';
 
@@ -66,7 +67,7 @@ export class StepService {
     await this.stepRepo.reorder(userId, data.taskId, data.orderedIds);
   }
 
-  async completeStep(userId: string, stepId: string) {
+  async completeStep(userId: string, stepId: string, input?: unknown) {
     const step = await this.stepRepo.findById(userId, stepId);
     if (!step) {
       throw new Error('STEP_NOT_FOUND');
@@ -76,11 +77,13 @@ export class StepService {
       throw new Error('STEP_ALREADY_COMPLETED');
     }
 
+    const data = completeStepSchema.parse(input);
+    const todayStr = data?.date ?? new Date().toISOString().split('T')[0];
+
     // 1. Marcar el paso como completado
     await this.stepRepo.completeStep(userId, stepId);
 
     // 2. Incrementar métrica diaria (idempotente por fecha y usuario)
-    const todayStr = new Date().toISOString().split('T')[0];
     await this.stepRepo.upsertDailyProgress(userId, todayStr);
 
     // 3. Buscar el próximo paso pendiente para esa tarea

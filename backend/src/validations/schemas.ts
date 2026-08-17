@@ -48,10 +48,16 @@ export const createTaskSchema = z.object({
   dueDate: parseableDate,
 });
 
-export const updateTaskSchema = z.object({
-  name: requiredName.optional(),
-  dueDate: parseableDate,
-});
+function hasAtLeastOneField(value: Record<string, unknown>): boolean {
+  return Object.keys(value).length > 0;
+}
+
+export const updateTaskSchema = z
+  .object({
+    name: requiredName.optional(),
+    dueDate: parseableDate,
+  })
+  .refine(hasAtLeastOneField, { message: 'Debe enviar al menos un campo para actualizar' });
 
 export const createStepToTaskSchema = z.object({
   name: requiredName,
@@ -67,15 +73,26 @@ export const createStepSchema = createStepToTaskSchema.extend({
   taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
 });
 
-export const updateStepSchema = z.object({
-  name: requiredName.optional(),
-  durationMin: z
-    .number({ error: 'durationMin debe ser un número' })
-    .int('durationMin debe ser un número entero')
-    .positive('durationMin debe ser mayor a 0')
-    .nullable()
-    .optional(),
-});
+export const updateStepSchema = z
+  .object({
+    name: requiredName.optional(),
+    durationMin: z
+      .number({ error: 'durationMin debe ser un número' })
+      .int('durationMin debe ser un número entero')
+      .positive('durationMin debe ser mayor a 0')
+      .nullable()
+      .optional(),
+  })
+  .refine(hasAtLeastOneField, { message: 'Debe enviar al menos un campo para actualizar' });
+
+export const completeStepSchema = z
+  .object({
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato YYYY-MM-DD')
+      .optional(),
+  })
+  .optional();
 
 export const reorderStepsSchema = z.object({
   taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),

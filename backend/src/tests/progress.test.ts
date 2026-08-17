@@ -43,4 +43,34 @@ describe('API de progreso diario — métricas', () => {
     const res = await request(app).get('/api/progress').set(authHeader(token));
     expect(res.body).toEqual([]);
   });
+
+  it('completeStep acepta la fecha local del día enviada por el cliente', async () => {
+    const task = await createTask(token, 'Tarea');
+    const step = await addStep(token, task.id, 'Paso');
+
+    const res = await request(app)
+      .patch(`/api/steps/${step.id}/complete`)
+      .set(authHeader(token))
+      .send({ date: '2026-08-17' });
+
+    expect(res.status).toBe(200);
+
+    const progress = await request(app).get('/api/progress').set(authHeader(token));
+    expect(progress.body).toEqual([
+      { id: expect.any(Number), userId: expect.any(String), date: '2026-08-17', stepsCompleted: 1 },
+    ]);
+  });
+
+  it('completeStep con fecha mal formada devuelve 400', async () => {
+    const task = await createTask(token, 'Tarea');
+    const step = await addStep(token, task.id, 'Paso');
+
+    const res = await request(app)
+      .patch(`/api/steps/${step.id}/complete`)
+      .set(authHeader(token))
+      .send({ date: '17-08-2026' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('La fecha debe tener formato YYYY-MM-DD');
+  });
 });

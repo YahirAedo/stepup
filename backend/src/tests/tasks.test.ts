@@ -93,6 +93,15 @@ describe('API de tareas — invariante de negocio', () => {
     expect(res.body.name).toBe('Renombrada');
   });
 
+  it('PUT /api/tasks/:id con body vacío devuelve 400', async () => {
+    const task = await createTask(token, 'Tarea');
+
+    const res = await request(app).put(`/api/tasks/${task.id}`).set(authHeader(token)).send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe enviar al menos un campo para actualizar');
+  });
+
   it('GET /api/tasks/:taskId/steps devuelve los pasos en orden (nested)', async () => {
     const task = await createTask(token, 'Tarea anidada');
     await addStep(token, task.id, 'Primero');
