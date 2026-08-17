@@ -17,6 +17,10 @@ const KNOWN_MESSAGES: Record<string, { status: number; message: string }> = {
     message: 'El registro pertenece a otro usuario',
   },
   INVALID_SINCE: { status: 400, message: 'El parámetro since no es una fecha válida' },
+  INVALID_REORDER: {
+    status: 400,
+    message: 'orderedIds debe ser una permutación exacta de los pasos de la tarea',
+  },
 };
 
 export function handleError(res: Response, error: unknown) {

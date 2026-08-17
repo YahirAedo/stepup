@@ -73,4 +73,18 @@ describe('API de progreso diario — métricas', () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('La fecha debe tener formato YYYY-MM-DD');
   });
+
+  it('completar dos veces en carrera incrementa daily_progress una sola vez', async () => {
+    const task = await createTask(token, 'Tarea');
+    const step = await addStep(token, task.id, 'Paso');
+
+    await Promise.all([
+      request(app).patch(`/api/steps/${step.id}/complete`).set(authHeader(token)).send({}),
+      request(app).patch(`/api/steps/${step.id}/complete`).set(authHeader(token)).send({}),
+    ]);
+
+    const progress = await request(app).get('/api/progress').set(authHeader(token));
+    expect(progress.body).toHaveLength(1);
+    expect(progress.body[0].stepsCompleted).toBe(1);
+  });
 });

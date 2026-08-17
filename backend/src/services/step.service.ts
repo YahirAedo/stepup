@@ -23,16 +23,21 @@ export class StepService {
 
   async addStepToTask(userId: string, taskId: string, input: unknown) {
     const data = createStepToTaskSchema.parse(input);
-    const task = await this.taskRepo.findById(userId, taskId);
-    if (!task) {
-      throw new Error('TASK_NOT_FOUND');
-    }
-    const maxOrderIndex = await this.stepRepo.getMaxOrderIndex(userId, taskId);
-    return this.stepRepo.create({
-      taskId,
-      name: data.name,
-      durationMin: data.durationMin ?? null,
-      orderIndex: maxOrderIndex + 1,
+    return prisma.$transaction(async (tx) => {
+      const task = await this.taskRepo.findById(userId, taskId, tx);
+      if (!task) {
+        throw new Error('TASK_NOT_FOUND');
+      }
+      const maxOrderIndex = await this.stepRepo.getMaxOrderIndex(userId, taskId, tx);
+      return this.stepRepo.create(
+        {
+          taskId,
+          name: data.name,
+          durationMin: data.durationMin ?? null,
+          orderIndex: maxOrderIndex + 1,
+        },
+        tx,
+      );
     });
   }
 
@@ -64,6 +69,18 @@ export class StepService {
 
   async reorder(userId: string, input: unknown) {
     const data = reorderStepsSchema.parse(input);
+    const current = await this.stepRepo.findByTask(userId, data.taskId);
+    const currentIds = current.map((step) => step.id).sort();
+    const orderedIds = [...data.orderedIds].sort();
+
+    const isExactPermutation =
+      currentIds.length === orderedIds.length &&
+      currentIds.every((id, index) => id === orderedIds[index]);
+
+    if (!isExactPermutation) {
+      throw new Error('INVALID_REORDER');
+    }
+
     await this.stepRepo.reorder(userId, data.taskId, data.orderedIds);
   }
 
@@ -80,25 +97,30 @@ export class StepService {
     const data = completeStepSchema.parse(input);
     const todayStr = data?.date ?? new Date().toISOString().split('T')[0];
 
-    // 1. Marcar el paso como completado
-    await this.stepRepo.completeStep(userId, stepId);
-
-    // 2. Incrementar métrica diaria (idempotente por fecha y usuario)
-    await this.stepRepo.upsertDailyProgress(userId, todayStr);
-
-    // 3. Buscar el próximo paso pendiente para esa tarea
-    const nextStep = await this.stepRepo.findNextPending(userId, step.taskId);
-    let taskCompleted = false;
-
-    // 4. Si no quedan pasos pendientes, cerrar la tarea automáticamente
-    if (!nextStep) {
-      const pendingCount = await this.taskRepo.findPendingStepsCount(userId, step.taskId);
-      if (pendingCount === 0) {
-        await this.taskRepo.completeTask(userId, step.taskId);
-        taskCompleted = true;
+    return prisma.$transaction(async (tx) => {
+      // 1. Marcar el paso como completado (update condicional: solo si sigue pending)
+      const marked = await this.stepRepo.completeStep(userId, stepId, tx);
+      if (marked.count === 0) {
+        throw new Error('STEP_ALREADY_COMPLETED');
       }
-    }
 
-    return { nextStep, taskCompleted };
+      // 2. Incrementar métrica diaria (idempotente por fecha y usuario)
+      await this.stepRepo.upsertDailyProgress(userId, todayStr, tx);
+
+      // 3. Buscar el próximo paso pendiente para esa tarea
+      const nextStep = await this.stepRepo.findNextPending(userId, step.taskId, tx);
+      let taskCompleted = false;
+
+      // 4. Si no quedan pasos pendientes, cerrar la tarea automáticamente
+      if (!nextStep) {
+        const pendingCount = await this.taskRepo.findPendingStepsCount(userId, step.taskId, tx);
+        if (pendingCount === 0) {
+          await this.taskRepo.completeTask(userId, step.taskId, tx);
+          taskCompleted = true;
+        }
+      }
+
+      return { nextStep, taskCompleted };
+    });
   }
 }

@@ -100,7 +100,10 @@ export const reorderStepsSchema = z.object({
     .array(z.string().uuid('orderedIds debe contener UUIDs válidos'), {
       error: 'orderedIds debe ser un array',
     })
-    .min(1, 'orderedIds no puede estar vacío'),
+    .min(1, 'orderedIds no puede estar vacío')
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: 'orderedIds no puede contener duplicados',
+    }),
 });
 
 export const registerSchema = z.object({

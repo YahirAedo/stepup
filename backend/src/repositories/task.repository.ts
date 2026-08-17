@@ -7,8 +7,8 @@ export class TaskRepository {
     });
   }
 
-  async findById(userId: string, id: string) {
-    return prisma.task.findFirst({
+  async findById(userId: string, id: string, db: Db = prisma) {
+    return db.task.findFirst({
       where: { id, userId },
       include: { steps: { orderBy: { orderIndex: 'asc' } } },
     });
@@ -46,14 +46,14 @@ export class TaskRepository {
     return prisma.task.delete({ where: { id, userId } });
   }
 
-  async findPendingStepsCount(userId: string, taskId: string) {
-    return prisma.step.count({
+  async findPendingStepsCount(userId: string, taskId: string, db: Db = prisma) {
+    return db.step.count({
       where: { taskId, status: 'pending', task: { userId } },
     });
   }
 
-  async completeTask(userId: string, id: string) {
-    return prisma.task.update({
+  async completeTask(userId: string, id: string, db: Db = prisma) {
+    return db.task.update({
       where: { id, userId },
       data: { status: 'completed', completedAt: new Date() },
     });

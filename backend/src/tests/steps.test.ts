@@ -167,22 +167,72 @@ describe('API de pasos — ejecución y orden', () => {
     expect(res.status).toBe(404);
   });
 
-  it('reorder sobre una tarea ajena no altera el orden real', async () => {
+  it('reorder con ids de una tarea ajena devuelve 400', async () => {
     const other = await registerUser('Otro', 'otro-reorder@stepup.app');
     const task = await createTask(token, 'Tarea de A');
     const stepA = await addStep(token, task.id, 'A');
     const stepB = await addStep(token, task.id, 'B');
 
-    await request(app)
+    const res = await request(app)
       .put('/api/steps/reorder')
       .set(authHeader(other.token))
-      .send({ taskId: task.id, orderedIds: [stepB.id, stepA.id] })
-      .expect(200);
+      .send({ taskId: task.id, orderedIds: [stepB.id, stepA.id] });
 
-    const steps = (
-      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
-    ).body;
-    expect(steps[0].name).toBe('A');
-    expect(steps[1].name).toBe('B');
+    expect(res.status).toBe(400);
+  });
+
+  it('reorder con subset (faltan pasos) devuelve 400', async () => {
+    const task = await createTask(token, 'Tarea');
+    const stepA = await addStep(token, task.id, 'A');
+    const stepB = await addStep(token, task.id, 'B');
+
+    const res = await request(app)
+      .put('/api/steps/reorder')
+      .set(authHeader(token))
+      .send({ taskId: task.id, orderedIds: [stepA.id] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('orderedIds debe ser una permutación exacta de los pasos de la tarea');
+  });
+
+  it('reorder con ids duplicados devuelve 400', async () => {
+    const task = await createTask(token, 'Tarea');
+    const stepA = await addStep(token, task.id, 'A');
+    const stepB = await addStep(token, task.id, 'B');
+
+    const res = await request(app)
+      .put('/api/steps/reorder')
+      .set(authHeader(token))
+      .send({ taskId: task.id, orderedIds: [stepA.id, stepA.id] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('orderedIds no puede contener duplicados');
+  });
+
+  it('reorder con un id ajeno a la tarea devuelve 400', async () => {
+    const task = await createTask(token, 'Tarea');
+    const stepA = await addStep(token, task.id, 'A');
+    const stepB = await addStep(token, task.id, 'B');
+
+    const res = await request(app)
+      .put('/api/steps/reorder')
+      .set(authHeader(token))
+      .send({ taskId: task.id, orderedIds: [stepA.id, '00000000-0000-4000-8000-000000000000'] });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('dos creates de step concurrentes no colisionan en orderIndex', async () => {
+    const task = await createTask(token, 'Tarea concurrente');
+
+    const [a, b] = await Promise.all([
+      request(app).post(`/api/tasks/${task.id}/steps`).set(authHeader(token)).send({ name: 'A' }),
+      request(app).post(`/api/tasks/${task.id}/steps`).set(authHeader(token)).send({ name: 'B' }),
+    ]);
+
+    expect(a.status).toBe(201);
+    expect(b.status).toBe(201);
+    expect(a.body.orderIndex).not.toBe(b.body.orderIndex);
+    expect([a.body.orderIndex, b.body.orderIndex].sort()).toEqual([0, 1]);
   });
 });
