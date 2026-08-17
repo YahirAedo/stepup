@@ -2,9 +2,46 @@ import { z } from 'zod';
 
 const requiredName = z.string({ error: 'El nombre es obligatorio' }).min(1, 'El nombre es obligatorio');
 
-const isoDateTime = z.string({ error: 'Debe ser un timestamp ISO' }).min(1, 'Debe ser un timestamp ISO');
+export const AUTH_PASSWORD_MIN = 8;
+export const AUTH_PASSWORD_MAX_BYTES = 72;
+export const AUTH_NAME_MAX = 120;
+export const AUTH_EMAIL_MAX = 254;
 
-const parseableDate = z.string().nullable().optional();
+const authName = z
+  .string({ error: 'El nombre es obligatorio' })
+  .trim()
+  .min(1, 'El nombre es obligatorio')
+  .max(AUTH_NAME_MAX, `El nombre no puede superar ${AUTH_NAME_MAX} caracteres`);
+
+const authEmail = z
+  .string({ error: 'El email es obligatorio' })
+  .trim()
+  .max(AUTH_EMAIL_MAX, `El email no puede superar ${AUTH_EMAIL_MAX} caracteres`)
+  .email('El email es inválido');
+
+const authPassword = z
+  .string({ error: 'La contraseña es obligatoria' })
+  .min(AUTH_PASSWORD_MIN, 'Mínimo 8 caracteres')
+  .refine((value) => Buffer.byteLength(value, 'utf8') <= AUTH_PASSWORD_MAX_BYTES, {
+    message: 'La contraseña no puede superar 72 bytes',
+  });
+
+function isParseableIso(value: string): boolean {
+  return !Number.isNaN(Date.parse(value));
+}
+
+const isoDateTime = z
+  .string({ error: 'Debe ser un timestamp ISO' })
+  .min(1, 'Debe ser un timestamp ISO')
+  .refine(isParseableIso, { message: 'Debe ser un timestamp ISO válido' });
+
+const parseableDate = z
+  .string()
+  .nullable()
+  .optional()
+  .refine((value) => value == null || value === '' || isParseableIso(value), {
+    message: 'Debe ser un timestamp ISO válido',
+  });
 
 export const createTaskSchema = z.object({
   name: requiredName,
@@ -16,8 +53,7 @@ export const updateTaskSchema = z.object({
   dueDate: parseableDate,
 });
 
-export const createStepSchema = z.object({
-  taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
+export const createStepToTaskSchema = z.object({
   name: requiredName,
   durationMin: z
     .number({ error: 'durationMin debe ser un número' })
@@ -25,6 +61,10 @@ export const createStepSchema = z.object({
     .positive('durationMin debe ser mayor a 0')
     .nullable()
     .optional(),
+});
+
+export const createStepSchema = createStepToTaskSchema.extend({
+  taskId: z.string({ error: 'taskId debe ser un UUID válido' }).uuid('taskId debe ser un UUID válido'),
 });
 
 export const updateStepSchema = z.object({
@@ -47,13 +87,13 @@ export const reorderStepsSchema = z.object({
 });
 
 export const registerSchema = z.object({
-  name: requiredName,
-  email: z.string({ error: 'El email es obligatorio' }).email('El email es inválido'),
-  password: z.string({ error: 'La contraseña es obligatoria' }).min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  name: authName,
+  email: authEmail,
+  password: authPassword,
 });
 
 export const loginSchema = z.object({
-  email: z.string({ error: 'El email es obligatorio' }).email('El email es inválido'),
+  email: authEmail,
   password: z.string({ error: 'La contraseña es obligatoria' }).min(1, 'La contraseña es obligatoria'),
 });
 
@@ -108,9 +148,9 @@ export const syncPushSchema = z.object({
 });
 
 export const syncMigrateSchema = z.object({
-  name: requiredName,
-  email: z.string({ error: 'El email es obligatorio' }).email('El email es inválido'),
-  password: z.string({ error: 'La contraseña es obligatoria' }).min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  name: authName,
+  email: authEmail,
+  password: authPassword,
   tasks: z
     .array(
       z.object({

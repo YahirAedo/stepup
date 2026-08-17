@@ -148,6 +148,35 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(past.body.tasks[0].id).toBe(id);
   });
 
+  it('POST /api/sync/push con updatedAt inválido devuelve 400', async () => {
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ name: 'Sin timestamp', updatedAt: 'ayer' }], steps: [] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe ser un timestamp ISO válido');
+  });
+
+  it('POST /api/sync/push con dueDate inválida devuelve 400', async () => {
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [
+          {
+            name: 'Fecha rota',
+            updatedAt: new Date().toISOString(),
+            dueDate: '32/13/2026',
+          },
+        ],
+        steps: [],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe ser un timestamp ISO válido');
+  });
+
   it('GET /api/sync/pull con since inválido devuelve 400', async () => {
     const res = await request(app).get('/api/sync/pull?since=not-a-date').set(authHeader(token));
 
@@ -202,6 +231,32 @@ describe('API de sincronización — push, pull y migrate', () => {
     const list = await request(app).get('/api/tasks').set(authHeader(res.body.token));
     expect(list.body).toHaveLength(1);
     expect(list.body[0].name).toBe('Migrada');
+  });
+
+  it('POST /api/sync/migrate con password corta devuelve 400', async () => {
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Nuevo',
+      email: 'corta@stepup.app',
+      password: '1234567',
+      tasks: [],
+      steps: [],
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Mínimo 8 caracteres');
+  });
+
+  it('POST /api/sync/migrate recorta espacios del email', async () => {
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Nuevo',
+      email: '  migrado.trim@stepup.app  ',
+      password: 'secret123',
+      tasks: [],
+      steps: [],
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.user.email).toBe('migrado.trim@stepup.app');
   });
 
   it('POST /api/sync/migrate con email existente devuelve 409', async () => {

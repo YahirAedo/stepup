@@ -32,9 +32,9 @@ export async function createTask(token: string, name = 'Tarea de prueba') {
 
 export async function addStep(token: string, taskId: string, name = 'Paso', durationMin?: number) {
   const res = await request(app)
-    .post('/api/steps')
+    .post(`/api/tasks/${taskId}/steps`)
     .set(authHeader(token))
-    .send({ taskId, name, durationMin });
+    .send({ name, durationMin });
   expect(res.status).toBe(201);
   return res.body as {
     id: string;

@@ -41,7 +41,7 @@ export class StepController {
         {
           userId,
           key: req.idempotencyKey,
-          method: 'PATCH',
+          method: 'PUT',
           path: `/api/steps/${id}`,
           body: req.body,
         },

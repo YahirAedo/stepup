@@ -131,5 +131,5 @@ Nota: el código de B1 ya vive en `feature/backend-express-prisma-postgres` (anc
 ## Decisiones pendientes del equipo (no bloquean B1 — pertenecen a B3/B4)
 > B1 está cerrado: los criterios de aceptación del issue #17 se cumplen independientemente de estas decisiones.
 > Quedan anotadas para alinear el código ya mergeado con la spec si el equipo lo decide.
-- [ ] ¿`PUT` o `PATCH` para update (B3 usa PATCH hoy, spec dice PUT)?
-- [ ] ¿Rutas anidadas `/api/tasks/:taskId/steps` o planas `/api/steps?taskId=` (spec dice anidadas)?
+- [x] ¿`PUT` o `PATCH` para update (B3 usa PATCH hoy, spec dice PUT)? → **PUT** (resuelto en B3, rama `feature/b3-task-step-crud`, 12/08/2026)
+- [x] ¿Rutas anidadas `/api/tasks/:taskId/steps` o planas `/api/steps?taskId=` (spec dice anidadas)? → **Anidadas como primarias, planas como aliases** (resuelto en B3, rama `feature/b3-task-step-crud`, 12/08/2026)

@@ -112,11 +112,15 @@ export async function getLastSyncAt(db: MigrationDb): Promise<string | null> {
 }
 
 export async function setLastSyncAt(db: MigrationDb, iso: string): Promise<void> {
-  await db.runAsync(
-    `INSERT INTO sync_meta (id, last_sync_at) VALUES (1, ?)
-     ON CONFLICT(id) DO UPDATE SET last_sync_at = excluded.last_sync_at`,
-    [iso],
-  );
+  try {
+    await db.runAsync(
+      `INSERT INTO sync_meta (id, last_sync_at) VALUES (1, ?)
+       ON CONFLICT(id) DO UPDATE SET last_sync_at = excluded.last_sync_at`,
+      [iso],
+    );
+  } catch (err) {
+    if (__DEV__) console.warn('[sync] setLastSyncAt failed (non-critical):', err);
+  }
 }
 
 export async function getTaskIdByServerId(db: MigrationDb, serverId: string): Promise<number | null> {

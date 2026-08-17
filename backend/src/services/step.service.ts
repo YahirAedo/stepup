@@ -1,6 +1,11 @@
 import { StepRepository } from '../repositories/step.repository';
 import { TaskRepository } from '../repositories/task.repository';
-import { createStepSchema, updateStepSchema, reorderStepsSchema } from '../validations/schemas';
+import {
+  createStepSchema,
+  createStepToTaskSchema,
+  updateStepSchema,
+  reorderStepsSchema,
+} from '../validations/schemas';
 import { prisma, Db } from '../config/prisma';
 
 export class StepService {
@@ -9,13 +14,21 @@ export class StepService {
 
   async addStep(userId: string, input: unknown) {
     const data = createStepSchema.parse(input);
-    const task = await this.taskRepo.findById(userId, data.taskId);
+    return this.addStepToTask(userId, data.taskId, {
+      name: data.name,
+      durationMin: data.durationMin,
+    });
+  }
+
+  async addStepToTask(userId: string, taskId: string, input: unknown) {
+    const data = createStepToTaskSchema.parse(input);
+    const task = await this.taskRepo.findById(userId, taskId);
     if (!task) {
       throw new Error('TASK_NOT_FOUND');
     }
-    const maxOrderIndex = await this.stepRepo.getMaxOrderIndex(userId, data.taskId);
+    const maxOrderIndex = await this.stepRepo.getMaxOrderIndex(userId, taskId);
     return this.stepRepo.create({
-      taskId: data.taskId,
+      taskId,
       name: data.name,
       durationMin: data.durationMin ?? null,
       orderIndex: maxOrderIndex + 1,
