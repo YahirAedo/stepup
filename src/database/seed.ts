@@ -2,7 +2,13 @@ import type { MigrationDb } from './migrations';
 
 export async function runSeed(db: MigrationDb): Promise<void> {
   const rows = await db.getAllAsync<{ count: number }>('SELECT COUNT(*) AS count FROM tasks', []);
-  if ((rows[0]?.count ?? 0) > 0) return;
+  const count = rows[0]?.count ?? 0;
+  console.log('[SEED] tasks count:', count);
+  if (count > 0) {
+    console.log('[SEED] skipping — DB already has data');
+    return;
+  }
+  console.log('[SEED] seeding 4 tasks...');
 
   const now = new Date().toISOString();
 
