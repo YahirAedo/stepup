@@ -8,7 +8,7 @@ const taskController = new TaskController();
 router.get('/', taskController.list);
 router.get('/completed', taskController.completed);
 router.get('/:id', taskController.getById);
-router.post('/', taskController.create);
+router.post('/', requireIdempotencyKey, taskController.create);
 router.put('/:id', requireIdempotencyKey, taskController.update);
 router.patch('/:id/complete', requireIdempotencyKey, taskController.complete);
 router.delete('/:id', taskController.remove);

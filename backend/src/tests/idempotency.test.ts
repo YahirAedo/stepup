@@ -202,4 +202,131 @@ describe('Idempotencia segura en PUT (Idempotency-Key)', () => {
     expect(second.status).toBe(200);
     expect(second.body).toEqual(first.body);
   });
+
+  it('POST /api/tasks retry con la misma key no crea duplicado', async () => {
+    const first = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({ name: 'Solo una' });
+    const second = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({ name: 'Solo una' });
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(second.body).toEqual(first.body);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body).toHaveLength(1);
+  });
+
+  it('POST create de step (nested) retry con la misma key no crea duplicado', async () => {
+    const task = await createTask(token, 'Tarea con pasos');
+
+    const first = await request(app)
+      .post(`/api/tasks/${task.id}/steps`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({ name: 'Paso unico' });
+    const second = await request(app)
+      .post(`/api/tasks/${task.id}/steps`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({ name: 'Paso unico' });
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(second.body).toEqual(first.body);
+
+    const steps = (
+      await request(app).get(`/api/tasks/${task.id}/steps`).set(authHeader(token))
+    ).body;
+    expect(steps).toHaveLength(1);
+  });
+
+  it('PATCH complete de paso con la misma key hace replay y no 400', async () => {
+    const task = await createTask(token, 'Tarea');
+    const stepRes = await request(app)
+      .post(`/api/tasks/${task.id}/steps`)
+      .set(authHeader(token))
+      .send({ name: 'Paso' });
+    const stepId = stepRes.body.id;
+
+    const first = await request(app)
+      .patch(`/api/steps/${stepId}/complete`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({});
+    const second = await request(app)
+      .patch(`/api/steps/${stepId}/complete`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({});
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(second.body).toEqual(first.body);
+  });
+
+  it('PATCH complete de tarea con la misma key hace replay', async () => {
+    const task = await createTask(token, 'Sin pasos');
+
+    const first = await request(app)
+      .patch(`/api/tasks/${task.id}/complete`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({});
+    const second = await request(app)
+      .patch(`/api/tasks/${task.id}/complete`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({});
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(second.body).toEqual(first.body);
+  });
+
+  it('PUT reorder con la misma key no re-aplica el orden', async () => {
+    const task = await createTask(token, 'Tarea');
+    const stepA = await request(app)
+      .post(`/api/tasks/${task.id}/steps`)
+      .set(authHeader(token))
+      .send({ name: 'A' });
+    const stepB = await request(app)
+      .post(`/api/tasks/${task.id}/steps`)
+      .set(authHeader(token))
+      .send({ name: 'B' });
+
+    const body = { taskId: task.id, orderedIds: [stepB.body.id, stepA.body.id] };
+
+    const first = await request(app)
+      .put('/api/steps/reorder')
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send(body);
+    const second = await request(app)
+      .put('/api/steps/reorder')
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send(body);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(second.body).toEqual(first.body);
+  });
+
+  it('key no UUID en POST /api/tasks → 400', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .set('Idempotency-Key', 'no-soy-un-uuid')
+      .send({ name: 'x' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Idempotency-Key debe ser un UUID válido');
+  });
 });

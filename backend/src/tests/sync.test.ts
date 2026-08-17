@@ -18,6 +18,30 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(pull.status).toBe(401);
   });
 
+  it('POST /api/sync/push retry con la misma key no duplica datos', async () => {
+    const id = crypto.randomUUID();
+    const key = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const body = { tasks: [{ id, name: 'Tarea offline', updatedAt: new Date().toISOString() }], steps: [] };
+
+    const first = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .set('Idempotency-Key', key)
+      .send(body);
+    const second = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .set('Idempotency-Key', key)
+      .send(body);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(second.body).toEqual(first.body);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body).toHaveLength(1);
+  });
+
   it('POST /api/sync/push crea tareas nuevas y devuelve sus server ids', async () => {
     const id = crypto.randomUUID();
 
@@ -202,6 +226,27 @@ describe('API de sincronización — push, pull y migrate', () => {
     const list = await request(app).get('/api/tasks').set(authHeader(res.body.token));
     expect(list.body).toHaveLength(1);
     expect(list.body[0].name).toBe('Migrada');
+  });
+
+  it('POST /api/sync/migrate retry con la misma key replayea token y maps', async () => {
+    const key = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const now = new Date().toISOString();
+    const body = {
+      name: 'Retry User',
+      email: 'retry@stepup.app',
+      password: 'secret123',
+      tasks: [{ localId: 1, name: 'Migrada', updatedAt: now }],
+      steps: [],
+    };
+
+    const first = await request(app).post('/api/sync/migrate').set('Idempotency-Key', key).send(body);
+    const second = await request(app).post('/api/sync/migrate').set('Idempotency-Key', key).send(body);
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(second.body.token).toBe(first.body.token);
+    expect(second.body.taskMap).toEqual(first.body.taskMap);
+    expect(second.body.user.email).toBe('retry@stepup.app');
   });
 
   it('POST /api/sync/migrate con email existente devuelve 409', async () => {
