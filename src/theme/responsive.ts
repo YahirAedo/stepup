@@ -1,19 +1,42 @@
-import { Dimensions, useWindowDimensions } from 'react-native';
+import { Dimensions, Platform, useWindowDimensions } from 'react-native';
 
 /** Baseline de diseño: iPhone 11 (375pt de ancho). */
 const BASE_WIDTH = 375;
+
+/**
+ * Ancho máximo efectivo de layout en web.
+ *
+ * En web el viewport puede medir 600-1280px+ y `scale()` explotaría
+ * (elementos gigantes). Se limita el ancho usado para escalar al de una
+ * tablet, manteniendo proporciones coherentes en el preview web.
+ */
+const MAX_WEB_LAYOUT_WIDTH = 600;
+
+/**
+ * Ancho efectivo usado para escalar. En web se limita a
+ * `MAX_WEB_LAYOUT_WIDTH`; en native (Expo Go) se usa el ancho real.
+ */
+function effectiveLayoutWidth(width: number): number {
+  if (Platform.OS === 'web') {
+    return Math.min(width, MAX_WEB_LAYOUT_WIDTH);
+  }
+  return width;
+}
 
 /**
  * Escala lineal proporcional al ancho de pantalla.
  * Usar para tamaños absolutos que deben escalar con el dispositivo:
  * iconos decorativos, rings del timer, ilustraciones, checkmarks grandes.
  *
+ * En web el ancho efectivo se limita a `MAX_WEB_LAYOUT_WIDTH` (600) para que
+ * los elementos no se vuelvan gigantes con viewports de escritorio.
+ *
  * ```tsx
  * <View style={{ width: scale(224), height: scale(224) }} />
  * ```
  */
 export const scale = (size: number): number => {
-  return (Dimensions.get('window').width / BASE_WIDTH) * size;
+  return (effectiveLayoutWidth(Dimensions.get('window').width) / BASE_WIDTH) * size;
 };
 
 /**
@@ -59,9 +82,10 @@ export interface Responsive {
  */
 export function useResponsive(): Responsive {
   const { width } = useWindowDimensions();
+  const layoutWidth = effectiveLayoutWidth(width);
 
   return {
-    scale: (n: number) => (width / BASE_WIDTH) * n,
+    scale: (n: number) => (layoutWidth / BASE_WIDTH) * n,
     isSmall: width < 360,
     isMedium: width >= 360 && width < 600,
     isTablet: width >= 600,
