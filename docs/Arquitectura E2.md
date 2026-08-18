@@ -58,7 +58,7 @@ StepUp E2 extiende la arquitectura en 3 capas de E1 a 4 capas, agregando la capa
 1. **Presentación:** pantallas y componentes React Native con diseño Zenith Vitality. Gestiona la interacción del usuario.
 2. **Lógica de negocio (app):** servicios TypeScript con reglas del dominio. Se agregan SyncService, AuthService y ApiClient para operaciones online.
 3. **Datos locales:** SQLite mediante expo-sqlite. Se agregan columnas server_id, dirty y updated_at para sync.
-4. **Capa remota (nueva):** API REST en Node.js + Express + Prisma + PostgreSQL hosteada en Railway.
+4. **Capa remota (nueva):** API REST en Node.js + Express + Prisma + PostgreSQL hosteada en Railway. URL de producción: `https://stepup-backend-api-production.up.railway.app`.
 
 # 3. Stack Tecnológico
 

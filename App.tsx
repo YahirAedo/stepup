@@ -6,6 +6,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { storage } from './src/services/storage';
+import { startSyncLifecycle } from './src/services/syncLifecycle';
+import { loadSession, hasSession } from './src/services/session';
+import type { RootStackParamList } from './src/types/navigation';
 
 import {
   Manrope_800ExtraBold,
@@ -20,14 +23,15 @@ import {
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 import { colors } from './src/theme';
 import { MainTabs } from './src/components/GlassTabBar';
 import { FloatingActionButton } from './src/components/FloatingActionButton';
-import type { RootStackParamList } from './src/types/navigation';
 
 SplashScreen.preventAutoHideAsync();
 
-const RootStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const ONBOARDING_KEY = 'hasSeenOnboarding';
 
@@ -36,7 +40,7 @@ const rootNavigationRef = createRef<NavigationContainerRef<RootStackParamList>>(
 function AppContent() {
   // Get the root navigation state (which includes the tab navigator state)
   const navigationState = useNavigationState((state) => state);
-  
+
   // Find the MainTabs route and get its state
   const mainTabsRoute = navigationState?.routes.find((r) => r.name === 'MainTabs');
   const tabsState = mainTabsRoute?.state;
@@ -79,16 +83,30 @@ export default function App() {
     PlusJakartaSans_700Bold,
   });
 
-  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
+
+  useEffect(() => {
+    const stopSync = startSyncLifecycle();
+    return stopSync;
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-    storage.getItem(ONBOARDING_KEY).then((val) => {
-      if (mounted) {
-        setInitialRoute(val === 'true' ? 'MainTabs' : 'Onboarding1');
+    (async () => {
+      await loadSession();
+      const hasSeenOnboarding = await storage.getItem(ONBOARDING_KEY);
+      if (!mounted) return;
+      if (hasSession()) {
+        setInitialRoute('MainTabs');
+      } else if (hasSeenOnboarding !== 'true') {
+        setInitialRoute('Onboarding1');
+      } else {
+        setInitialRoute('Login');
       }
-    });
-    return () => { mounted = false; };
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -123,6 +141,8 @@ export default function App() {
           <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
           <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
           <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
+          <RootStack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="Register" component={RegisterScreen} />
           <RootStack.Screen name="MainTabs" component={AppContent} />
         </RootStack.Navigator>
       </NavigationContainer>

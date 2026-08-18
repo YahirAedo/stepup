@@ -309,17 +309,19 @@ Cuando un agente de IA genere código para este proyecto:
 
 ```
 main        ← Entrega final. Solo recibe merges desde develop.
-develop     ← Frontend (app RN). Rama base para issues de frontend.
-develop2    ← TRANSIORIO: backend (E2) mientras no esté integrado a develop.
-              En el futuro se unifica con develop y desaparece.
+develop     ← Rama base para issues de frontend y backend.
+feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripcion>
 ```
 
-- Issue de **backend** → rama desde `develop2` → PR a `develop2`.
+- Issue de **backend** → rama desde `develop` → PR a `develop`.
 - Issue de **frontend** → rama desde `develop` → PR a `develop`.
 - `main` nunca recibe commits directos.
 
 > `main` y `develop` están protegidos en GitHub: PR obligatorio + 1 aprobación +
 > linear history, sin force-push ni commits directos (ni admin).
+>
+> Nota: la rama `develop2` (backend E2) fue transitoria y quedó **eliminada** al
+> unificarse a `develop` (PR #121, issue #120, 18/08/2026).
 
 ### 7.2 Cómo se toma una issue (pull rule)
 
@@ -334,8 +336,8 @@ develop2    ← TRANSIORIO: backend (E2) mientras no esté integrado a develop.
 Formato: `feature/<tipo>/<numero>-<descripcion>` desde la rama correcta.
 
 ```bash
-# Backend (desde develop2)
-git checkout develop2 && git pull
+# Backend y frontend (desde develop)
+git checkout develop && git pull
 git checkout -b fix/67-idempotencia-push
 
 # Frontend (desde develop)
@@ -360,7 +362,7 @@ git checkout -b feat/78-pantalla-x
 
 1. Cumplir el template `.github/PULL_REQUEST_TEMPLATE.md` (Propósito, Issues
    relacionadas con `Closes #N`, Cambios, Prueba/Evidencia, Checklist pre-merge).
-2. PR a la rama correcta (backend → `develop2`, frontend → `develop`).
+2. PR a la rama correcta (backend y frontend → `develop`).
 3. Título con el número de issue: `fix: idempotencia real en push/migrate (#67)`.
 4. Body del template completo, incluyendo la **evidencia real** (tests corridos,
    endpoints probados, capturas para UI).
@@ -372,21 +374,18 @@ git checkout -b feat/78-pantalla-x
    puntos que **bloquean** hasta resolverse y responderse.
 2. Merge con **squash and merge** (la rama destino queda lineal).
 3. La issue se cierra con `Closes #N` (automatizado por CI al mergear a
-   `develop`; al mergear a `develop2` el PR **no** se cierra solo, se cierra
-   manualmente o al integrar).
+   `develop`).
 4. La aprobación de 1 integrante la exige GitHub (branch protection), no solo la
    convención: sin la aprobación el merge queda bloqueado.
 5. Los status checks de CI (lint/typecheck/test) se activan como required al
    mergear la issue #90. Hasta entonces no hay checks obligatorios.
 
-### 7.7 Integración `develop2` → `develop`
+### 7.7 Integración `develop2` → `develop` (completada)
 
-- La integración la hace **un integrante designado** en cada **checkpoint**
-  alcanzado (ej. al terminar un grupo de fixes) y **antes del cierre de E2**.
-- Estrategia: **squash de `develop2` → `develop` como PR único**, resolviendo
-  los conflictos conocidos (`App.tsx`, `theme`, `api.ts`) en la rama de
-  integración, no directo en `develop2` ni en ramas feature.
-- Después de la integración, `develop2` se **congela y se elimina**; las issues
+- La integración de `develop2` a `develop` se realizó el **18/08/2026** vía
+  **PR #121 (issue #120)**: squash como PR único, resolviendo los conflictos en
+  la rama de integración (`feature/chore/integrar-develop2-120`).
+- Después de la integración, `develop2` se **congeló y se eliminó**; las issues
   de backend nuevas van a `develop`.
 
 ### 7.8 Estados de una issue
@@ -399,7 +398,7 @@ git checkout -b feat/78-pantalla-x
 
 ### 7.9 Registro de avances (documentación del proyecto)
 
-Cada PR que se mergea (a `develop` o `develop2`) debe acompañarse del registro
+Cada PR que se mergea a `develop` debe acompañarse del registro
 del avance en la documentación del proyecto, para que los docs reflejen el
 momento actual del repo:
 
@@ -425,8 +424,8 @@ Herramientas de GitHub activadas y cómo afectan el flujo:
   linear history; force-push y commits directos bloqueados (incluye admins).
   Los status checks del CI se agregan como required al mergear la issue #90.
 - **Dependabot** (`.github/dependabot.yml`): PRs semanales de updates de `npm` y
-  `github-actions`. ⚠️ Solo escanea la default branch (`main`): las dependencias
-  del backend en `develop2` no quedan cubiertas hasta la unificación.
+  `github-actions`. Escanea la default branch (`main`); con el backend ya en
+  `develop` (PR #121), sus dependencias quedan cubiertas al mergear a `main`.
 - **Seguridad**: vulnerability alerts, Dependabot security updates, secret
   scanning y push protection activos. Push protection bloquea el push si se
   intenta commitear un secret.

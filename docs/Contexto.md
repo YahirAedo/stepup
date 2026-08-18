@@ -155,7 +155,12 @@ Datos (expo-sqlite via db.ts)
 
 ### Archivos de base de datos
 - `src/database/db.ts` — conexión singleton a SQLite, ejecuta migraciones al iniciar
-- `src/database/migrations.ts` — schema de las 3 tablas
+- `src/database/migrations.ts` — schema de las 3 tablas (sin datos)
+- `src/database/seed.ts` — datos de prueba SOLO para desarrollo, no se ejecuta al iniciar
+
+**Seed manual (desarrollo):** la app arranca con tablas vacías. Para poblar datos de prueba,
+ejecutar con la variable de entorno `EXPO_PUBLIC_SEED_DB=true` (ej. `$env:EXPO_PUBLIC_SEED_DB="true"; npx expo start`).
+El seed usa `INSERT OR IGNORE` y nunca borra datos existentes.
 
 ---
 
@@ -178,7 +183,8 @@ stepup/
 │   │   └── ProgressService.ts
 │   ├── database/
 │   │   ├── db.ts
-│   │   └── migrations.ts
+│   │   ├── migrations.ts
+│   │   └── seed.ts
 │   ├── components/       ← componentes UI reutilizables (a crear)
 │   └── types/
 │       └── index.ts      ← interfaces Task, Step, DailyProgress, etc.
@@ -218,13 +224,13 @@ stepup/
 - Carga de fuentes Manrope + Plus Jakarta Sans
 - **Avance:** Slice 7 (GlassTabBar + FAB + date picker) ya mergeado (#58), resposive scaling aplicado (#42-#46), Onboarding (#50), Perfil (#52). Quedan slices de polish/animaciones.
 
-**Track B — Backend (implementado, en fixing):**
+**Track B — Backend (implementado e integrado a `develop`):**
 - API REST en Node.js + Express + Prisma + PostgreSQL ✅
 - Autenticación JWT (registro + login) ✅
 - Sync offline-first híbrido (push/pull/migrate) ✅
 - CRUD de tasks y steps ✅
 - Hosting en Railway ✅
-- **Estado:** PRs abiertos a `develop2`: #78 (fechas ISO), #80 (JWT fail-closed), #81 (password 8), #82 (idempotencia real). Epics #64 + issues #65-#77 de endurecimiento. **`develop2` es transitorio:** cuando los fixes estén integrados se unifica con `develop` y desaparece.
+- **Estado:** fixes del epic #64 (issues #65-#77) mergeados a `develop2`. **Unificación:** `develop2` integrada a `develop` vía PR #121 (issue #120) y eliminada. Las issues de backend ahora van a `develop`.
 
 ### Sistema operativo de desarrollo
 **Windows**
@@ -312,23 +318,24 @@ Todo el código de la sección anterior. Ya está hecho, listo para copiar al re
 
 ```
 main        ← Entrega final, siempre estable. Solo recibe merges desde develop.
-develop     ← Frontend (app RN). Rama base para issues de frontend.
-develop2    ← TRANSIORIO: backend (E2). Se unifica con develop y desaparece.
+develop     ← Rama base para issues de frontend y backend.
 feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripcion>
 ```
+
+> `develop2` (backend E2) existió como rama transitoria hasta el 18/08/2026; fue
+> unificada a `develop` vía PR #121 (issue #120) y eliminada.
 
 **Flujo de trabajo (obligatorio, ver `docs/CONVENCIONES.md` §7):**
 1. Tomar una issue abierta sin assignee y **auto-asignarse** (pull rule).
 2. Crear rama desde la rama correcta:
-   - Backend → `git checkout develop2 && git pull && git checkout -b fix/67-idempotencia-push`
+   - Backend → `git checkout develop && git pull && git checkout -b fix/67-idempotencia-push`
    - Frontend → `git checkout develop && git pull && git checkout -b feat/78-pantalla-x`
 3. Hacer commits con formato convencional
 4. Push a origin
 5. Crear Pull Request a la rama correcta siguiendo `.github/PULL_REQUEST_TEMPLATE.md`
 6. Alguien más revisa y mergea con squash (nadie mergea su propio PR)
-7. (Backend) En cada checkpoint, un integrante designado integra `develop2` → `develop`; luego `develop2` se congela y se elimina
 
-**Regla de oro:** nunca commitear directo a `main` ni a `develop`/`develop2`. Todo cambio entra por `feature/*` → rama destino (según área) → (integración) → `main`.
+**Regla de oro:** nunca commitear directo a `main` ni a `develop`. Todo cambio entra por `feature/*` → rama destino (según área) → (integración) → `main`.
 
 **Formato de commits:**
 ```
@@ -433,20 +440,22 @@ El plan de migración está desglosado en 12 issues en GitHub (labels por tipo: 
 - [ ] **Slice 6:** Perfil + Insignias (issue #9)
 - [ ] **Slice 7:** GlassTabBar + reestructuración navegación (issue #10)
 - [ ] **Slice 8:** Animaciones y polish (issue #11)
-- [ ] **Slice 9:** Auth Flow — Login + Register (issue #13)
+- [x] **Slice 9:** Auth Flow — Login + Register (issue #13) — ver `docs/B2 - Auth flow checklist.md`
 - [ ] **Slice 10:** XP/Level + Notificaciones v2 (issue #12)
 - [ ] **Slice 11:** SyncConflictScreen (issue #14)
 
-### Track B — Backend (implementado, en fixing)
+### Track B — Backend
 - [x] Setup del proyecto Node.js + Express + TypeScript
 - [x] Configurar Prisma + PostgreSQL en Railway
 - [x] Endpoints de autenticación (register + login + JWT)
 - [x] Endpoints de tareas (CRUD)
 - [x] Endpoints de pasos (CRUD)
 - [x] Endpoints de sync (push + pull + migrate)
-- [x] Hosting funcionando en Railway
-- [ ] PRs #78-#82 de endurecimiento reviewados y mergeados a `develop2`
-- [ ] Integrar `develop2` → `develop` (checkpoint) y eliminar `develop2`
+- [x] Hosting funcionando en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
+- [x] B1 (issue #17) cerrado — ver `docs/B1 - Railway deploy checklist.md`
+- [x] B2 (issue #18) + Slice 9 (issue #13) cerrados — ver `docs/B2 - Auth flow checklist.md`
+- [x] PRs #78-#82 de endurecimiento reviewados y mergeados a `develop2` (epic #64, issues #65-#77)
+- [x] Integrar `develop2` → `develop` (checkpoint, PR #121 / issue #120) y eliminar `develop2`
 
 ### Problem discovery (13/08/2026)
 - Judgment Day del backend en `develop2` → epic #64 + issues #65-#77 (JWT fail-closed, password 8, idempotencia, migración segura, fechas ISO, completeStep transaccional, orderIndex, reorder, zona horaria, PATCH vacío, error middleware, índices).
