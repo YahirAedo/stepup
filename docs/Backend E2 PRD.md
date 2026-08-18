@@ -166,8 +166,44 @@ Módulos a testear:
 
 ## Further Notes
 
-- Backend hosteado en Railway (tier gratuito). URL base como env var en la app.
-- PostgreSQL provisionado desde Railway dashboard. Prisma Migrate corre en deploy.
+- Backend hosteado en Railway (tier gratuito). URL de producción: `https://stepup-backend-api-production.up.railway.app`. En la app se usa como `EXPO_PUBLIC_API_URL`.
+- PostgreSQL provisionado desde Railway dashboard. Prisma Migrate corre en deploy (`startCommand: npx prisma migrate deploy && node dist/server.js`).
 - Puerto via `PORT` env var (default 3000).
 - `JWT_SECRET` via env var, obligatorio y fail-closed: el servidor **no arranca** si falta o es un placeholder conocido (issue #65). En desarrollo hay que definir uno propio.
 - Pantallas de Login, Register y SyncConflict tienen prototipos en `stitch_stepup_design_system/` — implementar en la app.
+
+## Backend Cycle — proceso de ramas (B1 · B2 · Slice 9)
+
+### Flujo de Git aplicado en este ciclo
+
+- Base de integración: **`develop2`** (el equipo la adoptó como base diaria; `develop` quedó como base de la spec).
+- Regla: una rama `feature/*` por cambio, PR hacia `develop2`, y borrado de la rama tras el merge.
+- Las ramas del ciclo se crearon **encadenadas** (cada una desde el tip de la anterior) para arrastrar dependencias sin conflictos:
+  `feature/backend-express-prisma-postgres` → `backend-auth-sync` → `offline-first-sync` → `b1-finish` → `b2-auth-flow` → `docs/cierre-b2-slice9`.
+
+### Orden real de integración en `develop2` (historial verificado)
+
+| # | Rama mergeada | Merge commit | Contenido |
+|---|---------------|--------------|-----------|
+| 1 | `feature/backend-express-prisma-postgres` | `13cb2f5` | B1: scaffold backend Express + Prisma + Postgres |
+| 2 | `feature/backend-auth-sync` | `d7a2333` | B2+B3 backend: auth JWT, CRUD tareas/pasos, sync |
+| 3 | `feature/offline-first-sync` | `97d6bee` | B4 app-side: SyncService, sesión, SQLite sync |
+| 4 | `feature/b1-finish` | `431e584` | B1: `/api/health` + `railway.json` + env producción |
+| 5 | `feature/b2-auth-flow` (PR #55) | `41f71a6` | B2 UI + Slice 9: Login/Register, guard, logout |
+| 6 | `feature/docs/cierre-b2-slice9` (PR #56) | `d79209a` | Docs: checklist B2 + Slice 9 |
+
+### Mapa por issue
+
+| Issue | Rama(s) usadas | Commits clave | Estado |
+|-------|----------------|---------------|--------|
+| **#17 B1** (backend scaffold + Railway) | `feature/backend-express-prisma-postgres` (scaffold) + `feature/b1-finish` (deploy) | `ca0912d`, `ac9041e`, `2160630` | ✅ cerrado 2026-08-11 · ver `docs/B1 - Railway deploy checklist.md` |
+| **#18 B2** (auth flow backend + app) | backend: `feature/backend-auth-sync` · app: `feature/b2-auth-flow` | `01d9ec8`, `2b6c4c3` | ✅ cerrado 2026-08-11 · ver `docs/B2 - Auth flow checklist.md` |
+| **#13 Slice 9** (Login + Register) | `feature/b2-auth-flow` | `2b6c4c3` | ✅ cerrado 2026-08-11 · ver `docs/B2 - Auth flow checklist.md` |
+
+### Notas y lecciones del ciclo
+
+- El backend de B2 se construyó en `feature/backend-auth-sync` (mergeado antes); la UI de B2 + Slice 9 se construyó encima en `feature/b2-auth-flow` y se mergeó vía PR #55. Aunque eran issues distintos, se implementaron juntos porque las pantallas de auth no tienen sentido sin el backend.
+- PRs mergeados con `--delete-branch` (#55 y #56) borran la remota automáticamente. Los merges directos (13cb2f5…431e584) dejaron la rama en origin; se limpiaron a mano con `git push origin --delete`.
+- **Limpieza final:** todas las ramas feature propias fueron eliminadas (local + remoto). `develop2` es la única fuente de verdad del ciclo.
+- Detalle de cuenta: quien mergea y autoriza es la misma cuenta GitHub del repo, por lo que la PR no se puede aprobar desde `gh` (GitHub bloquea auto-review). No hay branch protection en `develop2`, así que el merge pasó igual.
+- Queda pendiente alinear `docs/CONVENCIONES.md` para que la base oficial de integración diga `develop2` y no `develop`.

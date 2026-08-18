@@ -140,6 +140,7 @@ import StepCompleteScreen from '../screens/StepCompleteScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BadgesScreen from '../screens/BadgesScreen';
+import SyncConflictScreen from '../screens/SyncConflictScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -182,6 +183,7 @@ function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="Badges" component={BadgesScreen} />
+      <Stack.Screen name="SyncConflict" component={SyncConflictScreen} />
     </Stack.Navigator>
   );
 }

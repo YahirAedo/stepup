@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
+import { AuthService } from '../services/AuthService';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -24,6 +25,11 @@ export default function ProfileScreen({ navigation }: Props) {
   const { scale: s } = useResponsive();
   const [defaultDuration, setDefaultDuration] = useState(10);
   const [notifications, setNotifications] = useState(true);
+
+  const handleLogout = async () => {
+    await AuthService.logout();
+    navigation.getParent()?.getParent()?.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -204,6 +210,11 @@ export default function ProfileScreen({ navigation }: Props) {
               <TouchableOpacity
                 key={row.label}
                 activeOpacity={0.6}
+                onPress={() => {
+                  if (row.label === 'Cerrar sesión') {
+                    void handleLogout();
+                  }
+                }}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -225,6 +236,30 @@ export default function ProfileScreen({ navigation }: Props) {
             ))}
           </View>
         </View>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('SyncConflict')}
+          activeOpacity={0.7}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            padding: spacing['stack-gap'],
+            backgroundColor: colors['surface-container-low'],
+            borderRadius: borderRadius.xl,
+          }}
+        >
+          <Text style={{ fontSize: 24 }}>🔄</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[typography['body-md'] as any, { color: colors['on-surface'] }]}>
+              Sincronización
+            </Text>
+            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+              Resolver conflictos de datos
+            </Text>
+          </View>
+          <Text style={{ fontSize: 20, color: colors['outline'] }}>›</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => navigation.navigate('Badges')}

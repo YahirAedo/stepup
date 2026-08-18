@@ -1,13 +1,22 @@
 import React from 'react';
-import { View, Text, TextInput, type TextInputProps } from 'react-native';
+import { View, Text, TextInput, type TextInputProps, type TextStyle } from 'react-native';
 import { colors, typography } from '../theme';
 
 interface TextFieldProps extends TextInputProps {
   label: string;
   hint?: string;
+  leftIcon?: React.ReactNode;
+  rightElement?: React.ReactNode;
 }
 
-export default function TextField({ label, hint, style, ...inputProps }: TextFieldProps) {
+export default function TextField({
+  label,
+  hint,
+  style,
+  leftIcon,
+  rightElement,
+  ...inputProps
+}: TextFieldProps) {
   return (
     <View style={{ gap: 8 }}>
       <Text
@@ -18,24 +27,33 @@ export default function TextField({ label, hint, style, ...inputProps }: TextFie
       >
         {label}
       </Text>
-      <TextInput
-        placeholderTextColor={`${colors['surface-dim']}CC`}
-        style={[
-          {
-            backgroundColor: 'transparent',
-            borderBottomWidth: 2,
-            borderBottomColor: `${colors['surface-variant']}80`,
-            fontSize: 24,
-            fontFamily: 'Manrope_800ExtraBold',
-            lineHeight: 30,
-            color: colors['on-surface'],
-            paddingBottom: 12,
-            outlineStyle: 'none',
-          } as any,
-          style,
-        ]}
-        {...inputProps}
-      />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderBottomWidth: 2,
+          borderBottomColor: `${colors['surface-variant']}80`,
+        }}
+      >
+        {leftIcon && <View style={{ marginRight: 8 }}>{leftIcon}</View>}
+        <TextInput
+          placeholderTextColor={`${colors['surface-dim']}CC`}
+          style={[
+            {
+              flex: 1,
+              backgroundColor: 'transparent',
+              fontSize: 24,
+              fontFamily: 'Manrope_800ExtraBold',
+              lineHeight: 30,
+              color: colors['on-surface'],
+              paddingVertical: 12,
+            } as TextStyle,
+            style,
+          ]}
+          {...inputProps}
+        />
+        {rightElement && <View style={{ marginLeft: 8 }}>{rightElement}</View>}
+      </View>
       {hint && (
         <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
           {hint}

@@ -5,6 +5,9 @@ export interface Task {
   status: 'active' | 'completed';
   created_at: string;
   completed_at: string | null;
+  server_id: string | null;
+  dirty: number;
+  updated_at: string;
 }
 
 export interface Step {
@@ -15,12 +18,20 @@ export interface Step {
   order_index: number;
   status: 'pending' | 'completed';
   completed_at: string | null;
+  server_id: string | null;
+  dirty: number;
+  updated_at: string;
 }
 
 export interface DailyProgress {
   id: number;
   date: string;
   steps_completed: number;
+}
+
+export interface SyncMeta {
+  id: number;
+  last_sync_at: string | null;
 }
 
 export interface CreateTaskInput {
