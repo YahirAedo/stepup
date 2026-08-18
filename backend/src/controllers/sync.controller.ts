@@ -4,7 +4,7 @@ import { IdempotencyService } from '../services/idempotency.service';
 import { prisma } from '../config/prisma';
 import { handleError } from '../utils/handle-error';
 
-export const MIGRATE_IDEMPOTENCY_SCOPE = '00000000-0000-4000-8000-000000000001';
+export const MIGRATE_IDEMPOTENCY_SCOPE = '00000000-0000-4000-8000-000000000002';
 const MIGRATE_SCOPE_EMAIL = 'idempotency-migrate@internal.stepup';
 
 async function ensureMigrateScopeUser(): Promise<string> {

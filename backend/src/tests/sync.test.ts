@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { app, resetDb, registerUser, authHeader, createTask } from './helpers';
+import { prisma } from '../config/prisma';
 
 describe('API de sincronización — push, pull y migrate', () => {
   let token: string;
@@ -339,6 +340,30 @@ describe('API de sincronización — push, pull y migrate', () => {
       steps: [],
     });
     expect(retry.status).toBe(201);
+  });
+
+  it('migrate funciona aunque exista el usuario legacy del backfill (sin colisión de id)', async () => {
+    // El backfill de la migración auth_and_sync crea un usuario legacy con id ...001.
+    // El scope de idempotencia de migrate no debe usar ese mismo id (colisión → 409).
+    await prisma.user.create({
+      data: {
+        id: '00000000-0000-4000-8000-000000000001',
+        name: 'Legacy',
+        email: 'legacy@stepup.app',
+        password: '!',
+      },
+    });
+
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Nuevo',
+      email: 'nolegacy@stepup.app',
+      password: 'secret123',
+      tasks: [],
+      steps: [],
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.token).toBeTruthy();
   });
 
   it('push no puede completar una tarea con pasos pendientes (409) y hace rollback', async () => {
