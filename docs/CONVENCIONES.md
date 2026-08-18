@@ -108,6 +108,14 @@ function TimerWidget() {
 const CHECK_SIZE = scale(120);
 ```
 
+### Web vs native (Expo Go)
+
+En web el viewport puede medir 600-1280px+, lo que hacía explotar `scale()`
+(elementos gigantes). El responsive ahora limita el **ancho efectivo de layout**
+en web a `MAX_WEB_LAYOUT_WIDTH = 600` (ancho de tablet), mientras que en native
+se usa el ancho real de la pantalla. Esto lo maneja `effectiveLayoutWidth()`
+dentro de `src/theme/responsive.ts`; las screens no cambian su lógica.
+
 ### Moderate scale
 
 Para elementos donde el escalado completo se siente exagerado (border radius,
