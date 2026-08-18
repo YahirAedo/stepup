@@ -13,6 +13,7 @@ import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
 import { TimerService } from '../services/TimerService';
+import { ApiError } from '../services/api';
 import { Task, Step } from '../types';
 import { colors, typography, spacing, scale } from '../theme';
 import Button from '../components/Button';
@@ -139,6 +140,14 @@ export default function FocusScreen({ navigation }: Props) {
       } else {
         loadFocus();
       }
+    } catch (err) {
+      // El paso ya estaba completado (estado de UI desactualizado): reconciliar la pantalla.
+      if (err instanceof ApiError && err.status === 400 && err.message === 'STEP_ALREADY_COMPLETED') {
+        loadFocus();
+        return;
+      }
+      console.warn('Focus complete error:', err);
+      Alert.alert('No se pudo completar el paso', 'Intentá de nuevo.');
     } finally {
       setCompleting(false);
     }

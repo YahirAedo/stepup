@@ -217,7 +217,23 @@ describe('StepService', () => {
       expect(task.status).toBe('active');
     });
 
-    it('lanza error si el paso ya está completado', async () => {
+    it('es idempotente: completar un paso ya completado no lanza error y reconcilia', async () => {
+      const taskId = await insertTask();
+      const stepId = await insertStep(taskId);
+      const other = await insertStep(taskId, 'Pendiente', 1);
+      await db.runAsync(
+        `UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`,
+        ['2026-08-01T00:00:00.000Z', stepId],
+      );
+
+      const result = await StepService.complete(stepId);
+
+      expect(result.taskCompleted).toBe(false);
+      expect(result.nextStep).toMatchObject({ id: other, name: 'Pendiente' });
+      expect(mocks.syncNow).toHaveBeenCalled();
+    });
+
+    it('idempotente sin pasos pendientes devuelve taskCompleted=true', async () => {
       const taskId = await insertTask();
       const stepId = await insertStep(taskId);
       await db.runAsync(
@@ -225,7 +241,9 @@ describe('StepService', () => {
         ['2026-08-01T00:00:00.000Z', stepId],
       );
 
-      await expect(StepService.complete(stepId)).rejects.toBeInstanceOf(ApiError);
+      const result = await StepService.complete(stepId);
+
+      expect(result).toEqual({ nextStep: null, taskCompleted: true });
     });
 
     it('lanza error si el paso no existe', async () => {

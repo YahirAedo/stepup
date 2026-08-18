@@ -137,7 +137,19 @@ export const StepService = {
     );
     const step = rows[0] ? toStep(rows[0]) : null;
     if (!step) throw new ApiError(404, 'STEP_NOT_FOUND');
-    if (step.status === 'completed') throw new ApiError(400, 'STEP_ALREADY_COMPLETED');
+
+    // Idempotente: si el paso ya está completado (p. ej. la UI quedó desactualizada),
+    // reconciliar el estado real en vez de lanzar STEP_ALREADY_COMPLETED.
+    if (step.status === 'completed') {
+      const pending = await db.getAllAsync<Record<string, unknown>>(
+        `SELECT * FROM steps WHERE task_id = ? AND status = 'pending' ORDER BY order_index ASC, id ASC`,
+        [step.task_id],
+      );
+      const nextStep = pending.length > 0 ? toStep(pending[0]) : null;
+      const taskCompleted = !nextStep;
+      void syncNow();
+      return { nextStep, taskCompleted };
+    }
 
     const now = nowIso();
 
