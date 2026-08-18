@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { TasksStackParamList } from '../types/navigation';
 import { StepService } from '../services/StepService';
 import { Step } from '../types';
 import { colors, typography, spacing, borderRadius, useBottomLayout } from '../theme';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
 
-type Props = {
-  navigation: any;
-  route: any;
-};
+type Props = NativeStackScreenProps<TasksStackParamList, 'StepForm'>;
 
 const DURATION_PILLS = [5, 10, 15, 20, 30];
 

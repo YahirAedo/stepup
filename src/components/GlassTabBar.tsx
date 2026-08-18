@@ -2,6 +2,13 @@ import React from 'react';
 import { View, StyleProp, ViewStyle, Pressable, Text as RNText, TextStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type {
+  MainTabParamList,
+  FocusStackParamList,
+  TasksStackParamList,
+  HistoryStackParamList,
+  ProfileStackParamList,
+} from '../types/navigation';
 import {
   colors,
   typography,
@@ -13,7 +20,7 @@ import {
 
 type GlassTabBarProps = BottomTabBarProps;
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TABS = [
   { name: 'Focus', label: 'Ahora', icon: 'timer-outline' },
@@ -142,7 +149,10 @@ import ProfileScreen from '../screens/ProfileScreen';
 import BadgesScreen from '../screens/BadgesScreen';
 import SyncConflictScreen from '../screens/SyncConflictScreen';
 
-const Stack = createNativeStackNavigator();
+const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
+const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
+const HistoryStackNav = createNativeStackNavigator<HistoryStackParamList>();
+const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
 
 const screenOpts = {
   headerStyle: { backgroundColor: colors['inverse-surface'] },
@@ -152,39 +162,39 @@ const screenOpts = {
 
 function FocusStack() {
   return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="FocusMain" component={FocusScreen} options={{ title: 'Ahora' }} />
-    </Stack.Navigator>
+    <FocusStackNav.Navigator screenOptions={screenOpts}>
+      <FocusStackNav.Screen name="FocusMain" component={FocusScreen} options={{ title: 'Ahora' }} />
+    </FocusStackNav.Navigator>
   );
 }
 
 function TasksStack() {
   return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="TaskList" component={TaskListScreen} options={{ title: 'Tareas' }} />
-      <Stack.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
-      <Stack.Screen name="TaskForm" component={TaskFormScreen} options={{ title: 'Nueva tarea' }} />
-      <Stack.Screen name="StepForm" component={StepFormScreen} options={{ title: 'Nuevo paso' }} />
-      <Stack.Screen name="StepComplete" component={StepCompleteScreen} options={{ title: 'Progreso', headerShown: false }} />
-    </Stack.Navigator>
+    <TasksStackNav.Navigator screenOptions={screenOpts}>
+      <TasksStackNav.Screen name="TaskList" component={TaskListScreen} options={{ title: 'Tareas' }} />
+      <TasksStackNav.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
+      <TasksStackNav.Screen name="TaskForm" component={TaskFormScreen} options={{ title: 'Nueva tarea' }} />
+      <TasksStackNav.Screen name="StepForm" component={StepFormScreen} options={{ title: 'Nuevo paso' }} />
+      <TasksStackNav.Screen name="StepComplete" component={StepCompleteScreen} options={{ title: 'Progreso', headerShown: false }} />
+    </TasksStackNav.Navigator>
   );
 }
 
 function HistoryStack() {
   return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="HistoryMain" component={HistoryScreen} options={{ title: 'Historial' }} />
-    </Stack.Navigator>
+    <HistoryStackNav.Navigator screenOptions={screenOpts}>
+      <HistoryStackNav.Screen name="HistoryMain" component={HistoryScreen} options={{ title: 'Historial' }} />
+    </HistoryStackNav.Navigator>
   );
 }
 
 function ProfileStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
-      <Stack.Screen name="Badges" component={BadgesScreen} />
-      <Stack.Screen name="SyncConflict" component={SyncConflictScreen} />
-    </Stack.Navigator>
+    <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStackNav.Screen name="Badges" component={BadgesScreen} />
+      <ProfileStackNav.Screen name="SyncConflict" component={SyncConflictScreen} />
+    </ProfileStackNav.Navigator>
   );
 }
 

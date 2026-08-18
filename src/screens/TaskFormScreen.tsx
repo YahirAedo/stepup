@@ -5,6 +5,8 @@ import DateTimePicker, {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { TasksStackParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { parseISODate, toISODate, formatDateForDisplay } from '../services/dateFormat';
 import { Task } from '../types';
@@ -12,10 +14,7 @@ import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } f
 import Button from '../components/Button';
 import TextField from '../components/TextField';
 
-type Props = {
-  navigation: any;
-  route: any;
-};
+type Props = NativeStackScreenProps<TasksStackParamList, 'TaskForm'>;
 
 export default function TaskFormScreen({ navigation, route }: Props) {
   const { contentPaddingBottom } = useBottomLayout();

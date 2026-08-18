@@ -9,6 +9,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { FocusStackParamList, MainTabParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
@@ -21,7 +25,10 @@ import Card from '../components/Card';
 import TimerWidget from '../components/TimerWidget';
 import EmptyState from '../components/EmptyState';
 
-type Props = { navigation: any };
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<FocusStackParamList, 'FocusMain'>,
+  BottomTabScreenProps<MainTabParamList>
+>;
 
 export default function FocusScreen({ navigation }: Props) {
   const { contentPaddingBottom } = useBottomLayout();
@@ -212,7 +219,7 @@ export default function FocusScreen({ navigation }: Props) {
           headline="Mente clara, espacio libre"
           subtext="No tienes tareas pendientes para ahora. ¿Quieres planear algo nuevo?"
           cta="Crear Tarea"
-          onCtaPress={() => navigation.navigate('Tasks', { screen: 'TaskForm' })}
+          onCtaPress={() => navigation.navigate('Tasks', { screen: 'TaskForm', params: {} })}
         />
       </View>
     );
