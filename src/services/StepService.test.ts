@@ -250,4 +250,70 @@ describe('StepService', () => {
       await expect(StepService.complete(999)).rejects.toBeInstanceOf(ApiError);
     });
   });
+
+  describe('uncomplete', () => {
+    it('desmarca un paso completado a pending y lo marca dirty', async () => {
+      const taskId = await insertTask();
+      const stepId = await insertStep(taskId);
+      await StepService.complete(stepId);
+
+      const result = await StepService.uncomplete(stepId);
+
+      const [step] = await db.getAllAsync<{ status: string; completed_at: string | null; dirty: number }>(
+        `SELECT status, completed_at, dirty FROM steps WHERE id = ?`,
+        [stepId],
+      );
+      const [task] = await db.getAllAsync<{ status: string; dirty: number }>(
+        `SELECT status, dirty FROM tasks WHERE id = ?`,
+        [taskId],
+      );
+      expect(result.taskCompleted).toBe(false);
+      expect(result.nextStep).toMatchObject({ id: stepId });
+      expect(step.status).toBe('pending');
+      expect(step.completed_at).toBeNull();
+      expect(step.dirty).toBe(1);
+      expect(task.status).toBe('active');
+      expect(task.dirty).toBe(1);
+      expect(mocks.syncNow).toHaveBeenCalled();
+    });
+
+    it('si la tarea estaba completada, la vuelve a activa', async () => {
+      const taskId = await insertTask();
+      const stepId = await insertStep(taskId);
+      await StepService.complete(stepId); // completa el último paso → tarea completed
+
+      const [taskBefore] = await db.getAllAsync<{ status: string }>(
+        `SELECT status FROM tasks WHERE id = ?`,
+        [taskId],
+      );
+      expect(taskBefore.status).toBe('completed');
+
+      await StepService.uncomplete(stepId);
+
+      const [taskAfter] = await db.getAllAsync<{ status: string }>(
+        `SELECT status FROM tasks WHERE id = ?`,
+        [taskId],
+      );
+      expect(taskAfter.status).toBe('active');
+    });
+
+    it('no hace cambios si el paso ya está pending (idempotente)', async () => {
+      const taskId = await insertTask();
+      const stepId = await insertStep(taskId);
+
+      const result = await StepService.uncomplete(stepId);
+
+      expect(result.taskCompleted).toBe(false);
+      expect(result.nextStep).toMatchObject({ id: stepId });
+      const [step] = await db.getAllAsync<{ status: string }>(
+        `SELECT status FROM steps WHERE id = ?`,
+        [stepId],
+      );
+      expect(step.status).toBe('pending');
+    });
+
+    it('lanza error si el paso no existe', async () => {
+      await expect(StepService.uncomplete(999)).rejects.toBeInstanceOf(ApiError);
+    });
+  });
 });

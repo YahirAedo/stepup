@@ -65,8 +65,11 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
   }
 
   async function handleToggleStep(step: Step) {
-    if (step.status === 'completed') return;
-    await StepService.complete(step.id);
+    if (step.status === 'completed') {
+      await StepService.uncomplete(step.id);
+    } else {
+      await StepService.complete(step.id);
+    }
     loadData();
   }
 

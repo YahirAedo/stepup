@@ -184,4 +184,53 @@ export const StepService = {
     void syncNow();
     return { nextStep, taskCompleted };
   },
+
+  async uncomplete(id: number): Promise<{ nextStep: Step | null; taskCompleted: boolean }> {
+    const db = await getDb();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM steps WHERE id = ?`,
+      [id],
+    );
+    const step = rows[0] ? toStep(rows[0]) : null;
+    if (!step) throw new ApiError(404, 'STEP_NOT_FOUND');
+
+    // Idempotente: si el paso ya está pendiente, no hace cambios.
+    if (step.status === 'pending') {
+      return this.reconcileState(step.task_id);
+    }
+
+    const now = nowIso();
+
+    await db.runAsync(
+      `UPDATE steps SET status = 'pending', completed_at = NULL, dirty = 1, updated_at = ?
+       WHERE id = ?`,
+      [now, id],
+    );
+
+    // Si la tarea estaba completada, vuelve a activa.
+    const [taskRow] = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT status FROM tasks WHERE id = ?`,
+      [step.task_id],
+    );
+    if (taskRow?.status === 'completed') {
+      await db.runAsync(
+        `UPDATE tasks SET status = 'active', completed_at = NULL, dirty = 1, updated_at = ?
+         WHERE id = ?`,
+        [now, step.task_id],
+      );
+    }
+
+    void syncNow();
+    return this.reconcileState(step.task_id);
+  },
+
+  async reconcileState(taskId: number): Promise<{ nextStep: Step | null; taskCompleted: boolean }> {
+    const db = await getDb();
+    const pending = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM steps WHERE task_id = ? AND status = 'pending' ORDER BY order_index ASC, id ASC`,
+      [taskId],
+    );
+    const nextStep = pending.length > 0 ? toStep(pending[0]) : null;
+    return { nextStep, taskCompleted: !nextStep };
+  },
 };
