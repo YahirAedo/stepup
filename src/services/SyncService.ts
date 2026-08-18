@@ -112,8 +112,11 @@ export const SyncService = {
       return { tasks: 0, steps: 0 };
     }
 
+    // Incluir TODAS las tareas locales para resolver el server_id de la tarea de cada
+    // step aunque la tarea ya esté sincronizada (no dirty) y no viaje en este push.
+    const allTasks = await getAllTasks(db);
     const taskByLocal = new Map<number, Task>();
-    for (const task of tasks) taskByLocal.set(task.id, task);
+    for (const task of allTasks) taskByLocal.set(task.id, task);
 
     const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
       method: 'POST',

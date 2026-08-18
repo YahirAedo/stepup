@@ -159,6 +159,26 @@ describe('SyncService.push', () => {
     expect(body.steps[0]).not.toHaveProperty('taskLocalId');
   });
 
+  it('push de un step nuevo con tarea ya sincronizada (no dirty) manda taskId y no 404', async () => {
+    // La tarea ya se sincronizó (server_id asignado, dirty=0). Se agrega un step nuevo (dirty=1).
+    // El push debe mandar el step con taskId (server_id de la tarea), NO taskLocalId,
+    // porque la tarea no viaja en el batch → el backend respondería 404 TASK_NOT_FOUND.
+    const taskId = await insertTask({ server_id: 'uuid-task', dirty: 0 });
+    const stepId = await insertStep(taskId, { dirty: 1 });
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [],
+      steps: [{ id: 'uuid-step', applied: true, localId: stepId }],
+    });
+
+    await expect(SyncService.push()).resolves.toEqual({ tasks: 0, steps: 1 });
+
+    const body = pushBody();
+    expect(body.tasks).toHaveLength(0);
+    expect(body.steps).toHaveLength(1);
+    expect(body.steps[0]).toMatchObject({ localId: stepId, taskId: 'uuid-task' });
+    expect(body.steps[0]).not.toHaveProperty('taskLocalId');
+  });
+
   it('guarda server_id y limpia dirty aunque el servidor rechace (applied:false)', async () => {
     const taskId = await insertTask({ dirty: 1 });
     mocks.apiFetch.mockResolvedValueOnce({
