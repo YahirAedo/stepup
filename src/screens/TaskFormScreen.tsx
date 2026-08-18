@@ -6,6 +6,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { TaskService } from '../services/TaskService';
+import { parseISODate, toISODate, formatDateForDisplay } from '../services/dateFormat';
 import { Task } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import Button from '../components/Button';
@@ -26,28 +27,6 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [pickerDate, setPickerDate] = useState(() => new Date());
-
-  function parseISODate(dateStr: string): Date {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  }
-
-  function toISODate(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  function formatDateForDisplay(dateStr: string): string {
-    if (!dateStr) return '';
-    const opt: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    };
-    return parseISODate(dateStr).toLocaleDateString('es-AR', opt);
-  }
 
   function openDatePicker() {
     setPickerDate(dueDate ? parseISODate(dueDate) : new Date());
@@ -146,55 +125,108 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           >
             Fecha límite
           </Text>
-          <TouchableOpacity
-            onPress={openDatePicker}
-            activeOpacity={0.7}
-            style={{
-              backgroundColor: colors['surface-container-lowest'],
-              borderWidth: 1,
-              borderColor: colors['outline-variant'],
-              borderRadius: borderRadius.lg,
-              paddingHorizontal: spacing['stack-gap'] - 4,
-              height: 56,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spacing['stack-gap'] - 4,
-              ...shadows.ambient,
-            }}
-          >
-            <MaterialCommunityIcons
-              name="calendar-month-outline"
-              size={22}
-              color={dueDate ? colors['primary-container'] : colors['on-surface-variant']}
-            />
-            <Text
-              style={[
-                dueDate ? typography['body-md'] : typography['body-md'],
-                {
-                  color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
-                  flex: 1,
-                },
-              ]}
-              numberOfLines={1}
+          {Platform.OS === 'web' ? (
+            <View
+              style={{
+                backgroundColor: colors['surface-container-lowest'],
+                borderWidth: 1,
+                borderColor: colors['outline-variant'],
+                borderRadius: borderRadius.lg,
+                paddingHorizontal: spacing['stack-gap'] - 4,
+                height: 56,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing['stack-gap'] - 4,
+                ...shadows.ambient,
+              }}
             >
-              {dueDate ? formatDateForDisplay(dueDate) : 'Seleccionar fecha'}
-            </Text>
-            {dueDate ? (
-              <TouchableOpacity onPress={handleClearDate} hitSlop={8}>
+              <MaterialCommunityIcons
+                name="calendar-month-outline"
+                size={22}
+                color={dueDate ? colors['primary-container'] : colors['on-surface-variant']}
+              />
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  height: '100%',
+                  border: 'none',
+                  background: 'transparent',
+                  outline: 'none',
+                  fontSize: 16,
+                  fontFamily: 'PlusJakartaSans_400Regular',
+                  color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
+                }}
+              />
+              {dueDate ? (
+                <TouchableOpacity onPress={handleClearDate} hitSlop={8}>
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={20}
+                    color={colors['on-surface-variant']}
+                  />
+                </TouchableOpacity>
+              ) : (
                 <MaterialCommunityIcons
-                  name="close-circle"
+                  name="chevron-down"
                   size={20}
                   color={colors['on-surface-variant']}
                 />
-              </TouchableOpacity>
-            ) : (
+              )}
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={openDatePicker}
+              activeOpacity={0.7}
+              style={{
+                backgroundColor: colors['surface-container-lowest'],
+                borderWidth: 1,
+                borderColor: colors['outline-variant'],
+                borderRadius: borderRadius.lg,
+                paddingHorizontal: spacing['stack-gap'] - 4,
+                height: 56,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing['stack-gap'] - 4,
+                ...shadows.ambient,
+              }}
+            >
               <MaterialCommunityIcons
-                name="chevron-down"
-                size={20}
-                color={colors['on-surface-variant']}
+                name="calendar-month-outline"
+                size={22}
+                color={dueDate ? colors['primary-container'] : colors['on-surface-variant']}
               />
-            )}
-          </TouchableOpacity>
+              <Text
+                style={[
+                  dueDate ? typography['body-md'] : typography['body-md'],
+                  {
+                    color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
+                    flex: 1,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {dueDate ? formatDateForDisplay(dueDate) : 'Seleccionar fecha'}
+              </Text>
+              {dueDate ? (
+                <TouchableOpacity onPress={handleClearDate} hitSlop={8}>
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={20}
+                    color={colors['on-surface-variant']}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={20}
+                  color={colors['on-surface-variant']}
+                />
+              )}
+            </TouchableOpacity>
+          )}
           <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
             Opcional. Ayuda a priorizar.
           </Text>
