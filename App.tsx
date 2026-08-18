@@ -84,7 +84,6 @@ export default function App() {
   });
 
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
-
   useEffect(() => {
     const stopSync = startSyncLifecycle();
     return stopSync;

@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
 import ProgressRing from '../components/ProgressRing';
 
-type Props = {
-  navigation: NativeStackNavigationProp<any>;
-};
+type Props = NativeStackScreenProps<ProfileStackParamList, 'Badges'>;
 
 const unlockedBadges = [
   { icon: '🔥', label: 'Guerrero del Flow', bg: colors['secondary-fixed-dim'] },

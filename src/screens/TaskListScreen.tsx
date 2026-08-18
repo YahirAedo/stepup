@@ -9,7 +9,8 @@ import {
   StatusBar,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { TasksStackParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { ProgressService } from '../services/ProgressService';
@@ -19,16 +20,7 @@ import Badge from '../components/Badge';
 import ProgressBar from '../components/ProgressBar';
 import EmptyState from '../components/EmptyState';
 
-export type RootStackParamList = {
-  MainTabs: undefined;
-  TaskForm: { task?: Task };
-  TaskDetail: { taskId: number };
-  StepForm: { taskId: number; stepId?: number };
-};
-
-type Props = {
-  navigation: NativeStackNavigationProp<any>;
-};
+type Props = NativeStackScreenProps<TasksStackParamList, 'TaskList'>;
 
 interface TaskWithProgress extends Task {
   stepsTotal: number;

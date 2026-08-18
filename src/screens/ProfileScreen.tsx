@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
 import { AuthService } from '../services/AuthService';
 
-type Props = {
-  navigation: NativeStackNavigationProp<any>;
-};
+type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileMain'>;
 
 const durations = [
   { label: '5m', value: 5 },

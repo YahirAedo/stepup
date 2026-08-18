@@ -1,12 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, TouchableOpacity, StatusBar } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { TasksStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, shadows, scale } from '../theme';
 import ConfettiOverlay from '../components/ConfettiOverlay';
 
-type Props = {
-  navigation: any;
-  route: any;
-};
+type Props = NativeStackScreenProps<TasksStackParamList, 'StepComplete'>;
 
 export default function StepCompleteScreen({ navigation, route }: Props) {
   const { stepName, stepDuration, nextStepName } = route.params;

@@ -9,6 +9,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { TasksStackParamList, MainTabParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { Task, Step } from '../types';
@@ -16,10 +20,10 @@ import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } f
 import ProgressBar from '../components/ProgressBar';
 import StepItem from '../components/StepItem';
 
-type Props = {
-  navigation: any;
-  route: any;
-};
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<TasksStackParamList, 'TaskDetail'>,
+  BottomTabScreenProps<MainTabParamList>
+>;
 
 export default function TaskDetailScreen({ navigation, route }: Props) {
   const { contentPaddingBottom } = useBottomLayout();
