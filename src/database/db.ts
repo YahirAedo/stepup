@@ -10,7 +10,11 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
     dbPromise = (async () => {
       console.log('[DB] opening stepup.db...');
       const database = await SQLite.openDatabaseAsync('stepup.db');
-      if (Platform.OS !== 'web') {
+      if (Platform.OS === 'web') {
+        // OPFS no soporta WAL (archivos -wal/-shm). Forzar DELETE también
+        // convierte DBs locales que quedaron en modo WAL de versiones anteriores.
+        await database.execAsync('PRAGMA journal_mode = DELETE;');
+      } else {
         await database.execAsync('PRAGMA journal_mode = WAL;');
       }
       await database.execAsync('PRAGMA foreign_keys = ON;');
