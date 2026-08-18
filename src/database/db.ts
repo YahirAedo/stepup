@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { runMigrations } from './migrations';
 import { runSeed } from './seed';
@@ -9,7 +10,10 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
     dbPromise = (async () => {
       console.log('[DB] opening stepup.db...');
       const database = await SQLite.openDatabaseAsync('stepup.db');
-      await database.execAsync('PRAGMA journal_mode = WAL;');
+      if (Platform.OS !== 'web') {
+        await database.execAsync('PRAGMA journal_mode = WAL;');
+      }
+      await database.execAsync('PRAGMA foreign_keys = ON;');
       console.log('[DB] running migrations...');
       await runMigrations(database);
       if (__DEV__) {
