@@ -54,6 +54,11 @@ type PushResult = {
 
 export type PushSummary = { tasks: number; steps: number };
 
+function normalizeIso(value: string | null | undefined, fallback?: string): string {
+  if (value && !Number.isNaN(Date.parse(value))) return value;
+  return fallback ?? nowIso();
+}
+
 type MigrateTask = {
   id?: string;
   localId: number;
@@ -120,8 +125,8 @@ export const SyncService = {
           name: task.name,
           dueDate: task.due_date,
           status: task.status,
-          createdAt: task.created_at,
-          updatedAt: task.updated_at,
+          createdAt: normalizeIso(task.created_at),
+          updatedAt: normalizeIso(task.updated_at, task.created_at),
           completedAt: task.completed_at,
         })),
         steps: steps.map((step): PushStep => {
@@ -135,7 +140,7 @@ export const SyncService = {
             durationMin: step.duration_min,
             orderIndex: step.order_index,
             status: step.status,
-            updatedAt: step.updated_at,
+            updatedAt: normalizeIso(step.updated_at),
             completedAt: step.completed_at,
           };
         }),
@@ -229,8 +234,8 @@ export const SyncService = {
           name: task.name,
           dueDate: task.due_date,
           status: task.status,
-          createdAt: task.created_at,
-          updatedAt: task.updated_at,
+          createdAt: normalizeIso(task.created_at),
+          updatedAt: normalizeIso(task.updated_at, task.created_at),
           completedAt: task.completed_at,
         })),
         steps: steps.map((step): MigrateStep => {
@@ -244,7 +249,7 @@ export const SyncService = {
             durationMin: step.duration_min,
             orderIndex: step.order_index,
             status: step.status,
-            updatedAt: step.updated_at,
+            updatedAt: normalizeIso(step.updated_at),
             completedAt: step.completed_at,
           };
         }),

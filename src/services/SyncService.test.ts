@@ -349,4 +349,27 @@ describe('SyncService.migrate', () => {
     expect(body.tasks).toHaveLength(1);
     expect(body.steps[0]).toMatchObject({ taskLocalId: taskId });
   });
+
+  it('normaliza timestamps null/viejos a ISO antes de enviar (no rompe con datos legacy)', async () => {
+    // Datos locales viejos: updated_at = NULL (columna agregada sin default en migración v2)
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES (?, NULL, 'active', ?, NULL, NULL, 0, NULL)`,
+      ['Tarea legacy', '2026-08-01T00:00:00.000Z'],
+    );
+
+    mocks.apiFetch.mockResolvedValueOnce({
+      user: { id: 'u1', name: 'Ana', email: 'ana@x.com' },
+      token: 'jwt-migrate',
+      taskMap: {},
+      stepMap: {},
+    });
+
+    await SyncService.migrate('Ana', 'ana@x.com', 'secreto123');
+
+    const body = pushBody();
+    expect(body.tasks).toHaveLength(1);
+    expect(Number.isNaN(Date.parse(body.tasks[0].updatedAt as string))).toBe(false);
+    expect(Number.isNaN(Date.parse(body.tasks[0].createdAt as string))).toBe(false);
+  });
 });
