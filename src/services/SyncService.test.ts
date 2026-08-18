@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runMigrations, type MigrationDb } from '../database/migrations';
 import { makeSqlJsDb } from '../database/testDb';
-import { getDirtySteps, getDirtyTasks, getLastSyncAt, setLastSyncAt, type ServerStep, type ServerTask } from '../database/sync';
+import { getDirtySteps, getDirtyTasks, getLastSyncAt, getLocalOwner, setLastSyncAt, setLocalOwner, type ServerStep, type ServerTask } from '../database/sync';
 
 const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
@@ -391,5 +391,43 @@ describe('SyncService.migrate', () => {
     expect(body.tasks).toHaveLength(1);
     expect(Number.isNaN(Date.parse(body.tasks[0].updatedAt as string))).toBe(false);
     expect(Number.isNaN(Date.parse(body.tasks[0].createdAt as string))).toBe(false);
+  });
+
+  it('no migra datos de otra cuenta: si hay owner previo limpia antes de subir', async () => {
+    await setLocalOwner(db, 'u-old');
+    const taskId = await insertTask();
+    await insertStep(taskId);
+    mocks.apiFetch.mockResolvedValueOnce({
+      user: { id: 'u-new', name: 'Beto', email: 'beto@x.com' },
+      token: 'jwt-new',
+      taskMap: {},
+      stepMap: {},
+    });
+
+    await expect(SyncService.migrate('Beto', 'beto@x.com', 'secreto123')).resolves.toEqual({
+      tasks: 0,
+      steps: 0,
+    });
+
+    const body = pushBody();
+    expect(body.tasks).toEqual([]);
+    expect(body.steps).toEqual([]);
+    await expect(getLocalOwner(db)).resolves.toBe('u-new');
+  });
+
+  it('marca el owner local tras un migrate exitoso (datos sin owner se migran)', async () => {
+    await insertTask();
+    mocks.apiFetch.mockResolvedValueOnce({
+      user: { id: 'u1', name: 'Ana', email: 'ana@x.com' },
+      token: 'jwt-migrate',
+      taskMap: {},
+      stepMap: {},
+    });
+
+    await SyncService.migrate('Ana', 'ana@x.com', 'secreto123');
+
+    await expect(getLocalOwner(db)).resolves.toBe('u1');
+    const rows = await db.getAllAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM tasks`, []);
+    expect(rows[0].n).toBe(1);
   });
 });

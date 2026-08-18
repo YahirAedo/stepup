@@ -225,6 +225,46 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(mine.body.tasks).toEqual([]);
   });
 
+  it('aislamiento total entre usuarios: B no ve nada de A (pull, tasks, detalle, progress)', async () => {
+    const ana = await registerUser('Ana', 'ana@stepup.app');
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const push = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(ana.token))
+      .send({
+        tasks: [{ id: taskId, localId: 1, name: 'De Ana', updatedAt: now }],
+        steps: [{ id: stepId, localId: 1, taskId, name: 'Paso de Ana', orderIndex: 0, updatedAt: now }],
+      });
+    expect(push.status).toBe(200);
+
+    const complete = await request(app)
+      .patch(`/api/steps/${stepId}/complete`)
+      .set(authHeader(ana.token))
+      .set('Idempotency-Key', crypto.randomUUID());
+    expect(complete.status).toBe(200);
+
+    const progressAna = await request(app).get('/api/progress').set(authHeader(ana.token));
+    expect(progressAna.body.length).toBeGreaterThan(0);
+
+    const pullB = await request(app)
+      .get('/api/sync/pull?since=2020-01-01T00:00:00.000Z')
+      .set(authHeader(token));
+    expect(pullB.body.tasks).toEqual([]);
+    expect(pullB.body.steps).toEqual([]);
+
+    const listB = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(listB.body).toEqual([]);
+
+    const detailB = await request(app).get(`/api/tasks/${taskId}`).set(authHeader(token));
+    expect(detailB.status).toBe(404);
+
+    const progressB = await request(app).get('/api/progress').set(authHeader(token));
+    expect(progressB.body).toEqual([]);
+  });
+
   it('POST /api/sync/migrate crea la cuenta, importa datos y devuelve el mapeo de ids', async () => {
     const taskLocalId = 7;
     const stepLocalId = 3;
