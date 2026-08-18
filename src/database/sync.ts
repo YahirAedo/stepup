@@ -111,6 +111,30 @@ export async function getLastSyncAt(db: MigrationDb): Promise<string | null> {
   return rows[0]?.last_sync_at ?? null;
 }
 
+export async function getLocalOwner(db: MigrationDb): Promise<string | null> {
+  const rows = await db.getAllAsync<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM sync_meta WHERE id = 1`,
+    [],
+  );
+  return rows[0]?.owner_user_id ?? null;
+}
+
+export async function setLocalOwner(db: MigrationDb, userId: string): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO sync_meta (id, owner_user_id) VALUES (1, ?)
+     ON CONFLICT(id) DO UPDATE SET owner_user_id = excluded.owner_user_id`,
+    [userId],
+  );
+}
+
+export async function resetLocalData(db: MigrationDb): Promise<void> {
+  await db.runAsync(`DELETE FROM sync_conflicts`, []);
+  await db.runAsync(`DELETE FROM steps`, []);
+  await db.runAsync(`DELETE FROM tasks`, []);
+  await db.runAsync(`DELETE FROM daily_progress`, []);
+  await db.runAsync(`DELETE FROM sync_meta`, []);
+}
+
 export async function setLastSyncAt(db: MigrationDb, iso: string): Promise<void> {
   try {
     await db.runAsync(

@@ -63,10 +63,16 @@ const CONFLICTS_V3: string[] = [
    );`,
 ];
 
+// V4: aislar la DB local por usuario — sync_meta guarda el owner_user_id actual.
+const OWNER_USER_V4: string[] = [
+  `ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`,
+];
+
 const MIGRATIONS: Migration[] = [
   { version: 1, statements: BASE_SCHEMA_V1 },
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
+  { version: 4, statements: OWNER_USER_V4 },
 ];
 
 export async function runMigrations(db: MigrationDb): Promise<void> {

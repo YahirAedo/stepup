@@ -17,7 +17,7 @@ async function tableColumns(raw: Database, table: string): Promise<Column[]> {
 }
 
 describe('runMigrations — schema de SQLite local', () => {
-  it('crea las tablas base con las columnas de sync (v1 + v2)', async () => {
+  it('crea las tablas base con las columnas de sync y owner (v1 + v2 + v4)', async () => {
     const { db, raw } = await makeSqlJsDb();
     await runMigrations(db);
 
@@ -51,7 +51,7 @@ describe('runMigrations — schema de SQLite local', () => {
     );
     expect(meta.length).toBe(1);
     const metaCols = await tableColumns(raw, 'sync_meta');
-    expect(metaCols.map((c) => c.name)).toEqual(['id', 'last_sync_at']);
+    expect(metaCols.map((c) => c.name)).toEqual(['id', 'last_sync_at', 'owner_user_id']);
 
     const conflicts = raw.exec(
       `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sync_conflicts'`,
@@ -76,7 +76,7 @@ describe('runMigrations — schema de SQLite local', () => {
     await runMigrations(db);
 
     const [row] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-    expect(row.user_version).toBe(3);
+    expect(row.user_version).toBe(4);
   });
 
   it('actualiza una base con el schema viejo sin perder datos', async () => {

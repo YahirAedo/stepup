@@ -8,11 +8,14 @@ import {
   getDirtySteps,
   getDirtyTasks,
   getLastSyncAt,
+  getLocalOwner,
   getTaskIdByServerId,
   nowIso,
+  resetLocalData,
   resolveConflictKeepLocal as resolveLocalConflict,
   resolveConflictKeepServer as resolveServerConflict,
   setLastSyncAt,
+  setLocalOwner,
   upsertServerStep,
   upsertServerTask,
   type ServerStep,
@@ -218,6 +221,12 @@ export const SyncService = {
     idempotencyKey: string = generateIdempotencyKey(),
   ): Promise<PushSummary> {
     const db = await getDb();
+    const owner = await getLocalOwner(db);
+    if (owner !== null) {
+      // Los datos locales pertenecen a otra cuenta: se limpian antes de subir
+      // para no migrar datos ajenos a la cuenta nueva.
+      await resetLocalData(db);
+    }
     const tasks = await getAllTasks(db);
     const steps = await getAllSteps(db);
 
@@ -260,6 +269,7 @@ export const SyncService = {
     });
 
     await saveSession(result.token, result.user);
+    await setLocalOwner(db, result.user.id);
     await applyServerIds(db, 'tasks', result.taskMap);
     await applyServerIds(db, 'steps', result.stepMap);
 
