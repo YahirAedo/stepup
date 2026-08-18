@@ -150,18 +150,20 @@ describe('AuthService', () => {
     expect(mockedApiFetch).toHaveBeenCalledWith('/api/sync/pull');
   });
 
-  it('login del mismo owner conserva los datos locales y no hace pull extra', async () => {
+  it('login del mismo owner conserva los datos locales y hace pull incremental', async () => {
     await setLocalOwner(db, 'u-mismo');
     await insertTask('Propia');
     mockedApiFetch.mockResolvedValueOnce({
       user: { id: 'u-mismo', name: 'Leo', email: 'leo@x.com' },
       token: 'jwt-mismo',
     });
+    mockedApiFetch.mockResolvedValueOnce({ tasks: [], steps: [] });
 
     await AuthService.login('leo@x.com', 'secreto123');
 
     await expect(countTasks()).resolves.toBe(1);
-    expect(mockedApiFetch).toHaveBeenCalledTimes(1);
+    expect(mockedApiFetch).toHaveBeenCalledTimes(2);
+    expect(mockedApiFetch).toHaveBeenLastCalledWith('/api/sync/pull');
   });
 
   it('logout limpia la sesión y borra los datos locales', async () => {

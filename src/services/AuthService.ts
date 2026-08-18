@@ -23,14 +23,14 @@ export const AuthService = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    const { changed } = await ensureLocalOwner(res.user.id);
+    await ensureLocalOwner(res.user.id);
     await saveSession(res.token, res.user);
-    if (changed) {
-      try {
-        await SyncService.pull();
-      } catch {
-        // offline: el próximo ciclo de vida reintenta el pull desde cero
-      }
+    try {
+      // Si la DB se limpió por cambio de dueño, last_sync_at también se borró
+      // y el pull trae todo desde cero; si no, es un pull incremental.
+      await SyncService.pull();
+    } catch {
+      // offline: el próximo ciclo de vida reintenta el pull
     }
   },
 
