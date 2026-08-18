@@ -155,7 +155,12 @@ Datos (expo-sqlite via db.ts)
 
 ### Archivos de base de datos
 - `src/database/db.ts` — conexión singleton a SQLite, ejecuta migraciones al iniciar
-- `src/database/migrations.ts` — schema de las 3 tablas
+- `src/database/migrations.ts` — schema de las 3 tablas (sin datos)
+- `src/database/seed.ts` — datos de prueba SOLO para desarrollo, no se ejecuta al iniciar
+
+**Seed manual (desarrollo):** la app arranca con tablas vacías. Para poblar datos de prueba,
+ejecutar con la variable de entorno `EXPO_PUBLIC_SEED_DB=true` (ej. `$env:EXPO_PUBLIC_SEED_DB="true"; npx expo start`).
+El seed usa `INSERT OR IGNORE` y nunca borra datos existentes.
 
 ---
 
@@ -178,7 +183,8 @@ stepup/
 │   │   └── ProgressService.ts
 │   ├── database/
 │   │   ├── db.ts
-│   │   └── migrations.ts
+│   │   ├── migrations.ts
+│   │   └── seed.ts
 │   ├── components/       ← componentes UI reutilizables (a crear)
 │   └── types/
 │       └── index.ts      ← interfaces Task, Step, DailyProgress, etc.
