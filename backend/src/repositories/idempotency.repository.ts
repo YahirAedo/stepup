@@ -20,6 +20,16 @@ export class IdempotencyRepository {
   }
 
   async tryReserve(userId: string, key: string, data: IdempotencyRecordInput): Promise<boolean> {
+    // Lease: liberar reservas huérfanas (status_code=0 y más viejas que la ventana),
+    // p. ej. procesos que murieron entre tryReserve y storeResult.
+    await prisma.$executeRaw`
+      DELETE FROM "idempotency_keys"
+      WHERE "user_id" = ${userId}
+        AND "key" = ${key}
+        AND "status_code" = 0
+        AND "created_at" < CURRENT_TIMESTAMP - INTERVAL '30 seconds'
+    `;
+
     const result = await prisma.$executeRaw`
       INSERT INTO "idempotency_keys"
         ("user_id", "key", "request_hash", "method", "path", "status_code", "response_body", "created_at", "expires_at")

@@ -7,11 +7,13 @@ const KEY_B = '22222222-2222-4222-8222-222222222222';
 
 describe('Idempotencia segura en PUT (Idempotency-Key)', () => {
   let token: string;
+  let userId: string;
 
   beforeEach(async () => {
     await resetDb();
     const user = await registerUser();
     token = user.token;
+    userId = user.user.id;
   });
 
   it('misma key + mismo body dos veces → replay de la respuesta almacenada (una sola aplicacion)', async () => {
@@ -328,5 +330,82 @@ describe('Idempotencia segura en PUT (Idempotency-Key)', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('Idempotency-Key debe ser un UUID válido');
+  });
+
+  it('reserva huérfana (status_code=0) vencida se retoma y ejecuta (no 503)', async () => {
+    const task = await createTask(token, 'Original');
+
+    // Reserva huérfana: status_code=0 y creada hace más de 30s (lease)
+    await prisma.idempotencyKey.create({
+      data: {
+        userId,
+        key: KEY_B,
+        requestHash: 'hash-ficticio',
+        method: 'PUT',
+        path: `/api/tasks/${task.id}`,
+        statusCode: 0,
+        responseBody: '',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 60 * 1000),
+      },
+    });
+
+    // El retry con la misma key (misma reserva) debe liberar la huérfana y ejecutar
+    const res = await request(app)
+      .put(`/api/tasks/${task.id}`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_B)
+      .send({ name: 'Retomada' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Retomada');
+  });
+
+  it('reserva huérfana reciente (status_code=0, menos de 30s) devuelve 503 retryable', async () => {
+    const task = await createTask(token, 'Original');
+
+    await prisma.idempotencyKey.create({
+      data: {
+        userId,
+        key: KEY_B,
+        requestHash: 'hash-ficticio',
+        method: 'PUT',
+        path: `/api/tasks/${task.id}`,
+        statusCode: 0,
+        responseBody: '',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+    });
+
+    const res = await request(app)
+      .put(`/api/tasks/${task.id}`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_B)
+      .send({ name: 'Bloqueada' });
+
+    expect(res.status).toBe(503);
+    expect(res.body.message).toMatch(/reintente/i);
+  });
+
+  it('mismo payload con keys en distinto orden → replay (200), no 409', async () => {
+    const task = await createTask(token, 'Original');
+
+    const first = await request(app)
+      .put(`/api/tasks/${task.id}`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({ name: 'Canónico', dueDate: '2026-08-20T00:00:00.000Z' });
+
+    expect(first.status).toBe(200);
+
+    const second = await request(app)
+      .put(`/api/tasks/${task.id}`)
+      .set(authHeader(token))
+      .set('Idempotency-Key', KEY_A)
+      .send({ dueDate: '2026-08-20T00:00:00.000Z', name: 'Canónico' });
+
+    expect(second.status).toBe(200);
+    expect(second.body).toEqual(first.body);
   });
 });

@@ -1,6 +1,10 @@
 import { Response } from 'express';
 import { ZodError } from 'zod';
-import { IdempotencyConflictError, IdempotencyNotReadyError } from '../services/idempotency.service';
+import {
+  IdempotencyConflictError,
+  IdempotencyNotReadyError,
+  IdempotencyRecordMissingError,
+} from '../services/idempotency.service';
 
 const KNOWN_MESSAGES: Record<string, { status: number; message: string }> = {
   CANNOT_COMPLETE_WITH_PENDING_STEPS: {
@@ -33,6 +37,10 @@ export function handleError(res: Response, error: unknown) {
   }
 
   if (error instanceof IdempotencyNotReadyError) {
+    return res.status(503).json({ message: error.message });
+  }
+
+  if (error instanceof IdempotencyRecordMissingError) {
     return res.status(503).json({ message: error.message });
   }
 
