@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, type TextStyle } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
@@ -68,7 +68,7 @@ function BadgeCard({
       <Text style={{ fontSize: s(32) }}>{icon}</Text>
       <Text
         style={[
-          typography['label-sm'] as any,
+          typography['label-sm'] as TextStyle,
           {
             color: unlocked ? colors['on-surface'] : colors['on-surface-variant'],
             textAlign: 'center',
@@ -100,7 +100,7 @@ export default function BadgesScreen({ navigation }: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.6}>
           <Text style={{ fontSize: 24, color: colors['on-surface'] }}>‹</Text>
         </TouchableOpacity>
-        <Text style={[typography['headline-md'] as any, { color: colors['on-surface'] }]}>
+        <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           Tus Logros
         </Text>
       </View>
@@ -127,18 +127,18 @@ export default function BadgesScreen({ navigation }: Props) {
           <View style={{ flex: 1 }}>
             <Text
               style={[
-                typography['body-lg'] as any,
+                typography['body-lg'] as TextStyle,
                 { color: colors['on-surface'], marginBottom: 4 },
               ]}
             >
               Insignias Desbloqueadas
             </Text>
-            <Text style={[typography['headline-md'] as any, { color: colors.primary }]}>3/12</Text>
+            <Text style={[typography['headline-md'] as TextStyle, { color: colors.primary }]}>3/12</Text>
           </View>
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
             Desbloqueadas
           </Text>
           <View
@@ -156,7 +156,7 @@ export default function BadgesScreen({ navigation }: Props) {
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as any, { color: colors['outline'] }]}>
+          <Text style={[typography['label-md'] as TextStyle, { color: colors['outline'] }]}>
             Bloqueadas
           </Text>
           <View

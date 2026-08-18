@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, type TextStyle } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
@@ -74,7 +74,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
         <Text
           style={[
-            typography['headline-md'] as any,
+            typography['headline-md'] as TextStyle,
             { color: colors['on-surface'], marginBottom: 4 },
           ]}
         >
@@ -89,7 +89,7 @@ export default function ProfileScreen({ navigation }: Props) {
             backgroundColor: colors['primary-fixed-dim'],
           }}
         >
-          <Text style={[typography['label-sm'] as any, { color: colors['on-primary-fixed'] }]}>
+          <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-primary-fixed'] }]}>
             🌟 Miembro Pro
           </Text>
         </View>
@@ -118,7 +118,7 @@ export default function ProfileScreen({ navigation }: Props) {
               alignItems: 'center',
             }}
           >
-            <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+            <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               ⏱ Duración default
             </Text>
             <View
@@ -143,7 +143,7 @@ export default function ProfileScreen({ navigation }: Props) {
                 >
                   <Text
                     style={[
-                      typography['label-sm'] as any,
+                      typography['label-sm'] as TextStyle,
                       {
                         color:
                           defaultDuration === d.value
@@ -166,7 +166,7 @@ export default function ProfileScreen({ navigation }: Props) {
               alignItems: 'center',
             }}
           >
-            <Text style={[typography['body-md'] as any, { color: colors['on-surface-variant'] }]}>
+            <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               🔔 Notificaciones
             </Text>
             <TouchableOpacity
@@ -195,7 +195,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
             Ajustes
           </Text>
 
@@ -226,7 +226,7 @@ export default function ProfileScreen({ navigation }: Props) {
               >
                 <Text style={{ fontSize: 20 }}>{row.icon}</Text>
                 <Text
-                  style={[typography['body-md'] as any, { color: colors['on-surface'], flex: 1 }]}
+                  style={[typography['body-md'] as TextStyle, { color: colors['on-surface'], flex: 1 }]}
                 >
                   {row.label}
                 </Text>
@@ -274,10 +274,10 @@ export default function ProfileScreen({ navigation }: Props) {
         >
           <Text style={{ fontSize: 24 }}>🏅</Text>
           <View style={{ flex: 1 }}>
-            <Text style={[typography['body-md'] as any, { color: colors['on-surface'] }]}>
+            <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
               Tus Logros
             </Text>
-            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+            <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               3 insignias desbloqueadas
             </Text>
           </View>
