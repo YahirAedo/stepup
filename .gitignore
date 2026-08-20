@@ -47,5 +47,8 @@ stitch_stepup_design_system/
 # AI tool caches (local paths, not for the team)
 .atl/
 
+# Local documentation (not for the team)
+SKILL-BACKEND.md
+
 # drive docs
 *.docx
