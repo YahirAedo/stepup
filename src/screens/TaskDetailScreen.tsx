@@ -1,19 +1,32 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
-  StyleSheet, Alert, ActivityIndicator
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { TasksStackParamList, MainTabParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
 import { Task, Step } from '../types';
+import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
+import ProgressBar from '../components/ProgressBar';
+import StepItem from '../components/StepItem';
 
-type Props = {
-  navigation: any;
-  route: any;
-};
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<TasksStackParamList, 'TaskDetail'>,
+  BottomTabScreenProps<MainTabParamList>
+>;
 
 export default function TaskDetailScreen({ navigation, route }: Props) {
+  const { contentPaddingBottom } = useBottomLayout();
   const { taskId } = route.params;
   const [task, setTask] = useState<Task | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -22,251 +35,264 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [])
+    }, []),
   );
 
   async function loadData() {
     setLoading(true);
-    const [t, s] = await Promise.all([
-      TaskService.getById(taskId),
-      StepService.getByTask(taskId),
-    ]);
-    setTask(t);
-    setSteps(s);
-    navigation.setOptions({ title: t?.name ?? 'Detalle' });
-    setLoading(false);
+    try {
+      const [t, s] = await Promise.all([
+        TaskService.getById(taskId),
+        StepService.getByTask(taskId),
+      ]);
+      setTask(t);
+      setSteps(s);
+      navigation.setOptions({ title: t?.name ?? 'Detalle' });
+    } catch (err) {
+      console.warn('TaskDetail load error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleDeleteStep(step: Step) {
-    Alert.alert(
-      'Eliminar paso',
-      `¿Eliminar "${step.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            await StepService.delete(step.id);
-            loadData();
-          },
+    Alert.alert('Eliminar paso', `¿Eliminar "${step.name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          await StepService.delete(step.id);
+          loadData();
         },
-      ]
-    );
+      },
+    ]);
   }
 
-  async function handleCompleteTask() {
-    if (!task) return;
-    const pending = steps.filter(s => s.status === 'pending');
-    if (pending.length > 0) {
-      Alert.alert(
-        'Pasos pendientes',
-        `Todavía quedan ${pending.length} paso(s) sin completar. Completalos desde la Vista Foco.`
-      );
-      return;
+  async function handleToggleStep(step: Step) {
+    if (step.status === 'completed') {
+      await StepService.uncomplete(step.id);
+    } else {
+      await StepService.complete(step.id);
     }
-    const ok = await TaskService.complete(task.id);
-    if (ok) {
-      Alert.alert('¡Tarea completada!', 'La tarea se movió al historial.', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
-    }
+    loadData();
   }
 
-  function getStepIcon(step: Step, index: number): string {
-    if (step.status === 'completed') return '✅';
-    const isNext = steps.findIndex(s => s.status === 'pending') === index;
-    return isNext ? '▶' : '○';
-  }
-
-  function getStepColor(step: Step, index: number): string {
-    if (step.status === 'completed') return '#94A3B8';
-    const isNext = steps.findIndex(s => s.status === 'pending') === index;
-    return isNext ? '#2563EB' : '#1A3A5C';
-  }
+  const completedCount = steps.filter((s) => s.status === 'completed').length;
+  const totalCount = steps.length;
+  const progress = totalCount > 0 ? completedCount / totalCount : 0;
+  const nextIndex = steps.findIndex((s) => s.status === 'pending');
+  const totalEstMinutes = steps.reduce((sum, s) => sum + (s.duration_min ?? 0), 0);
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+        }}
+      >
+        <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+        <ActivityIndicator size="large" color={colors['primary-container']} />
       </View>
     );
   }
 
   if (!task) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>No se encontró la tarea.</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+        }}
+      >
+        <Text style={{ color: colors['on-surface-variant'], fontSize: 14 }}>
+          No se encontró la tarea.
+        </Text>
       </View>
     );
   }
 
-  const completedCount = steps.filter(s => s.status === 'completed').length;
-  const totalCount = steps.length;
-  const progress = totalCount > 0 ? completedCount / totalCount : 0;
+  const formatHours = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    if (h > 0) return `${h}h ${m}m estim.`;
+    return `${m}m estim.`;
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+
       <FlatList
         data={steps}
-        keyExtractor={item => String(item.id)}
-        contentContainerStyle={{ padding: 16 }}
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={{
+          paddingHorizontal: spacing['container-padding'],
+          paddingBottom: contentPaddingBottom,
+        }}
+        showsVerticalScrollIndicator={false}
         ListHeaderComponent={() => (
-          <View>
-            {/* Info de la tarea */}
-            <View style={styles.taskCard}>
-              <Text style={styles.taskName}>{task.name}</Text>
-              {task.due_date && (
-                <Text style={styles.dueDate}>
-                  📅 Vence el {new Date(task.due_date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+          <View style={{ gap: spacing['section-gap'] }}>
+            {/* Hero section */}
+            <View style={{ gap: spacing['stack-gap'] }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text
+                  style={[
+                    typography['label-sm'],
+                    { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2 },
+                  ]}
+                >
+                  Alta Prioridad
                 </Text>
-              )}
-              {/* Barra de progreso */}
-              {totalCount > 0 && (
-                <View style={styles.progressSection}>
-                  <View style={styles.progressBar}>
-                    <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-                  </View>
-                  <Text style={styles.progressText}>{completedCount}/{totalCount} pasos</Text>
+              </View>
+
+              <Text style={[typography['headline-lg-mobile'], { color: colors['on-surface'] }]}>
+                {task.name}
+              </Text>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 16, color: colors['on-surface-variant'] }}>📅</Text>
+                  <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
+                    {task.due_date
+                      ? new Date(task.due_date).toLocaleDateString('es-AR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'Sin fecha'}
+                  </Text>
                 </View>
-              )}
+                <View
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 2,
+                    backgroundColor: colors['outline-variant'],
+                  }}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 16, color: colors['on-surface-variant'] }}>⏱</Text>
+                  <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
+                    {formatHours(totalEstMinutes)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Progress */}
+              <View style={{ gap: 12 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-end',
+                  }}
+                >
+                  <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
+                    Progreso general
+                  </Text>
+                  <Text style={[typography['headline-md'], { color: colors.secondary }]}>
+                    {Math.round(progress * 100)}%
+                  </Text>
+                </View>
+                <ProgressBar progress={progress} height={6} color={colors.secondary} />
+              </View>
             </View>
 
-            {/* Botones de acción */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.btnEdit}
-                onPress={() => navigation.navigate('TaskForm', { task })}
-              >
-                <Text style={styles.btnEditText}>✏️ Editar tarea</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.btnComplete}
-                onPress={handleCompleteTask}
-              >
-                <Text style={styles.btnCompleteText}>✅ Completar</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.sectionTitle}>
-              {totalCount === 0 ? 'Sin pasos todavía' : `Pasos (${totalCount})`}
+            {/* Steps header */}
+            <Text
+              style={[
+                typography['headline-md'],
+                { color: colors['on-surface'], marginBottom: spacing['stack-gap'] },
+              ]}
+            >
+              Pasos a seguir
             </Text>
           </View>
         )}
         ListEmptyComponent={() => (
-          <View style={styles.emptySteps}>
-            <Text style={styles.emptyText}>
-              Esta tarea no tiene pasos todavía. Tocá "+ Agregar paso" para dividirla.
+          <View style={{ padding: 16, alignItems: 'center' }}>
+            <Text
+              style={[
+                typography['body-md'],
+                { color: colors['on-surface-variant'], textAlign: 'center' },
+              ]}
+            >
+              Esta tarea no tiene pasos todavía. Tocá "+" para agregar uno.
             </Text>
           </View>
         )}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.unit * 3 }} />}
         renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={[
-              styles.stepCard,
-              item.status === 'completed' && styles.stepCardDone,
-              steps.findIndex(s => s.status === 'pending') === index && styles.stepCardNext,
-            ]}
+          <StepItem
+            step={item}
+            isNext={index === nextIndex}
+            onToggle={() => handleToggleStep(item)}
             onPress={() => navigation.navigate('StepForm', { taskId: task.id, stepId: item.id })}
             onLongPress={() => handleDeleteStep(item)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.stepIcon}>{getStepIcon(item, index)}</Text>
-            <View style={styles.stepInfo}>
-              <Text style={[
-                styles.stepName,
-                item.status === 'completed' && styles.stepNameDone,
-                { color: getStepColor(item, index) }
-              ]}>
-                {item.name}
-              </Text>
-              {item.duration_min && (
-                <Text style={styles.stepDur}>⏱ {item.duration_min} min</Text>
-              )}
-            </View>
-            {steps.findIndex(s => s.status === 'pending') === index && (
-              <View style={styles.nextBadge}>
-                <Text style={styles.nextBadgeText}>ahora</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          />
         )}
         ListFooterComponent={() => (
           <TouchableOpacity
-            style={styles.btnAddStep}
             onPress={() => navigation.navigate('StepForm', { taskId: task.id })}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
+            style={{
+              marginTop: spacing['stack-gap'],
+              padding: 14,
+              borderRadius: borderRadius.lg,
+              borderWidth: 2,
+              borderStyle: 'dashed',
+              borderColor: colors.secondary,
+              alignItems: 'center',
+              opacity: 0.6,
+            }}
           >
-            <Text style={styles.btnAddStepText}>+ Agregar paso</Text>
+            <Text style={[typography['label-md'], { color: colors.secondary }]}>
+              + Agregar paso
+            </Text>
           </TouchableOpacity>
         )}
       />
+
+      {/* Floating bottom bar */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: spacing['container-padding'],
+          paddingBottom: 32,
+          paddingTop: 16,
+          backgroundColor: colors.surface,
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Focus')}
+          activeOpacity={0.9}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            paddingVertical: 16,
+            borderRadius: borderRadius.full,
+            backgroundColor: colors['tertiary'],
+            ...shadows.fab,
+          }}
+        >
+          <Text style={{ fontSize: 20, color: colors['on-tertiary'] }}>▶</Text>
+          <Text style={[typography['label-md'], { color: colors['on-tertiary'], fontSize: 16 }]}>
+            Comenzar ahora
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFF' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { color: '#64748B', fontSize: 14 },
-  taskCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    elevation: 2,
-  },
-  taskName: { fontSize: 17, fontWeight: '700', color: '#1A3A5C', marginBottom: 6 },
-  dueDate: { fontSize: 13, color: '#64748B', marginBottom: 10 },
-  progressSection: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  progressBar: {
-    flex: 1, height: 6, backgroundColor: '#E2E8F0',
-    borderRadius: 3, overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: '#2563EB', borderRadius: 3 },
-  progressText: { fontSize: 12, color: '#64748B', minWidth: 60 },
-  actions: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  btnEdit: {
-    flex: 1, padding: 10, borderRadius: 8,
-    borderWidth: 1, borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF', alignItems: 'center',
-  },
-  btnEditText: { fontSize: 13, color: '#64748B' },
-  btnComplete: {
-    flex: 1, padding: 10, borderRadius: 8,
-    backgroundColor: '#DCFCE7', alignItems: 'center',
-  },
-  btnCompleteText: { fontSize: 13, color: '#166534', fontWeight: '600' },
-  sectionTitle: {
-    fontSize: 12, color: '#94A3B8', fontWeight: '600',
-    textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8,
-  },
-  emptySteps: { padding: 16 },
-  emptyText: { fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 },
-  stepCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 10, padding: 14,
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderWidth: 0.5, borderColor: '#E2E8F0', elevation: 1,
-  },
-  stepCardDone: { backgroundColor: '#F8FAFF', borderColor: '#E2E8F0' },
-  stepCardNext: { borderColor: '#2563EB', borderWidth: 1.5, backgroundColor: '#EFF6FF' },
-  stepIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  stepInfo: { flex: 1 },
-  stepName: { fontSize: 14, fontWeight: '500' },
-  stepNameDone: { textDecorationLine: 'line-through', color: '#94A3B8' },
-  stepDur: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
-  nextBadge: {
-    backgroundColor: '#2563EB', borderRadius: 20,
-    paddingHorizontal: 8, paddingVertical: 2,
-  },
-  nextBadgeText: { fontSize: 10, color: '#FFFFFF', fontWeight: '600' },
-  btnAddStep: {
-    marginTop: 12, padding: 14, borderRadius: 10,
-    borderWidth: 1.5, borderColor: '#2563EB',
-    borderStyle: 'dashed', alignItems: 'center',
-  },
-  btnAddStepText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
-});

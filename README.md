@@ -11,11 +11,11 @@ Aplicación mobile anti-procrastinación que combate la *task paralysis* descomp
 - [Descripción](#descripción)
 - [Estado del proyecto](#estado-del-proyecto)
 - [Tech stack](#tech-stack)
+- [Documentación obligatoria](#documentación-obligatoria)
 - [Requisitos previos](#requisitos-previos)
 - [Cómo correr el proyecto](#cómo-correr-el-proyecto)
 - [Estructura del proyecto](#estructura-del-proyecto)
-- [Branching strategy](#branching-strategy)
-- [Testing](#testing)
+- [Convenciones del equipo](#convenciones-del-equipo)
 - [Entregas](#entregas)
 - [Equipo](#equipo)
 
@@ -38,21 +38,27 @@ StepUp resuelve un problema concreto: las personas saben que tienen tareas impor
 
 ## Estado del proyecto
 
-**Entrega 1 — En desarrollo** (Marzo – Mayo 2026)
+**Entrega 1 — Completada** ✅ (Marzo – Junio 2026)
+App 100% offline con ciclo completo de tareas, pasos, timer e historial.
+
+**Entrega 2 — Completada** ✅ (Julio – Agosto 2026)
+Migración visual al diseño Zenith Vitality + backend + auth + sync offline-first.
 
 | Módulo | Estado |
 |---|---|
-| Gestión de tareas (CRUD) | 🟡 En desarrollo |
-| División en pasos | 🟡 En desarrollo |
-| Vista Foco (próximo paso) | 🟡 En desarrollo |
-| Timer opcional por paso | 🟡 En desarrollo |
-| Completar pasos con avance automático | 🟡 En desarrollo |
-| Historial de tareas completadas | 🟡 En desarrollo |
-| Backend / sync en la nube | ⏳ Planificado para E2 |
-| Notificaciones push | ⏳ Planificado para E2 |
+| Gestión de tareas (CRUD) | ✅ Completado |
+| División en pasos | ✅ Completado |
+| Vista Foco (próximo paso) | ✅ Completado |
+| Timer opcional por paso | ✅ Completado |
+| Completar pasos con avance automático | ✅ Completado |
+| Historial de tareas completadas | ✅ Completado |
+| Theme system + componentes UI (Zenith Vitality) | ✅ Completado |
+| Backend / sync en la nube | ✅ Completado (E2) |
+| Autenticación (JWT) | ✅ Completado (E2) |
+| Onboarding + notificaciones | ✅ Completado (E2 — v1; notif. v2 priorizada a E3) |
+| Date picker + responsive web | ✅ Completado (E2) |
+| Insignias y perfil | ✅ Completado (E2) |
 | Sugerencia de pasos con IA | ⏳ Planificado para E3 |
-
-> La Entrega 1 es **100% offline**. Todos los datos se guardan localmente en SQLite mediante `expo-sqlite`. No requiere conexión a internet.
 
 ---
 
@@ -60,12 +66,27 @@ StepUp resuelve un problema concreto: las personas saben que tienen tareas impor
 
 | Capa | Tecnología |
 |---|---|
-| Framework mobile | React Native + Expo SDK 54 |
+| Framework mobile | React Native + Expo SDK 54 (no usar SDK 55) |
 | Lenguaje | TypeScript |
 | Base de datos local | expo-sqlite (SQLite) |
-| Navegación | React Navigation — Bottom Tabs |
-| Testing | Jest + React Native Testing Library |
-| Control de versiones | Git + GitHub |
+| Navegación | React Navigation — GlassTabBar |
+| Diseño visual | Sistema Zenith Vitality |
+| Testing | Vitest (app, 111 tests) + Jest/Supertest (backend, 94 tests) |
+| Control de versiones | Git + GitHub + Conventional Commits |
+| Backend (E2) | Node.js + Express + Prisma + PostgreSQL + Railway |
+
+---
+
+## Documentación obligatoria
+
+Antes de escribir código, leer en este orden:
+
+| Orden | Documento | Por qué |
+|-------|-----------|---------|
+| 1 | `docs/Contexto.md` | Contexto completo, entregas, decisiones técnicas |
+| 2 | `docs/CONVENCIONES.md` | Reglas de estilo, arquitectura, git y calidad |
+| 3 | `.claude/skills/zenith-vitality-ds/SKILL.md` | Design System: tokens, componentes, anti-patterns |
+| 4 | `AGENTS.md` | Guía rápida para agentes de IA |
 
 ---
 
@@ -93,7 +114,7 @@ git --version
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/YahirAedo/stepup.git.git
+git clone https://github.com/YahirAedo/stepup.git
 cd stepup
 ```
 
@@ -121,6 +142,21 @@ Esto abre el **Metro Bundler** en la terminal y muestra un código QR.
 
 > **Nota:** La base de datos SQLite se inicializa automáticamente al primer arranque. No requiere ninguna configuración manual.
 
+> **Nota E2:** Para probar registro y sincronización apuntá la app al backend
+> (producción en Railway por defecto). Si querés correrlo local:
+>
+> ```bash
+> cd backend
+> npm install
+> docker compose up -d        # Postgres local
+> cp .env.example .env        # definir JWT_SECRET y DATABASE_URL
+> npx prisma migrate deploy
+> npm run dev
+> ```
+>
+> Y en la raíz: `EXPO_PUBLIC_API_URL=http://localhost:3000 npx expo start`. Para
+> la demo con datos de ejemplo: `EXPO_PUBLIC_SEED_DB=true npx expo start`.
+
 ---
 
 ## Estructura del proyecto
@@ -134,19 +170,71 @@ stepup/
 │   │   ├── TaskDetailScreen.tsx   # Detalle de tarea + pasos
 │   │   ├── TaskFormScreen.tsx     # Crear / editar tarea
 │   │   ├── StepFormScreen.tsx     # Crear / editar paso
-│   │   └── HistoryScreen.tsx      # Historial de tareas completadas
+│   │   ├── StepCompleteScreen.tsx # Celebración + confetti
+│   │   ├── HistoryScreen.tsx      # Historial + gráfico semanal
+│   │   ├── BadgesScreen.tsx       # Galería de insignias
+│   │   ├── ProfileScreen.tsx      # Perfil y configuración
+│   │   ├── BadgesScreen.tsx       # Galería de insignias
+│   │   ├── OnboardingScreen.tsx    # Onboarding inicial
+│   │   ├── WelcomeScreen.tsx      # Entrar con cuenta o explorar sin cuenta
+│   │   ├── LoginScreen.tsx        # Inicio de sesión
+│   │   ├── RegisterScreen.tsx     # Registro + migración de datos
+│   │   └── SyncConflictScreen.tsx # Resolución de conflictos de sync
 │   ├── services/
 │   │   ├── TaskService.ts         # CRUD tareas + completado
 │   │   ├── StepService.ts         # Pasos + orden + completar
 │   │   ├── TimerService.ts        # Countdown / countup por paso
-│   │   └── ProgressService.ts     # Historial + contador diario
+│   │   ├── ProgressService.ts     # Historial + contador diario
+│   │   ├── api.ts                 # Cliente HTTP (JWT + idempotencia)
+│   │   ├── AuthService.ts         # Registro, login, sesión
+│   │   ├── SyncService.ts         # Push / pull / migrate / conflictos
+│   │   ├── syncLifecycle.ts       # Sync automático al abrir/cerrar
+│   │   ├── session.ts             # Persistencia de sesión
+│   │   ├── idempotency.ts         # Claves idempotentes
+│   │   └── dateFormat.ts          # Helpers ISO + display
 │   ├── database/
 │   │   ├── db.ts                  # Conexión + inicialización SQLite
-│   │   └── migrations.ts          # Schema: tasks, steps, daily_progress
+│   │   └── migrations.ts          # 4 migraciones (schema + sync + conflictos + owner)
 │   ├── components/                # Componentes UI reutilizables
-│   └── types/
-│       └── index.ts               # Interfaces TypeScript
+│   │   ├── Button.tsx             # Botones primary/secondary/tertiary
+│   │   ├── Card.tsx               # Contenedor tipo glassmorph
+│   │   ├── Badge.tsx              # Etiquetas de estado
+│   │   ├── TextField.tsx          # Input con label
+│   │   ├── ProgressBar.tsx        # Barra de progreso
+│   │   ├── ProgressRing.tsx       # Anillo SVG de progreso
+│   │   ├── StepItem.tsx           # Item de paso con checkbox
+│   │   ├── TimerWidget.tsx        # Display del timer
+│   │   ├── GlassTabBar.tsx        # Barra inferior flotante
+│   │   ├── EmptyState.tsx         # Estado vacío con CTA
+│   │   ├── LineChart.tsx          # Gráfico de líneas simple
+│   │   └── ConfettiOverlay.tsx    # Confetti animado
+│   └── theme/
+│       ├── colors.ts              # Paleta de colores
+│       ├── typography.ts          # Estilos de texto
+│       ├── spacing.ts             # Sistema de espaciado
+│       ├── borderRadius.ts        # Radios de borde
+│       └── shadows.ts             # Sombras ambientales
+├── .claude/skills/zenith-vitality-ds/  # Design System skill para IA
+├── backend/                     # API REST (E2) — Express + Prisma + PostgreSQL
+│   ├── src/
+│   │   ├── server.ts            # Entry point (env fail-closed)
+│   │   ├── app.ts               # Express app + rutas
+│   │   ├── routes/              # auth, task, step, sync, progress
+│   │   ├── controllers/         # Capa HTTP
+│   │   ├── services/            # Lógica de negocio
+│   │   ├── repositories/        # Acceso a datos (Prisma)
+│   │   ├── middleware/          # auth, idempotency, error-handler
+│   │   └── tests/               # 9 suites (94 casos)
+│   ├── prisma/
+│   │   ├── schema.prisma        # User, Task, Step, DailyProgress, IdempotencyKey
+│   │   └── migrations/          # 4 migraciones
+│   └── docker-compose.yml       # Postgres local de desarrollo
+├── docs/
+│   ├── CONVENCIONES.md            # Reglas del equipo
+│   ├── Contexto.md                 # Contexto completo del proyecto
+│   └── practicas-recomendadas.md  # Prácticas de ingeniería
 ├── App.tsx                        # Entry point + navegación bottom tabs
+├── AGENTS.md                      # Guía para agentes de IA
 ├── app.json
 ├── tsconfig.json
 └── package.json
@@ -154,39 +242,16 @@ stepup/
 
 ---
 
-## Branching strategy
+## Convenciones del equipo
 
-| Rama | Uso |
-|---|---|
-| `main` | Versión estable y demostrable. Solo recibe merges desde `develop`. **Esta es la rama que se entrega.** |
-| `develop` | Rama de integración. Todo el desarrollo se integra aquí antes de pasar a `main`. |
-| `feature/*` | Una rama por historia de usuario. Ej: `feature/HU-01-crear-tarea`. |
+Todas las reglas de estilo, arquitectura, git y calidad están en **`docs/CONVENCIONES.md`**.
 
-### Convención de commits
-
-```
-feat: agregar pantalla de creacion de tarea
-fix: corregir contador diario al reabrir la app
-test: agregar casos de prueba para StepService
-docs: actualizar README
-refactor: separar logica del timer en TimerService
-chore: instalar expo-sqlite y configurar
-```
-
----
-
-## Testing
-
-```bash
-# Correr todos los tests
-npm test
-
-# Con coverage
-npm test -- --coverage
-
-# Modo watch
-npm test -- --watch
-```
+Resumen rápido:
+- **Git:** `main` ← `develop` ← `feature/*`. Nunca commitear directo a main.
+- **Commits:** formato convencional (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- **Estilos:** siempre usar tokens del theme, nunca colores hardcodeados.
+- **Arquitectura:** las screens no acceden a SQLite directamente.
+- **IA:** cualquier agente debe leer `AGENTS.md` y `docs/CONVENCIONES.md` antes de escribir código.
 
 ---
 
@@ -194,8 +259,8 @@ npm test -- --watch
 
 | Entrega | Período | Stack | Estado |
 |---|---|---|---|
-| E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | 🟡 En curso |
-| E2 | Junio – Agosto 2026 | + Node.js + PostgreSQL + Firebase FCM | ⏳ Planificado |
+| E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | ✅ Completada |
+| E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Railway | ✅ Completada |
 | E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | ⏳ Planificado |
 
 ---
@@ -206,9 +271,9 @@ Proyecto universitario — Ingeniería en Sistemas de Información — 2026
 
 | Integrante | GitHub |
 |---|---|
-| Integrante A | @YahirAedo |
-| Integrante B | @IamSantiFarias |
-| Integrante C | @joaar |
+| Alejandro Aedo | @YahirAedo |
+| Santiago Farias | @IamSantiFarias |
+| Joaquín Arias | @joaar |
 
 ---
 

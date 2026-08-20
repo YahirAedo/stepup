@@ -1,0 +1,101 @@
+// Backend StepUp — modelo relacional (espejo de src/database/migrations.ts del app móvil)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  active
+  completed
+}
+
+enum StepStatus {
+  pending
+  completed
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tasks Task[]
+  dailyProgress DailyProgress[]
+  idempotencyKeys IdempotencyKey[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  name        String
+  dueDate     DateTime?  @map("due_date")
+  status      TaskStatus @default(active)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  completedAt DateTime?  @map("completed_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps Step[]
+
+  @@index([userId, updatedAt])
+  @@map("tasks")
+}
+
+model Step {
+  id          String     @id @default(uuid())
+  taskId      String     @map("task_id")
+  name        String
+  durationMin Int?       @map("duration_min")
+  orderIndex  Int        @map("order_index")
+  status      StepStatus @default(pending)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  completedAt DateTime?  @map("completed_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, orderIndex])
+  @@index([taskId, status])
+  @@index([taskId, updatedAt])
+  @@map("steps")
+}
+
+model DailyProgress {
+  id             Int    @id @default(autoincrement())
+  userId         String @map("user_id")
+  date           String
+  stepsCompleted Int    @default(0) @map("steps_completed")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_progress")
+}
+
+model IdempotencyKey {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id")
+  key          String
+  requestHash  String   @map("request_hash")
+  method       String
+  path         String
+  statusCode   Int      @map("status_code")
+  responseBody String   @map("response_body")
+  createdAt    DateTime @default(now()) @map("created_at")
+  expiresAt    DateTime @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}

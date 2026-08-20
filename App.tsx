@@ -1,103 +1,149 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useEffect, useState, createRef } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { NavigationContainer, useNavigationState, type NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Text } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { storage } from './src/services/storage';
+import { startSyncLifecycle } from './src/services/syncLifecycle';
+import { loadSession, hasSession } from './src/services/session';
+import type { RootStackParamList } from './src/types/navigation';
 
-import FocusScreen      from './src/screens/FocusScreen';
-import TaskListScreen   from './src/screens/TaskListScreen';
-import TaskDetailScreen from './src/screens/TaskDetailScreen';
-import TaskFormScreen   from './src/screens/TaskFormScreen';
-import StepFormScreen   from './src/screens/StepFormScreen';
-import HistoryScreen    from './src/screens/HistoryScreen';
+import {
+  Manrope_800ExtraBold,
+  Manrope_700Bold,
+} from '@expo-google-fonts/manrope';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 
-const Tab   = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+import OnboardingScreen1 from './src/screens/OnboardingScreen1';
+import OnboardingScreen2 from './src/screens/OnboardingScreen2';
+import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
+import { colors } from './src/theme';
+import { MainTabs } from './src/components/GlassTabBar';
+import { FloatingActionButton } from './src/components/FloatingActionButton';
 
-const screenOpts = {
-  headerStyle:      { backgroundColor: '#1A3A5C' },
-  headerTintColor:  '#FFFFFF',
-  headerTitleStyle: { fontWeight: '600' as const },
-};
+SplashScreen.preventAutoHideAsync();
 
-// Stack de tareas: Lista → Detalle → Formularios
-function TasksStack() {
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+
+const ONBOARDING_KEY = 'hasSeenOnboarding';
+
+const rootNavigationRef = createRef<NavigationContainerRef<RootStackParamList>>();
+
+function AppContent() {
+  // Get the root navigation state (which includes the tab navigator state)
+  const navigationState = useNavigationState((state) => state);
+
+  // Find the MainTabs route and get its state
+  const mainTabsRoute = navigationState?.routes.find((r) => r.name === 'MainTabs');
+  const tabsState = mainTabsRoute?.state;
+  const activeTabRoute = tabsState?.routes[tabsState?.index ?? 0];
+  const activeTabName = activeTabRoute?.name;
+  // Inside the Tasks stack, the FAB only makes sense on the root screen (TaskList).
+  const tasksStackIndex = activeTabRoute?.state?.index ?? 0;
+
+  // Show FAB only on the Tasks tab root screen (TaskList)
+  const showFAB = activeTabName === 'Tasks' && tasksStackIndex === 0;
+
   return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="TaskList"   component={TaskListScreen}   options={{ title: 'Tareas' }} />
-      <Stack.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
-      <Stack.Screen name="TaskForm"   component={TaskFormScreen}   options={{ title: 'Nueva tarea' }} />
-      <Stack.Screen name="StepForm"   component={StepFormScreen}   options={{ title: 'Nuevo paso' }} />
-    </Stack.Navigator>
-  );
-}
-
-// Stack de Vista Foco (necesita acceso a Tasks para navegar)
-function FocusStack() {
-  return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="FocusMain" component={FocusScreen} options={{ title: 'Ahora' }} />
-    </Stack.Navigator>
-  );
-}
-
-// Stack de Historial
-function HistoryStack() {
-  return (
-    <Stack.Navigator screenOptions={screenOpts}>
-      <Stack.Screen name="HistoryMain" component={HistoryScreen} options={{ title: 'Historial' }} />
-    </Stack.Navigator>
+    <>
+      <MainTabs />
+      {showFAB && (
+        <FloatingActionButton
+          onPress={() => {
+            // Navigate to TaskForm through the Tasks stack using root navigation
+            if (rootNavigationRef.current) {
+              rootNavigationRef.current.navigate('MainTabs', {
+                screen: 'Tasks',
+                params: { screen: 'TaskForm', params: {} }
+              });
+            }
+          }}
+          icon="+"
+          variant="primary"
+        />
+      )}
+    </>
   );
 }
 
 export default function App() {
+  const [fontsLoaded, fontsError] = useFonts({
+    Manrope_800ExtraBold,
+    Manrope_700Bold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
+  useEffect(() => {
+    const stopSync = startSyncLifecycle();
+    return stopSync;
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      await loadSession();
+      const hasSeenOnboarding = await storage.getItem(ONBOARDING_KEY);
+      if (!mounted) return;
+      if (hasSession()) {
+        setInitialRoute('MainTabs');
+      } else if (hasSeenOnboarding !== 'true') {
+        setInitialRoute('Onboarding1');
+      } else {
+        setInitialRoute('Login');
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded || fontsError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontsError]);
+
+  if (!fontsLoaded && !fontsError) {
+    return null;
+  }
+
+  if (fontsError) {
+    console.warn('Font loading error:', fontsError);
+  }
+
+  if (!initialRoute) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarActiveTintColor:   '#2563EB',
-            tabBarInactiveTintColor: '#94A3B8',
-            tabBarStyle: {
-              borderTopColor: '#E2E8F0',
-              paddingBottom: 4,
-              height: 58,
-            },
-          }}
+      <NavigationContainer ref={rootNavigationRef}>
+        <RootStack.Navigator
+          initialRouteName={initialRoute}
+          screenOptions={{ headerShown: false }}
         >
-          <Tab.Screen
-            name="Focus"
-            component={FocusStack}
-            options={{
-              tabBarLabel: 'Ahora',
-              tabBarIcon: ({ color, size }) => (
-                <Text style={{ fontSize: size, color }}>▶</Text>
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Tasks"
-            component={TasksStack}
-            options={{
-              tabBarLabel: 'Tareas',
-              tabBarIcon: ({ color, size }) => (
-                <Text style={{ fontSize: size, color }}>☑</Text>
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="History"
-            component={HistoryStack}
-            options={{
-              tabBarLabel: 'Historial',
-              tabBarIcon: ({ color, size }) => (
-                <Text style={{ fontSize: size, color }}>📋</Text>
-              ),
-            }}
-          />
-        </Tab.Navigator>
+          <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
+          <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
+          <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
+          <RootStack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="Register" component={RegisterScreen} />
+          <RootStack.Screen name="MainTabs" component={AppContent} />
+        </RootStack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
   );

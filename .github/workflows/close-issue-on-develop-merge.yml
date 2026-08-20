@@ -1,0 +1,87 @@
+name: Close linked issue on develop merge
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  close-issue:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect referenced issues
+        id: collect
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+
+          numbers=""
+
+          # A) Closing keywords in PR body (same-repo #N references)
+          if [ -n "$PR_BODY" ]; then
+            body_matches="$(printf '%s' "$PR_BODY" \
+              | grep -oiE '(close[sd]?|fix(es|ed)?|resolv(e[sd]?)?)([[:space:]]+)?(issue[[:space:]]+)?#[0-9]+' \
+              | grep -oE '#[0-9]+' \
+              | tr -d '#' || true)"
+            numbers="$numbers $body_matches"
+          fi
+
+          # B) Issues linked via the PR sidebar (API)
+          linked="$(gh api "repos/$GITHUB_REPOSITORY/pulls/${{ github.event.pull_request.number }}/issues" --jq '.[].number' 2>/dev/null || true)"
+          numbers="$numbers $linked"
+
+          # C) Issue number inferred from branch name (feature/issue-42, feature/#42, issue_42)
+          branch_matches="$(printf '%s' "$HEAD_REF" \
+            | grep -oE 'issue[-_#][0-9]+' \
+            | grep -oE '[0-9]+' || true)"
+          numbers="$numbers $branch_matches"
+
+          unique="$(printf '%s' "$numbers" | tr ' ' '\n' | sed '/^$/d' | sort -un)"
+
+          {
+            echo "issues<<EOF"
+            echo "$unique"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Close issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          pr_number="${{ github.event.pull_request.number }}"
+          issues="${{ steps.collect.outputs.issues }}"
+
+          if [ -z "$issues" ]; then
+            echo "No issues detected for PR #$pr_number"
+            exit 0
+          fi
+
+          for n in $issues; do
+            is_pr="$(gh api "repos/$GITHUB_REPOSITORY/issues/$n" --jq '.pull_request != null' 2>/dev/null || echo true)"
+            if [ "$is_pr" = "true" ]; then
+              echo "Skipping #$n: reference is a pull request, not an issue"
+              continue
+            fi
+
+            state="$(gh api "repos/$GITHUB_REPOSITORY/issues/$n" --jq '.state')"
+            if [ "$state" = "closed" ]; then
+              echo "Skipping #$n: already closed"
+              continue
+            fi
+
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/$n" \
+              -f state=closed \
+              -f state_reason=completed
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$n/comments" \
+              -f body="Cerrado automáticamente al mergear el PR #$pr_number en \`develop\`."
+
+            echo "Closed #$n"
+          done
