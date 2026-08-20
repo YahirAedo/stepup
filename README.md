@@ -41,8 +41,8 @@ StepUp resuelve un problema concreto: las personas saben que tienen tareas impor
 **Entrega 1 — Completada** ✅ (Marzo – Junio 2026)
 App 100% offline con ciclo completo de tareas, pasos, timer e historial.
 
-**Entrega 2 — En curso** 🟡 (Julio – Agosto 2026, entrega: 18 de Agosto)
-Migración visual al diseño Zenith Vitality + backend + auth + sync.
+**Entrega 2 — Completada** ✅ (Julio – Agosto 2026)
+Migración visual al diseño Zenith Vitality + backend + auth + sync offline-first.
 
 | Módulo | Estado |
 |---|---|
@@ -52,10 +52,12 @@ Migración visual al diseño Zenith Vitality + backend + auth + sync.
 | Timer opcional por paso | ✅ Completado |
 | Completar pasos con avance automático | ✅ Completado |
 | Historial de tareas completadas | ✅ Completado |
-| Theme system + componentes UI | 🟡 En progreso |
-| Backend / sync en la nube | 🟡 En progreso (E2) |
-| Autenticación | 🟡 En progreso (E2) |
-| Notificaciones push y onboarding | 🟡 En progreso (E2) |
+| Theme system + componentes UI (Zenith Vitality) | ✅ Completado |
+| Backend / sync en la nube | ✅ Completado (E2) |
+| Autenticación (JWT) | ✅ Completado (E2) |
+| Onboarding + notificaciones | ✅ Completado (E2 — v1; notif. v2 priorizada a E3) |
+| Date picker + responsive web | ✅ Completado (E2) |
+| Insignias y perfil | ✅ Completado (E2) |
 | Sugerencia de pasos con IA | ⏳ Planificado para E3 |
 
 ---
@@ -69,7 +71,7 @@ Migración visual al diseño Zenith Vitality + backend + auth + sync.
 | Base de datos local | expo-sqlite (SQLite) |
 | Navegación | React Navigation — GlassTabBar |
 | Diseño visual | Sistema Zenith Vitality |
-| Testing | Vitest (pendiente de configurar — issue #33) |
+| Testing | Vitest (app, 111 tests) + Jest/Supertest (backend, 94 tests) |
 | Control de versiones | Git + GitHub + Conventional Commits |
 | Backend (E2) | Node.js + Express + Prisma + PostgreSQL + Railway |
 
@@ -140,6 +142,21 @@ Esto abre el **Metro Bundler** en la terminal y muestra un código QR.
 
 > **Nota:** La base de datos SQLite se inicializa automáticamente al primer arranque. No requiere ninguna configuración manual.
 
+> **Nota E2:** Para probar registro y sincronización apuntá la app al backend
+> (producción en Railway por defecto). Si querés correrlo local:
+>
+> ```bash
+> cd backend
+> npm install
+> docker compose up -d        # Postgres local
+> cp .env.example .env        # definir JWT_SECRET y DATABASE_URL
+> npx prisma migrate deploy
+> npm run dev
+> ```
+>
+> Y en la raíz: `EXPO_PUBLIC_API_URL=http://localhost:3000 npx expo start`. Para
+> la demo con datos de ejemplo: `EXPO_PUBLIC_SEED_DB=true npx expo start`.
+
 ---
 
 ## Estructura del proyecto
@@ -157,15 +174,27 @@ stepup/
 │   │   ├── HistoryScreen.tsx      # Historial + gráfico semanal
 │   │   ├── BadgesScreen.tsx       # Galería de insignias
 │   │   ├── ProfileScreen.tsx      # Perfil y configuración
-│   │   └── OnboardingScreen.tsx    # Onboarding inicial
+│   │   ├── BadgesScreen.tsx       # Galería de insignias
+│   │   ├── OnboardingScreen.tsx    # Onboarding inicial
+│   │   ├── WelcomeScreen.tsx      # Entrar con cuenta o explorar sin cuenta
+│   │   ├── LoginScreen.tsx        # Inicio de sesión
+│   │   ├── RegisterScreen.tsx     # Registro + migración de datos
+│   │   └── SyncConflictScreen.tsx # Resolución de conflictos de sync
 │   ├── services/
 │   │   ├── TaskService.ts         # CRUD tareas + completado
 │   │   ├── StepService.ts         # Pasos + orden + completar
 │   │   ├── TimerService.ts        # Countdown / countup por paso
-│   │   └── ProgressService.ts     # Historial + contador diario
+│   │   ├── ProgressService.ts     # Historial + contador diario
+│   │   ├── api.ts                 # Cliente HTTP (JWT + idempotencia)
+│   │   ├── AuthService.ts         # Registro, login, sesión
+│   │   ├── SyncService.ts         # Push / pull / migrate / conflictos
+│   │   ├── syncLifecycle.ts       # Sync automático al abrir/cerrar
+│   │   ├── session.ts             # Persistencia de sesión
+│   │   ├── idempotency.ts         # Claves idempotentes
+│   │   └── dateFormat.ts          # Helpers ISO + display
 │   ├── database/
 │   │   ├── db.ts                  # Conexión + inicialización SQLite
-│   │   └── migrations.ts          # Schema: tasks, steps, daily_progress
+│   │   └── migrations.ts          # 4 migraciones (schema + sync + conflictos + owner)
 │   ├── components/                # Componentes UI reutilizables
 │   │   ├── Button.tsx             # Botones primary/secondary/tertiary
 │   │   ├── Card.tsx               # Contenedor tipo glassmorph
@@ -186,6 +215,20 @@ stepup/
 │       ├── borderRadius.ts        # Radios de borde
 │       └── shadows.ts             # Sombras ambientales
 ├── .claude/skills/zenith-vitality-ds/  # Design System skill para IA
+├── backend/                     # API REST (E2) — Express + Prisma + PostgreSQL
+│   ├── src/
+│   │   ├── server.ts            # Entry point (env fail-closed)
+│   │   ├── app.ts               # Express app + rutas
+│   │   ├── routes/              # auth, task, step, sync, progress
+│   │   ├── controllers/         # Capa HTTP
+│   │   ├── services/            # Lógica de negocio
+│   │   ├── repositories/        # Acceso a datos (Prisma)
+│   │   ├── middleware/          # auth, idempotency, error-handler
+│   │   └── tests/               # 9 suites (94 casos)
+│   ├── prisma/
+│   │   ├── schema.prisma        # User, Task, Step, DailyProgress, IdempotencyKey
+│   │   └── migrations/          # 4 migraciones
+│   └── docker-compose.yml       # Postgres local de desarrollo
 ├── docs/
 │   ├── CONVENCIONES.md            # Reglas del equipo
 │   ├── Contexto.md                 # Contexto completo del proyecto
@@ -217,7 +260,7 @@ Resumen rápido:
 | Entrega | Período | Stack | Estado |
 |---|---|---|---|
 | E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | ✅ Completada |
-| E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Railway | 🟡 En curso |
+| E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Railway | ✅ Completada |
 | E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | ⏳ Planificado |
 
 ---
