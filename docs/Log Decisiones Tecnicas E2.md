@@ -33,6 +33,8 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada — implementada (issue #71) |
 | DT-22 | GitHub: protección de ramas y gestión de herramientas del repo | Agosto 2026 | Confirmada |
 | DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
+| DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Agosto 2026 | Planificada (E3) |
+| DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
 
 # Decisiones detalladas
 
@@ -246,8 +248,36 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Decisión** | Agregar `owner_user_id` en `sync_meta`. Al hacer login se verifica el owner; si no coincide, se resetea la DB local antes de migrar/operar. Al logout se limpia el owner. | |
 | **Razonamiento** | Un solo almacén local con ownership explícito evita mezclar datasets de cuentas distintas sin perder el modo offline (E1). | |
 | **Alternativas descartadas** | DB por usuario (descartado: complejidad de migración y espacio); borrar todo al logout (descartado: rompía el modo offline sin cuenta). | |
-| **Consecuencias** | El `migrate()` limpia datos ajenos antes de subir. El flujo "saltar y usar offline" sigue funcionando sin owner. | |
+| **Consecuencias** | El `migrate()` limpia datos ajenos antes de subir. El flujo "saltar y usar offline" sigue funcionando sin owner. |
 
-*StepUp — Log Decisiones Técnicas E2 — Versión 1.2 — Agosto 2026*
+---
+
+## DT-24 IA en E3: Google Gemini vía proxy por el backend
+*Agosto 2026 — Plan de la Entrega 3 (epic #152, PRD en `docs/Entrega 3 PRD.md`)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Planificada (E3)** | |
+| **Contexto** | E3 necesita una IA que sugiera pasos al crear una tarea. El equipo no tiene experiencia previa en integración de IA. Investigación: la alternativa con mejor relación costo/esfuerzo es Google Gemini API (AI Studio) con tier gratis permanente (modelo `gemini-2.5-flash`, ~10 RPM / 250K TPM en el tier gratuito). | |
+| **Decisión** | La IA se consume **vía un endpoint propio del backend** (`POST /api/ai/suggest-steps` + acción de asistente de descripción), que a su vez llama a Gemini. La API key vive **solo en el servidor** (Railway env), nunca en el bundle de la app. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json`. | |
+| **Razonamiento** | No exponer el secreto en un bundle público (la app se distribuye a cualquier dispositivo). Coherente con la arquitectura existente (JWT auth, env.ts fail-closed, error-handler, tests con supertest). Permite centralizar rate limiting, retry con backoff y sanitización de la respuesta. | |
+| **Alternativas descartadas** | Llamada directa desde la app a Gemini (descartado: la key queda expuesta en el bundle). Claude Haiku / GPT-4o mini (descartado: costos o cuotas del tier gratis menos favorables para esta escala). IA on-device (descartado: requiere modelos locales pesados, fuera de alcance académico). Refino conversacional de la sugerencia (descartado en E3: se usa re-generar). | |
+| **Consecuencias** | La app offline no puede usar la IA (requiere red) pero nunca queda bloqueada: sin conexión, el botón de IA no aparece y el flujo manual de creación queda intacto. En el tier gratis Google entrena con los prompts (aceptable para uso académico; no enviar datos sensibles). La mejora continua del prompt queda como trabajo posterior. | |
+
+---
+
+## DT-25 Descripción como atributo persistente de la tarea
+*Agosto 2026 — Plan de la Entrega 3 (slice #153)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Planificada (E3)** | |
+| **Contexto** | La calidad de la sugerencia de pasos con IA depende del contexto que el usuario da. Hoy una tarea solo tiene nombre y fecha. Se necesita un campo de descripción, y decidir si se persiste. | |
+| **Decisión** | La tarea gana un atributo `description` (opcional, nullable) que se guarda en SQLite local, en PostgreSQL (Prisma) y viaja en el contrato de sync. Es editable desde el formulario y se muestra en el detalle. | |
+| **Razonamiento** | La descripción es el "por qué" de la tarea; descartarla (efímera) impediría re-generar pasos con IA más tarde con el mismo contexto y empobrecería el dashboard futuro. El costo de schema es acotado: ya existen migraciones en SQLite y Prisma, y el sync ya resuelve cambios. | |
+| **Alternativas descartadas** | Descripción efímera (solo para la llamada de IA, no persistida): más simple, pero pierde el contexto y rompe "re-generar pasos después". | |
+| **Consecuencias** | El formulario de crear/editar tarea gana un campo. El detalle muestra la descripción. El sync y las migraciones (local y remota) se actualizan. El campo es opcional: crear sin descripción sigue siendo válido y rápido (HU-2). | |
+
+*StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
 *Ingeniería en Sistemas de Información*

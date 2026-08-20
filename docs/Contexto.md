@@ -62,13 +62,18 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 - Modelo de datos replicado entre SQLite local y PostgreSQL remoto
 
 ### Entrega 3 — Septiembre a Noviembre 2026 (entrega final)
-- Integración con API de IA (Claude Haiku o GPT-4o mini)
-- El usuario escribe el nombre de la tarea y la app sugiere los pasos automáticamente
-- El usuario edita y confirma los pasos sugeridos
-- Estimación automática del tiempo total
-- Dashboard de estadísticas personales, rachas de productividad
-- Notificaciones push (Firebase Cloud Messaging)
-- Pulido general y demo final
+
+**Foco principal: IA.** Plan detallado en `docs/Entrega 3 PRD.md` (epic #152).
+
+- Integración con **Google Gemini API** (AI Studio, tier gratis, modelo `gemini-2.5-flash` vía backend)
+- **Sugeridor de pasos:** el usuario escribe nombre + descripción y la app sugiere pasos accionables de 5-25 min (alineados al método Pomodoro), 3-8 según el tamaño de la tarea
+- **Asistente de descripción:** guía de estructura contextual para escribir mejores descripciones
+- La IA propone, el usuario decide: borrador editable → confirmar → la tarea y sus pasos nacen juntos
+- La IA también está disponible en el detalle de tarea (re-generar pasos con la descripción guardada)
+- La descripción pasa a ser atributo persistente de la tarea (SQLite + PostgreSQL + sync)
+- Offline: la IA nunca bloquea — sin conexión, el flujo manual de creación queda intacto
+- **Dashboard de consistencia:** racha de días con actividad (1 día de gracia fijo por racha, no acumulable) + tendencia semanal con LineChart
+- Notificaciones push (FCM), slices de polish 8/10/11 y refino conversacional de la IA quedan FUERA del alcance obligatorio de E3
 
 > **Nota:** originalmente se planificaron 4 entregas (la cuarta en diciembre con widget Android y estadísticas avanzadas), pero la cursada termina a fines de noviembre. Todo lo que entre en el tiempo disponible se agrupa en E3. La E4 queda descartada o como trabajo futuro.
 
@@ -89,7 +94,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 | Auth (E2) | JWT (jsonwebtoken + bcrypt) | Registro y login de usuarios |
 | Diseño visual (E2) | Sistema Zenith Vitality | Colores, tipografía, componentes desde `stitch_stepup_design_system/` |
 | Notificaciones (E3) | Firebase Cloud Messaging | Se agrega en E3 |
-| IA (E3) | Claude Haiku API o GPT-4o mini | Una llamada con buen prompt, sin fine-tuning |
+| IA (E3) | Google Gemini API (AI Studio) | Una llamada con buen prompt, sin fine-tuning. Se accede vía el backend (la key nunca va en el bundle de la app) |
 
 ---
 
@@ -99,6 +104,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 ```
 id           INTEGER PRIMARY KEY AUTOINCREMENT
 name         TEXT NOT NULL
+description  TEXT (nullable) — contexto de la tarea (agregado en E3)
 due_date     TEXT (ISO 8601, nullable)
 status       TEXT — 'active' | 'completed'
 created_at   TEXT (ISO 8601)
@@ -238,6 +244,39 @@ stepup/
 
 ---
 
+## Plan de la Entrega 3 (definido en agosto 2026)
+
+> Detalle completo en `docs/Entrega 3 PRD.md` (epic GitHub **#152**).
+
+### Alcance
+- **Foco:** IA para sugerir pasos al crear una tarea + dashboard de consistencia.
+- **Fuera de alcance:** notificaciones push (FCM), slices de polish 8/10/11, refino conversacional de la IA.
+
+### Slices (issues del milestone Entrega 3)
+| Slice | Issue | Qué es | Bloqueado por |
+|-------|-------|--------|---------------|
+| 1 | #153 | Descripción como atributo persistente de la tarea (SQLite + Prisma + sync) | — |
+| 2 | #154 | Endpoint backend de IA: `POST /api/ai/suggest-steps` + asistente de descripción (Gemini vía proxy) | — |
+| 3 | #155 | Frontend: sugerir pasos con IA al crear tarea (borrador editable + regenerar) | #153, #154 |
+| 4 | #157 | Frontend: generar pasos con IA desde el detalle de tarea | #153, #154 |
+| 5 | #156 | Dashboard de consistencia: racha (1 día de gracia fijo) + tendencia semanal | #122 |
+
+### Deuda de E2 priorizada (no eliminada)
+- **Alta:** #122 (borde de día UTC — alimenta las rachas), #123 (IDOR en migrate).
+- **Media:** #124 (idempotencia client-side anulada).
+- **Baja:** #126 (`as any` restantes).
+- **Cerrada sin hacer:** #125 (docs PRD — el PRD se actualiza en E3).
+
+### Conceptos clave (del grill con domain-modeling)
+- **Sugerencia de pasos:** la IA propone, el usuario decide. El borrador es temporal, editable, descartable y no se persiste hasta confirmar.
+- **Buen paso:** accionable (verbo concreto), de 5-25 min (Pomodoro), en orden lógico, derivado del contexto dado (nunca genérico).
+- **Descripción:** opcional para crear, necesaria para una buena sugerencia. Se guarda con la tarea.
+- **Racha:** días consecutivos con al menos 1 paso completado, contando desde hoy; 1 día de gracia fijo por racha (no acumulable).
+- **IA offline:** no funciona sin conexión, pero nunca bloquea — el flujo manual queda intacto.
+- **Key de Gemini:** SOLO en el backend (Railway env), nunca en el bundle de la app.
+
+---
+
 ## División de tareas de desarrollo
 
 ### Integrante A (Claude tomó este rol) — Fundación + DB + Servicios
@@ -372,6 +411,8 @@ Todos los documentos están en formato .docx listos para subir a Google Drive.
 6. **README.md** — listo para pegar en el repo de GitHub. Tiene descripción, estado de funcionalidades, tech stack, requisitos, instrucciones de instalación paso a paso, estructura de carpetas, branching, testing, tabla de entregas.
 
 7. **Documentación E2 (18/08/2026)** — 8 entregables nuevos en `docs/` (md + docx): Requerimientos E2 v1.1, Arquitectura E2 v1.1, Log Decisiones Técnicas E2 v1.2, Testing E2 v1.1, Repositorio y Desarrollo E2 v1.0, Manual de Usuario E2 v1.0, Minutas y Feedback E2 v1.0, Gestión Documental E2 v1.0.
+
+8. **PRD Entrega 3 (20/08/2026)** — `docs/Entrega 3 PRD.md` (epic #152): problem statement, 17 user stories, decisiones de implementación (Gemini vía backend, descripción persistente, borrador editable, racha), decisiones de testing (seams backend + racha), out of scope y deuda priorizada.
 
 ### Lo que falta generar
 - Presentación E2 (PPTX) con capturas reales de la app
