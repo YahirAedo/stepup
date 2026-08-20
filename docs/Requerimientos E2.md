@@ -6,7 +6,12 @@ Iteración 2 | Julio – Agosto 2026
 
 Ingeniería en Sistemas de Información | 2026
 
-*Versión 1.0 | Julio 2026*
+*Versión 1.1 | Agosto 2026*
+
+> **Nota de versión (1.1):** refleja el estado **implementado** de la Entrega 2 al
+> momento del cierre (18/08/2026). La v1.0 era la especificación inicial; esta
+> versión documenta qué se construyó, los ajustes respecto a lo planificado y las
+> decisiones tomadas durante la iteración.
 
 # 1. Introducción
 
@@ -88,7 +93,12 @@ Arquitectura híbrida:
 - Con cuenta: los datos existentes se migran al servidor al registrarse
 - Push: envía cambios locales al servidor
 - Pull: trae cambios del servidor desde la última sincronización
-- Resolución de conflictos: last-write-wins
+- Resolución de conflictos: last-write-wins (con pantalla de resolución manual implementada)
+
+> **Estado v1.1:** los 4 puntos están implementados. La DB local se aisló por usuario
+> (`owner_user_id`) para no filtrar datos entre cuentas al re-loguear. El push/pull
+> corre automáticamente al abrir y cerrar la app (`syncLifecycle`). La pantalla de
+> resolución de conflictos quedó implementada y cableada en el perfil.
 
 # 3. Historias de Usuario
 
@@ -139,13 +149,27 @@ Arquitectura híbrida:
 
 | Elemento | Descripción | Estado |
 | --- | --- | --- |
-| Diseño visual | Se reemplaza el diseño funcional de E1 por el sistema Zenith Vitality con glassmorphism, nueva paleta y componentes. | En curso |
-| Navegación | Bottom tabs estándar → GlassTabBar flotante. | En curso |
-| Backend | Se agrega API REST con Node.js + Express + Prisma + PostgreSQL. Nuevo para E2. | Planificado |
-| Autenticación | Se agrega registro/login con JWT. No existía en E1 (offline puro). | Planificado |
-| Sync | Se agrega sincronización offline-first híbrida. No existía en E1. | Planificado |
-| Onboarding | Se agregan 2 pantallas de onboarding para primera ejecución. No existía en E1. | En curso |
-| Perfil e insignias | Se agregan pantallas de perfil, configuración y galería de insignias. | En curso |
+| Diseño visual | Se reemplaza el diseño funcional de E1 por el sistema Zenith Vitality con glassmorphism, nueva paleta y componentes. | Completado |
+| Navegación | Bottom tabs estándar → GlassTabBar flotante. | Completado |
+| Backend | Se agrega API REST con Node.js + Express + Prisma + PostgreSQL. Nuevo para E2. | Completado |
+| Autenticación | Se agrega registro/login con JWT. No existía en E1 (offline puro). | Completado |
+| Sync | Se agrega sincronización offline-first híbrida. No existía en E1. | Completado |
+| Onboarding | Se agregan 2 pantallas de onboarding para primera ejecución. No existía en E1. | Completado |
+| Perfil e insignias | Se agregan pantallas de perfil, configuración y galería de insignias. | Completado |
+
+## 5.1 Ajustes respecto a lo planificado (durante la iteración)
+
+| Cambio | Detalle | Estado |
+| --- | --- | --- |
+| Slices 8, 10 y 11 | Animaciones/polish, XP/Level + notificaciones v2 y SyncConflictScreen se re-priorizaron al milestone E3. La pantalla SyncConflictScreen quedó **implementada y cableada**; los otros dos siguen abiertos para E3. | Priorizados a E3 |
+| Unificación de ramas | El backend se desarrolló en `develop2` (transitoria) y se integró a `develop` vía PR único (#121, issue #120). `develop2` fue eliminada. | Completado |
+| API: verbos finales | Los updates de tasks/steps usan `PUT`, las acciones de completado usan `PATCH /complete`, el reorder usa `PUT /reorder`. La spec original anticipaba PATCH para updates; se dejó el diseño final del backend (rutas anidadas y planas conviviendo). | Completado |
+| Idempotencia por `Idempotency-Key` | Los writes requieren key idempotente (patrón Stripe) para evitar duplicados en reintentos. Implementado del lado servidor; el cliente aún genera key nueva por llamada (issue #124, E3). | Server ✅ / cliente pendiente |
+| Modelos extra en PostgreSQL | A los 3 modelos de la spec se sumaron `DailyProgress` e `IdempotencyKey` (necesarios para contadores y replay seguro). | Completado |
+| Endurecimiento de seguridad | JWT fail-closed (no arranca sin secret seguro), password 8–72 bytes, validación ISO real de fechas, índices para reads de sync. | Completado |
+| Aislamiento de la DB local por usuario | `sync_meta.owner_user_id` + reset al login/logout para no migrar datos ajenos. | Completado |
+| Contrato de login unificado | Registro usa `SyncService.migrate()` (registro + migración de datos locales en un solo paso) en lugar de `AuthService.register()`; el efecto funcional es el mismo. | Completado (desvío documentado) |
+| Celebración al completar paso (HU-21) | La pantalla StepCompleteScreen existe y está registrada en el stack de Tareas, pero el flujo actual de completado **avanza inline** al siguiente paso (sin navegar a la celebración). Queda para el polish de E3 (slice 8). | Desviado a E3 (HU-21) |
 
 # 6. Glosario (adiciones a E1)
 

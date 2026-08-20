@@ -6,7 +6,12 @@ Iteración 2 | Julio–Agosto 2026
 
 Ingeniería en Sistemas de Información | 2026
 
-*Versión 1.0 | Julio 2026*
+*Versión 1.1 | Agosto 2026*
+
+> **Nota de versión (1.1):** actualiza la spec de Julio contra la **implementación
+> real** (18/08/2026): endpoints finales (PATCH, `/complete`, `/reorder`,
+> `/progress`), 5 modelos Prisma, estructura backend definitiva, 16 pantallas y
+> el estado confirmado de las decisiones DT-13 a DT-22.
 
 # 1. Introducción
 
@@ -90,21 +95,20 @@ StepUp E2 extiende la arquitectura en 3 capas de E1 a 4 capas, agregando la capa
 | StepFormScreen | Pills de duración, drag-and-drop, glass card |
 | HistoryScreen | Gráfico de línea bezier, logros XP, racha, tarjeta de hito |
 
-### Pantallas nuevas (7)
+### Pantallas nuevas (10)
 
-| Pantalla | Propósito |
-| --- | --- |
-| OnboardingScreen1 | "Un paso a la vez" — concepto de fragmentación de metas |
-| OnboardingScreen2 | "Tu flujo comienza aquí" — llamado a crear primera tarea |
-| NotificationPermissionScreen v1 | "Libera tu mente" — ripple ping animation |
-| NotificationPermissionScreen v2 | "Mantén el ritmo" — calm wave animation |
-| LoadingScreen | "Preparando tu espacio de calma" — spinner doble anillo |
-| ProfileScreen | Avatar, duración default, toggle notificaciones |
-| BadgesScreen | Galería de insignias desbloqueadas/bloqueadas |
-| StepCompleteScreen | Celebración con check animado y confetti |
-| LoginScreen | "Bienvenido de vuelta" — email + password |
-| RegisterScreen | "Comienza tu camino" — nombre + email + password |
-| SyncConflictScreen | Resolución de conflictos local vs servidor |
+| Pantalla | Propósito | Estado |
+| --- | --- | --- |
+| OnboardingScreen1 | "Un paso a la vez" — concepto de fragmentación de metas | Implementada |
+| OnboardingScreen2 | "Tu flujo comienza aquí" — llamado a crear primera tarea | Implementada |
+| NotificationPermissionScreen | "Libera tu mente" — permiso de notificaciones v1 (ripple ping) | Implementada |
+| LoadingScreen | Splash/loading animado al arranque (splash nativo + spinner) | Implementada |
+| ProfileScreen | Avatar, duración default, logout, acceso a conflictos | Implementada |
+| BadgesScreen | Galería de insignias desbloqueadas/bloqueadas | Implementada |
+| StepCompleteScreen | Celebración con check animado y confetti | Implementada (screen registrada en el stack de Tareas; sin wiring actual — el completado avanza inline al siguiente paso. Se prevé cablearla en E3, slice 8) |
+| LoginScreen | "Bienvenido de vuelta" — email + password | Implementada |
+| RegisterScreen | "Comienza tu camino" — nombre + email + password | Implementada |
+| SyncConflictScreen | Resolución de conflictos local vs servidor | Implementada (issue #14 quedó en E3 para su revisión) |
 
 ## 4.2 Servicios (Capa de Lógica de Negocio)
 
@@ -121,81 +125,106 @@ StepUp E2 extiende la arquitectura en 3 capas de E1 a 4 capas, agregando la capa
 
 | Servicio | Responsabilidad |
 | --- | --- |
-| ApiClient | Wrapper de fetch con JWT, manejo de errores 401 |
-| AuthService | login, register, logout, isLoggedIn, getToken |
-| SyncService | push (envía dirty records), pull (trae cambios remotos), migrate (sube datos al registrarse) |
+| api.ts (`apiFetch`) | Wrapper de fetch: adjunta JWT e `Idempotency-Key`, maneja 401 (logout global), lanza `ApiError(status, message)` |
+| session.ts | Persistencia de sesión (save/load/clear/has), usuario actual |
+| AuthService | login, register, logout, isLoggedIn, getUser |
+| SyncService | push (envía dirty records), pull (trae cambios desde lastSyncAt), migrate (sube datos al registrarse), getConflicts, resolveConflict (local/server) |
+| syncLifecycle.ts | Orquesta sync automático al abrir y cerrar la app (RFN-08) |
+| idempotency.ts | Generación de claves idempotentes client-side |
+| dateFormat.ts | Helpers ISO `YYYY-MM-DD` + display (web y native) |
 
 ## 4.3 Capa de Datos Local
 
-### Cambios en SQLite respecto a E1
+### Cambios en SQLite respecto a E1 (schema real, 4 migraciones)
 
-Tablas existentes con columnas agregadas:
+**V1 — base E1** (sin cambios): tasks, steps, daily_progress.
 
-**tasks** (columnas nuevas):
-- `server_id TEXT` — UUID del servidor (nullable si no sincronizado)
-- `dirty INTEGER DEFAULT 0` — 1 si hay cambios locales pendientes de sync
-- `updated_at TEXT` — timestamp ISO para last-write-wins
+**V2 — sync offline-first** (`OFFLINE_SYNC_V2`):
+- `tasks` + `server_id TEXT`, `dirty INTEGER DEFAULT 0`, `updated_at TEXT`
+- `steps` + `server_id TEXT`, `dirty INTEGER DEFAULT 0`, `updated_at TEXT`
+- Nueva tabla `sync_meta` (single row, `id INTEGER CHECK (id = 1)`): `last_sync_at TEXT`
 
-**steps** (columnas nuevas):
-- `server_id TEXT` — UUID del servidor
-- `dirty INTEGER DEFAULT 0`
-- `updated_at TEXT`
+**V3 — conflictos** (`CONFLICTS_V3`):
+- Nueva tabla `sync_conflicts`: `table_name`, `local_id`, `server_id`, `local_payload`, `server_payload`, `created_at`, `UNIQUE (table_name, local_id)`
 
-**Nueva tabla sync_meta:**
-- `id INTEGER PRIMARY KEY AUTOINCREMENT`
-- `key TEXT UNIQUE` — identificador del metadato
-- `value TEXT` — valor (ej: last_sync_at, user_id, token)
+**V4 — aislamiento por usuario** (`OWNER_USER_V4`):
+- `sync_meta` + `owner_user_id TEXT` — identifica a qué cuenta pertenecen los datos locales; se limpia al login/logout para no migrar datos ajenos (PR #114)
 
 ## 4.4 Capa Remota (Backend)
 
-### Proyecto backend/
+### Proyecto backend/ (estructura real)
 
 ```
 backend/
 ├── src/
-│   ├── index.ts              — Entry point, Express app
-│   ├── routes/
-│   │   ├── auth.ts           — POST /register, /login, GET /me
-│   │   ├── tasks.ts          — CRUD /tasks
-│   │   ├── steps.ts          — CRUD /tasks/:id/steps, /steps/:id
-│   │   └── sync.ts           — POST /push, GET /pull, POST /migrate
+│   ├── server.ts              — entry point (dotenv, fail-closed env, listen PORT)
+│   ├── app.ts                 — Express app: cors, json, /health + /api/health, rutas, errorHandler
+│   ├── config/
+│   │   ├── env.ts             — JWT fail-closed (no arranca sin secret seguro)
+│   │   └── prisma.ts          — Prisma client singleton
 │   ├── middleware/
-│   │   └── auth.ts           — JWT verification
-│   └── lib/
-│       └── prisma.ts         — Prisma client singleton
+│   │   ├── auth.ts            — requireAuth (JWT verification)
+│   │   ├── idempotency.ts     — requireIdempotencyKey (UUID o 400)
+│   │   └── error-handler.ts   — errores JSON (sin HTML de Express)
+│   ├── routes/                — auth / task / step / sync / progress .routes.ts
+│   ├── controllers/           — capa HTTP (status codes, error mapping)
+│   ├── services/              — lógica de negocio (register, push, completeStep, …)
+│   ├── repositories/          — acceso a datos Prisma
+│   ├── utils/                 — handle-error, jwt, schemas (zod)
+│   └── tests/                 — 10 suites (94 casos)
 ├── prisma/
-│   └── schema.prisma         — User, Task, Step
-├── package.json
-└── tsconfig.json
+│   ├── schema.prisma          — User, Task, Step, DailyProgress, IdempotencyKey
+│   └── migrations/            — 4 migraciones
+├── docker-compose.yml         — Postgres local de desarrollo (stepup-postgres)
+├── railway.json               — deploy Nixpacks (migrate deploy + start)
+└── package.json
 ```
 
-### Modelo de datos (Prisma)
+### Modelo de datos (Prisma — 5 modelos)
 
-User: id (uuid), name, email (unique), password (bcrypt), createdAt, tasks[]
-Task: id (uuid), userId, name, dueDate?, status, createdAt, updatedAt, completedAt?, steps[]
-Step: id (uuid), taskId, name, durationMin?, orderIndex, status, createdAt, updatedAt, completedAt?
+- **User**: id (uuid), name, email (unique), password (bcrypt), createdAt, relations
+- **Task**: id (uuid), userId, name, dueDate?, status (active|completed), createdAt, updatedAt, completedAt?, steps[]
+- **Step**: id (uuid), taskId, name, durationMin?, orderIndex, status (pending|completed), createdAt, updatedAt, completedAt?
+- **DailyProgress**: userId, date (YYYY-MM-DD), stepsCompleted — `@@unique([userId, date])`
+- **IdempotencyKey**: userId, key, requestHash, method, path, statusCode, responseBody, expiresAt — `@@unique([userId, key])`
 
-### API Endpoints
+Índices para reads de sync: `@@index([userId, updatedAt])` en Task; `@@index([taskId, orderIndex|status|updatedAt])` en Step.
+
+### API Endpoints (final)
 
 ```
-POST   /api/auth/register     → 201 { user, token }
-POST   /api/auth/login        → 200 { user, token }
-GET    /api/auth/me           → 200 { user }
+POST   /api/auth/register    Body: { name, email, password }     → 201 { user, token }
+POST   /api/auth/login       Body: { email, password }           → 200 { user, token }
+GET    /api/auth/me          Header: Bearer <jwt>                → 200 { user }
 
-GET    /api/tasks             → 200 Task[]
-POST   /api/tasks             → 201 Task
-PUT    /api/tasks/:id         → 200 Task
-DELETE /api/tasks/:id         → 204
+GET    /api/tasks                                                → 200 Task[]
+GET    /api/tasks/completed                                      → 200 Task[]
+GET    /api/tasks/:id                                            → 200 Task
+POST   /api/tasks            Body: { name, dueDate? }            → 201 Task
+PUT    /api/tasks/:id        Body: { name?, dueDate? }           → 200 Task
+PATCH  /api/tasks/:id/complete                                   → 200 Task
+DELETE /api/tasks/:id                                            → 204
+GET    /api/tasks/:taskId/steps                                  → 200 Step[]
+POST   /api/tasks/:taskId/steps                                  → 201 Step
 
-GET    /api/tasks/:id/steps   → 200 Step[]
-POST   /api/tasks/:id/steps   → 201 Step
-PUT    /api/steps/:id         → 200 Step
-DELETE /api/steps/:id         → 204
+GET    /api/steps            (alias, ?taskId=)                   → 200 Step[]
+POST   /api/steps            Body: { taskId, name, durationMin?, orderIndex? } → 201
+PUT    /api/steps/:id                                            → 200 Step
+PATCH  /api/steps/:id/complete                                   → 200 { nextStep, taskCompleted }
+PUT    /api/steps/reorder    Body: { taskId, orderedIds[] }      → 200 { ok }
+DELETE /api/steps/:id                                            → 204
 
-POST   /api/sync/push         → 200 { tasks, steps }
-GET    /api/sync/pull?since=  → 200 { tasks, steps }
-POST   /api/sync/migrate      → 201 { user, token, taskMap }
+POST   /api/sync/push        Body: { tasks[], steps[] }          → 200 { tasks[], steps[] }
+GET    /api/sync/pull?since={ISO}                                → 200 { tasks[], steps[] }
+POST   /api/sync/migrate     Body: { tasks[], steps[], email, password, name } → 201 { user, token, taskMap, stepMap }
+
+GET    /api/progress                                             → 200
 ```
+
+**Protección:** JWT (`requireAuth`) en todas las rutas salvo `register`, `login`,
+`migrate` y `health`. `Idempotency-Key` obligatoria en writes (POST/PUT/PATCH) —
+replay byte-idéntico o 409 si el payload cambió (issue #67). Error middleware
+global (issue #76).
 
 # 5. Flujo de Sincronización
 
@@ -206,29 +235,24 @@ La app funciona exactamente como E1. Todo se escribe en SQLite local. No hay lla
 ## 5.2 Al registrarse (migración)
 
 1. El usuario completa el formulario de registro (nombre, email, contraseña)
-2. AuthService.register() envía credenciales + SyncService.migrate() envía datos locales
+2. `SyncService.migrate()` envía credenciales + el dataset local completo a `/api/sync/migrate`
 3. El backend crea la cuenta, importa todas las tareas y pasos, asigna UUIDs
-4. El backend retorna { user, token, taskMap: { localId: serverId } }
-5. La app guarda el token, actualiza server_id en cada registro local según taskMap
+4. El backend retorna `{ user, token, taskMap, stepMap }` (mapeo localId → server UUID)
+5. La app guarda la sesión, registra `owner_user_id` en `sync_meta` y actualiza `server_id` en cada registro según los mapas
 6. A partir de este punto, la app opera en modo sync
+
+> Si la DB local ya pertenece a otra cuenta (`owner_user_id` distinto), se limpia
+> antes de migrar para no subir datos ajenos (PR #114).
 
 ## 5.3 Con cuenta (sync activo)
 
-**Al abrir la app:**
-1. SyncService.pull() pide cambios desde lastSyncAt
-2. Aplica inserts y updates a SQLite local
-3. Actualiza lastSyncAt
+**Al abrir la app:** `syncLifecycle` → `pull()` desde `last_sync_at`, aplica inserts/updates y actualiza el marcador.
 
-**Al crear o modificar datos:**
-1. Se escribe en SQLite local con dirty=1
-2. SyncService.push() encola el envío
+**Al crear o modificar datos:** se escribe en SQLite local con `dirty=1` (la app es local-first; el servidor es destino de sync).
 
-**Al cerrar la app o periódicamente:**
-1. SyncService.push() envía todos los registros dirty
-2. Servidor upserts y retorna los server_ids actualizados
-3. App limpia dirty=0 y actualiza server_ids
+**Al abrir/cerrar la app:** `syncLifecycle` → `push()` envía los registros dirty; el servidor hace upsert idempotente (misma `Idempotency-Key` por operación) y responde los `server_id` asignados.
 
-**Resolución de conflictos:** last-write-wins. Si el mismo registro fue modificado en ambos lados con timestamps cercanos, se muestra SyncConflictScreen para resolución manual.
+**Resolución de conflictos:** last-write-wins con umbral de 1 minuto. Si un registro se modificó en ambos lados con timestamps cercanos, se persiste en `sync_conflicts` y se muestra en `SyncConflictScreen` (accesible desde Perfil) para elegir local o servidor.
 
 # 6. Sistema de Diseño Zenith Vitality
 
@@ -258,7 +282,7 @@ La app funciona exactamente como E1. Todo se escribe en SQLite local. No hay lla
 
 # 7. Decisiones Arquitectónicas (nuevas en E2)
 
-(Ver documento completo en `docs/Log Decisiones Tecnicas E2.md`)
+(Ver documento completo en `docs/Log Decisiones Tecnicas E2.md` — DT-09 a DT-22)
 
 | ID | Decisión | Estado |
 | --- | --- | --- |
@@ -266,9 +290,16 @@ La app funciona exactamente como E1. Todo se escribe en SQLite local. No hay lla
 | DT-10 | Autenticación JWT con registro/login | Confirmada |
 | DT-11 | Sync offline-first híbrido (sin cuenta→local, con cuenta→backend) | Confirmada |
 | DT-12 | Conflictos: last-write-wins | Confirmada |
-| DT-13 | Diseño visual: Sistema Zenith Vitality | En curso |
-| DT-14 | Fuentes: Manrope + Plus Jakarta Sans vía @expo-google-fonts | En curso |
-| DT-15 | Navegación: GlassTabBar flotante | En curso |
+| DT-13 | Diseño visual: Sistema Zenith Vitality | Confirmada |
+| DT-14 | Fuentes: Manrope + Plus Jakarta Sans vía @expo-google-fonts | Confirmada |
+| DT-15 | Navegación: GlassTabBar flotante | Confirmada |
+| DT-16 | Rama `develop2` transitoria (unificada y eliminada 18/08) | Confirmada |
+| DT-17 | JWT fail-closed (no arranca sin secret seguro) | Confirmada |
+| DT-18 | Contrato de password 8–72 bytes + email trim | Confirmada |
+| DT-19 | Validación ISO real de fechas | Confirmada |
+| DT-20 | Idempotencia por `Idempotency-Key` en writes | Server ✅ / cliente pendiente (#124) |
+| DT-21 | `completeStep` transaccional | Confirmada |
+| DT-22 | GitHub: protección de ramas, Dependabot, milestones, releases | Confirmada |
 
 # 8. Evolución hacia la Entrega 3
 

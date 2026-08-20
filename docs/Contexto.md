@@ -218,11 +218,11 @@ stepup/
 ### 🚧 Trabajo pendiente para E2
 
 **Track A — Migración visual (12 issues en GitHub):**
-- `src/theme/` — sistema de diseño centralizado (colores, tipografía, espaciado, sombras)
-- `src/components/` — componentes reutilizables (Button, Card, Badge, TextField, GlassTabBar, etc.)
-- Rediseño de las 6 pantallas existentes + 7 nuevas pantallas
-- Carga de fuentes Manrope + Plus Jakarta Sans
-- **Avance:** Slice 7 (GlassTabBar + FAB + date picker) ya mergeado (#58), resposive scaling aplicado (#42-#46), Onboarding (#50), Perfil (#52). Quedan slices de polish/animaciones.
+- `src/theme/` — sistema de diseño centralizado (colores, tipografía, espaciado, sombras) ✅
+- `src/components/` — componentes reutilizables (Button, Card, Badge, TextField, GlassTabBar, etc.) ✅
+- Rediseño de las 6 pantallas existentes + 10 nuevas pantallas ✅
+- Carga de fuentes Manrope + Plus Jakarta Sans ✅
+- Slices 1–7 y 9 cerrados; **slice 8 (polish), 10 (XP/Level) y la revisión formal de la 11 (SyncConflictScreen, ya implementada) quedaron para E3**
 
 **Track B — Backend (implementado e integrado a `develop`):**
 - API REST en Node.js + Express + Prisma + PostgreSQL ✅
@@ -231,6 +231,7 @@ stepup/
 - CRUD de tasks y steps ✅
 - Hosting en Railway ✅
 - **Estado:** fixes del epic #64 (issues #65-#77) mergeados a `develop2`. **Unificación:** `develop2` integrada a `develop` vía PR #121 (issue #120) y eliminada. Las issues de backend ahora van a `develop`.
+- **Pendiente para E3:** bugs #122–#126 detectados en el review final (borde de día UTC, IDOR en migrate, idempotencia client-side anulada, docs PRD, `as any` restantes)
 
 ### Sistema operativo de desarrollo
 **Windows**
@@ -368,12 +369,13 @@ Todos los documentos están en formato .docx listos para subir a Google Drive.
 
 5. **Log de Decisiones Técnicas** (.docx) — 8 decisiones en formato ADR: contexto, decisión, razonamiento, alternativas descartadas, consecuencias. Incluye guía de cómo mantener el documento vivo.
 
-6. **README.md** — listo para pegar en el repo de GitHub. Tiene descripción, estado de funcionalidades, tech stack, requisitos, instrucciones de instalación paso a paso, estructura de carpetas, branching, testing, tabla de entregas. **Nota: la tabla de entregas del README todavía dice 4 entregas hasta diciembre, hay que actualizarla a 3 entregas hasta noviembre.**
+6. **README.md** — listo para pegar en el repo de GitHub. Tiene descripción, estado de funcionalidades, tech stack, requisitos, instrucciones de instalación paso a paso, estructura de carpetas, branching, testing, tabla de entregas.
+
+7. **Documentación E2 (18/08/2026)** — 8 entregables nuevos en `docs/` (md + docx): Requerimientos E2 v1.1, Arquitectura E2 v1.1, Log Decisiones Técnicas E2 v1.2, Testing E2 v1.1, Repositorio y Desarrollo E2 v1.0, Manual de Usuario E2 v1.0, Minutas y Feedback E2 v1.0, Gestión Documental E2 v1.0.
 
 ### Lo que falta generar
-- Documento de Testing E1 (casos de prueba + resultados + bug list)
-- Manual de usuario v1 (con capturas o wireframes del flujo completo)
-- Minuta de reunión con el profesor (feedback y aprendizajes)
+- Presentación E2 (PPTX) con capturas reales de la app
+- Capturas reales de pantallas para el manual (Playwright sobre la app web)
 
 ---
 
@@ -431,18 +433,18 @@ El plan de migración está desglosado en 12 issues en GitHub (labels por tipo: 
 ## Checklist de E2 — Entrega 18 de Agosto
 
 ### Track A — Migración visual (12 issues en GitHub)
-- [ ] **Prefactor:** Theme system + carga de fuentes (issue #3)
-- [ ] **Slice 1:** FocusScreen rediseñada con TimerWidget (issue #4)
-- [ ] **Slice 2:** TaskList con bento grid (issue #5)
-- [ ] **Slice 3:** TaskDetail + StepForm rediseñadas (issue #6)
-- [ ] **Slice 4:** History + Step Celebration con confetti (issue #7)
-- [ ] **Slice 5:** Onboarding (2 pantallas) + Notificaciones v1 (issue #8)
-- [ ] **Slice 6:** Perfil + Insignias (issue #9)
-- [ ] **Slice 7:** GlassTabBar + reestructuración navegación (issue #10)
-- [ ] **Slice 8:** Animaciones y polish (issue #11)
+- [x] **Prefactor:** Theme system + carga de fuentes (issue #3)
+- [x] **Slice 1:** FocusScreen rediseñada con TimerWidget (issue #4)
+- [x] **Slice 2:** TaskList con bento grid (issue #5)
+- [x] **Slice 3:** TaskDetail + StepForm rediseñadas (issue #6)
+- [x] **Slice 4:** History + Step Celebration con confetti (issue #7)
+- [x] **Slice 5:** Onboarding (2 pantallas) + Notificaciones v1 (issue #8)
+- [x] **Slice 6:** Perfil + Insignias (issue #9)
+- [x] **Slice 7:** GlassTabBar + reestructuración navegación (issue #10)
+- [ ] **Slice 8:** Animaciones y polish (issue #11) — priorizada a E3
 - [x] **Slice 9:** Auth Flow — Login + Register (issue #13) — ver `docs/B2 - Auth flow checklist.md`
-- [ ] **Slice 10:** XP/Level + Notificaciones v2 (issue #12)
-- [ ] **Slice 11:** SyncConflictScreen (issue #14)
+- [ ] **Slice 10:** XP/Level + Notificaciones v2 (issue #12) — priorizada a E3
+- [ ] **Slice 11:** SyncConflictScreen (issue #14) — pantalla implementada y cableada; su revisión formal quedó en E3
 
 ### Track B — Backend
 - [x] Setup del proyecto Node.js + Express + TypeScript
@@ -459,17 +461,16 @@ El plan de migración está desglosado en 12 issues en GitHub (labels por tipo: 
 
 ### Problem discovery (13/08/2026)
 - Judgment Day del backend en `develop2` → epic #64 + issues #65-#77 (JWT fail-closed, password 8, idempotencia, migración segura, fechas ISO, completeStep transaccional, orderIndex, reorder, zona horaria, PATCH vacío, error middleware, índices).
-- Revisión de PRs #78-#82 y comentarios de review publicados (el #82 tiene un hallazgo CRÍTICO de IDOR en `/api/sync/migrate` por scope fijo).
+- Revisión de PRs #78-#82 y comentarios de review publicados (el #82 tiene un hallazgo CRÍTICO de IDOR en `/api/sync/migrate` por scope fijo — registrado como issue #123 en E3).
 - Flujo de resolución de issues definido en `docs/CONVENCIONES.md` §7.
 
 ### Integración
-- [ ] Conectar app al backend cuando hay sesión activa
-- [ ] Flujo offline-first: sin cuenta → SQLite local
-- [ ] Migración de datos locales al registrarse
-- [ ] Sync pull/push funcionando con last-write-wins
-- [ ] Prueba de flujo completo en dispositivo físico Android
-- [ ] Fix de bugs críticos
-- [ ] Merge develop → main + tag v2.0-E2
+- [x] Conectar app al backend cuando hay sesión activa
+- [x] Flujo offline-first: sin cuenta → SQLite local
+- [x] Migración de datos locales al registrarse
+- [x] Sync pull/push funcionando con last-write-wins
+- [x] Fix de bugs críticos (PRs #99-#121)
+- [ ] Merge develop → main + tag v2.0-E2 (opcional — el equipo decidió no mergear en este ciclo de documentación)
 - [ ] Generar APK o link de Expo Go para la demo
 
 ---

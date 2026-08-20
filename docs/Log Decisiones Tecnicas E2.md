@@ -22,16 +22,17 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-10 | Autenticación JWT con registro/login | Julio 2026 | Confirmada |
 | DT-11 | Sync offline-first híbrido: sin cuenta→local, con cuenta→backend | Julio 2026 | Confirmada |
 | DT-12 | Conflictos de sync: last-write-wins | Julio 2026 | Confirmada |
-| DT-13 | Diseño visual: Sistema Zenith Vitality | Julio 2026 | En curso |
-| DT-14 | Fuentes: Manrope + Plus Jakarta Sans vía @expo-google-fonts | Julio 2026 | En curso |
-| DT-15 | Navegación: GlassTabBar flotante con 3-4 tabs | Julio 2026 | En curso |
-| DT-16 | Rama `develop2` transitoria para el backend | Agosto 2026 | En curso |
+| DT-13 | Diseño visual: Sistema Zenith Vitality | Julio 2026 | Confirmada |
+| DT-14 | Fuentes: Manrope + Plus Jakarta Sans vía @expo-google-fonts | Julio 2026 | Confirmada |
+| DT-15 | Navegación: GlassTabBar flotante con 3-4 tabs | Julio 2026 | Confirmada |
+| DT-16 | Rama `develop2` transitoria para el backend | Agosto 2026 | Confirmada — unificada y eliminada (18/08) |
 | DT-17 | JWT fail-closed: rechazar arranque sin secret o con placeholder | Agosto 2026 | Confirmada |
 | DT-18 | Contrato de password unificado: min 8, max 72 bytes, email trim | Agosto 2026 | Confirmada |
 | DT-19 | Validación ISO real de fechas (400 vs 500) | Agosto 2026 | Confirmada |
-| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | En curso (ver hallazgo IDOR en migrate) |
-| DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada |
+| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | Server confirmado · cliente pendiente (#123 IDOR, #124 key por llamada) |
+| DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada — implementada (issue #71) |
 | DT-22 | GitHub: protección de ramas y gestión de herramientas del repo | Agosto 2026 | Confirmada |
+| DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
 
 # Decisiones detalladas
 
@@ -142,12 +143,12 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 
 | | | |
 | --- | --- | --- |
-| **Estado** | **En curso** | |
+| **Estado** | **Confirmada — unificada (18/08/2026)** | |
 | **Contexto** | El frontend vive en `develop` y el backend se desarrolló en paralelo. La rama `develop` del repo no tiene el backend, y unir todo en `develop` antes de tiempo mezclaba dos tracks en conflicto (App.tsx, theme, api.ts). | |
 | **Decisión** | Usar `develop2` como rama base para el backend mientras esté separado. Issues de backend → ramas `feature/<tipo>/<numero>-<desc>` desde `develop2` → PR a `develop2`. Un integrante designado integra `develop2` → `develop` en cada checkpoint alcanzado y antes del cierre de E2 (18/08). Después de la integración, `develop2` se congela y se elimina: todo pasa a `develop`. | |
 | **Razonamiento** | Mantener los dos tracks aislados evita conflictos constantes durante el desarrollo activo de ambos. La integración puntual en checkpoints (con squash como PR único) es más revisable y estable que una unión continua. La transitoriedad evita una estrategia de ramas permanente con dos develop. | |
 | **Alternativas descartadas** | Backend en `develop` desde el inicio (descartado: conflicto constante con el track visual y ramas viejas). Rama única `dev-backend` permanente (descartado: agregaría una tercera línea de integración para siempre). | |
-| **Consecuencias** | Positivo: tracks aislados y revisión estable. Positivo: red de integración conocida. Negativo: el workflow de CI que cierra issues solo aplica a `develop`, por lo que PRs mergeados a `develop2` no cierran la issue automáticamente (cerrar manual o al integrar). | |
+| **Consecuencias** | Positivo: tracks aislados y revisión estable. Positivo: red de integración conocida. Negativo: el workflow de CI que cierra issues solo aplica a `develop`, por lo que PRs mergeados a `develop2` no cierran la issue automáticamente (cerrar manual o al integrar). **Cierre (18/08):** `develop2` se integró a `develop` vía PR #121 (issue #120) y la rama fue eliminada. Todo el desarrollo de E3 vuelve a `develop`. | |
 
 ---
 
@@ -203,7 +204,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Decisión** | Middleware `requireIdempotencyKey` en POST/PUT/PATCH (UUID válido o 400); `runIdempotent` con TTL 24h y respuesta byte-idéntica en replay. | |
 | **Razonamiento** | Patrón Stripe: idempotencia por key del cliente sin estado global complejo. | |
 | **Alternativas descartadas** | — | |
-| **Consecuencias** | HALLAZGO CRÍTICO en review: `/api/sync/migrate` usa un scope de idempotencia fijo y público (`MIGRATE_IDEMPOTENCY_SCOPE`), por lo que todos los usuarios comparten el mismo `user_id` en `idempotency_keys` → posible IDOR (replay de token/taskMap de otro usuario). Y `ensureMigrateScopeUser()` hace upsert de un usuario fake en `users` de producción. Pendiente: corregir scope (email del payload), no usar usuario fake, y hacer `completeStep` transaccional (DT-21). | |
+| **Consecuencias** | HALLAZGO CRÍTICO en review: `/api/sync/migrate` usa un scope de idempotencia fijo y público (`MIGRATE_IDEMPOTENCY_SCOPE`), por lo que todos los usuarios comparten el mismo `user_id` en `idempotency_keys` → posible IDOR (replay de token/taskMap de otro usuario). Y `ensureMigrateScopeUser()` hace upsert de un usuario fake en `users` de producción. **Estado al cierre (18/08):** el servidor quedó idempotente y testado (18 casos); quedan registrados en E3 el fix del scope del migrate (#123, IDOR) y la persistencia de la key del lado cliente (#124 — hoy se genera una key nueva por llamada, anulando el replay desde la app). `completeStep` transaccional implementado (DT-21, issue #71). | |
 
 ---
 
@@ -217,7 +218,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Decisión** | Envolver el flujo en `prisma.$transaction` y hacer el update del step condicional (`updatedMany where status='pending'` + verificación de count) para decidir el incremento. El retry (misma key o nueva) no debe re-incrementar. | |
 | **Razonamiento** | Atómico y el incremento depende de la transición real, no de la llegada de la request. | |
 | **Alternativas descartadas** | — | |
-| **Consecuencias** | Pendiente de implementar (issue #71 para `develop2`). El `runIdempotent` del #82 solo protege replay con misma key; no cubre keys distintas ni dos dispositivos. | |
+| **Consecuencias** | Implementado en `step.service.ts` (issue #71): flujo envuelto en `prisma.$transaction`, update del step condicional (`updatedMany where status='pending'` + verificación de count) para decidir el incremento, sin doble conteo en requests concurrentes ni reintentos. El `runIdempotent` del #82 protege replay con misma key; no cubre keys distintas ni dos dispositivos. | |
 
 ---
 
@@ -233,6 +234,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Alternativas descartadas** | Seguir con convención manual (fracasa en el largo plazo); esperar a tener CI para proteger las ramas (pérdida de valor inmediato); habilitar secret scanning por API (no existe endpoint REST, solo UI). | |
 | **Consecuencias** | Ningún integrante (ni admin) puede pushear directo a `main`/`develop`. Dependabot solo escanea la default branch (`main`): las deps del backend en `develop2` quedan sin cobertura hasta la unificación. Al mergear la #90, marcar los checks del CI como required. | |
 
-*StepUp — Log Decisiones Técnicas E2 — Versión 1.1 — Agosto 2026*
+---
+
+## DT-23 Aislamiento de la DB local por usuario (`owner_user_id`)
+*Agosto 2026 — Sprint 3 E2 (PR #114)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | Con auth y sync conviviendo en un solo SQLite local, al desloguearse y loguearse otra cuenta podían quedar datos del usuario anterior en el device y hasta migrarse a la cuenta nueva (fuga de datos). Issue #114. | |
+| **Decisión** | Agregar `owner_user_id` en `sync_meta`. Al hacer login se verifica el owner; si no coincide, se resetea la DB local antes de migrar/operar. Al logout se limpia el owner. | |
+| **Razonamiento** | Un solo almacén local con ownership explícito evita mezclar datasets de cuentas distintas sin perder el modo offline (E1). | |
+| **Alternativas descartadas** | DB por usuario (descartado: complejidad de migración y espacio); borrar todo al logout (descartado: rompía el modo offline sin cuenta). | |
+| **Consecuencias** | El `migrate()` limpia datos ajenos antes de subir. El flujo "saltar y usar offline" sigue funcionando sin owner. | |
+
+*StepUp — Log Decisiones Técnicas E2 — Versión 1.2 — Agosto 2026*
 
 *Ingeniería en Sistemas de Información*

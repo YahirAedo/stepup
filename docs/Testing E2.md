@@ -6,7 +6,11 @@ Iteración 2 | Julio – Agosto 2026
 
 Ingeniería en Sistemas de Información | 2026
 
-*Versión 1.0 | Julio 2026*
+*Versión 1.1 | Agosto 2026*
+
+> **Nota de versión (1.1):** resultados de ejecución reales al 18/08/2026, bugs
+> detectados registrados, y detalle de las suites agregadas en la iteración
+> (idempotencia, progreso, migración).
 
 # 1. Introducción
 
@@ -22,17 +26,22 @@ Se testean dos tracks:
 
 # 2. Estrategia de Testing
 
-Se priorizan dos niveles:
+Se priorizan tres niveles:
 
-**Tests automatizados (backend):**
-- Tests de integración sobre la API usando supertest
-- Cada endpoint se prueba con casos felices y casos de error
-- Base de datos de prueba separada (PostgreSQL test database en Railway o SQLite local para tests)
+**Tests automatizados — app mobile (Vitest):**
+- Unit tests de servicios (api, AuthService, StepService, SyncService, TaskService), helpers (dateFormat) y migraciones de SQLite
+- Mocks de `expo-sqlite` y `fetch` para aislar la lógica de negocio
+- **Ejecutados:** 111 tests en 15 suites — todos en verde
+
+**Tests automatizados — backend (Jest + Supertest):**
+- Tests de integración sobre la API contra una base PostgreSQL de prueba (`stepup_test`)
+- **Ejecutados:** 94 tests en 9 suites — todos en verde
+- *Requisito:* la suite requiere PostgreSQL local (provisionada con `docker-compose.yml`); no se pudo re-ejecutar en el entorno de entrega por falta de Docker. Resultados provienen de la corrida de integración (ver §6).
 
 **Tests manuales (app mobile):**
 - Prueba de flujo completo en dispositivo físico Android
 - Verificación visual de cada pantalla contra los prototipos del design system
-- Prueba de sync offline-first en avión mode
+- Prueba de sync offline-first en modo avión
 
 # 3. Casos de Prueba
 
@@ -87,7 +96,25 @@ Se priorizan dos niveles:
 | TC-SYNC-05 | Migración al registrarse | POST /api/sync/migrate con tasks+steps+credenciales | 201 + user, token, taskMap | Automatizado |
 | TC-SYNC-06 | Push sin autenticación | POST /api/sync/push sin token | 401 | Automatizado |
 
-## 3.5 App — Flujo manual offline-first
+## 3.5 Backend — Idempotencia
+
+| ID | Caso | Pasos | Resultado esperado | Tipo |
+| --- | --- | --- | --- | --- |
+| TC-IDEM-01 | Write sin Idempotency-Key | POST /api/tasks sin header | 400 | Automatizado |
+| TC-IDEM-02 | Replay con misma key | POST /api/tasks 2 veces con la misma key | 2ª respuesta = respuesta cacheada (201 único) | Automatizado |
+| TC-IDEM-03 | Misma key, payload distinto | Misma key, body diferente | 409 | Automatizado |
+| TC-IDEM-04 | Replay de completeStep | PATCH /api/steps/:id/complete con misma key | No dobla el conteo de DailyProgress | Automatizado |
+| TC-IDEM-05 | Limpieza de claves vencidas | Clave expirada (TTL 24h) | Se descarta y se procesa normal | Automatizado |
+
+## 3.6 Backend — Progreso
+
+| ID | Caso | Pasos | Resultado esperado | Tipo |
+| --- | --- | --- | --- | --- |
+| TC-PROG-01 | Progreso diario | GET /api/progress con pasos completados hoy | 200 + contador del día | Automatizado |
+| TC-PROG-02 | Sin actividad hoy | GET /api/progress sin completar hoy | Contador en cero (registro creado) | Automatizado |
+| TC-PROG-03 | Completa paso → incrementa | Completar paso → GET /api/progress | stepsCompleted +1 | Automatizado |
+
+## 3.7 App — Flujo manual offline-first
 
 | ID | Caso | Pasos | Resultado esperado | Tipo |
 | --- | --- | --- | --- | --- |
@@ -97,7 +124,7 @@ Se priorizan dos niveles:
 | TC-MAN-04 | Pull al abrir app | Desde otro dispositivo, crear tarea → abrir app en primer dispositivo | Tarea aparece | Manual |
 | TC-MAN-05 | Persistencia de sesión | Cerrar y reabrir app | Sesión activa, mismo usuario | Manual |
 
-## 3.6 App — Prueba visual (migración)
+## 3.8 App — Prueba visual (migración)
 
 | ID | Caso | Pasos | Resultado esperado | Tipo |
 | --- | --- | --- | --- | --- |
@@ -105,7 +132,7 @@ Se priorizan dos niveles:
 | TC-VIS-02 | Onboarding no se repite | Cerrar y reabrir app | No se muestra onboarding | Manual |
 | TC-VIS-03 | FocusScreen con timer | Tocar "Iniciar Cronómetro" | Timer corre, botón cambia a "Pausar" | Manual |
 | TC-VIS-04 | TaskList bento grid | Tener 3+ tareas activas | Se ven tarjetas de distintos tamaños | Manual |
-| TC-VIS-05 | Completar paso con celebración | Completar paso desde FocusScreen | Aparece StepCompleteScreen con confetti | Manual |
+| TC-VIS-05 | Completar paso (avance automático) | Completar paso desde FocusScreen | El paso se marca completado y aparece el siguiente (sin pantalla de celebración; StepCompleteScreen registrada pero no cableada — E3) | Manual |
 | TC-VIS-06 | GlassTabBar | Navegar entre tabs | Barra flotante, tab activo resaltado | Manual |
 | TC-VIS-07 | Perfil y configuración | Ir a Perfil, cambiar duración default | Selector funcional, cambio persiste | Manual |
 | TC-VIS-08 | Insignias | Ir a Insignias desde Historial | Galería con desbloqueadas/bloqueadas | Manual |
@@ -115,26 +142,51 @@ Se priorizan dos niveles:
 | ID | Descripción | Severidad | Estado | Módulo |
 | --- | --- | --- | --- | --- |
 | BUG-01 | El timer no persiste al cerrar la app | Baja | Abierto — por diseño | Timer |
-| BUG-02 | Fecha límite se ingresa manualmente (YYYY-MM-DD), no hay date picker | Media | Abierto — mejora UX | TaskForm |
-| BUG-03 | Sin feedback visual al completar paso (E1) | Baja | Resuelto en E2 — celebración | FocusScreen |
+| BUG-02 | Fecha límite se ingresa manualmente (YYYY-MM-DD), no hay date picker | Media | **Resuelto en E2** — date picker web (#60, PR #116) | TaskForm |
+| BUG-03 | Sin feedback visual al completar paso (E1) | Baja | Resuelto en E2 — avance automático al siguiente paso (StepCompleteScreen registrada, sin wiring; E3) | FocusScreen |
 | BUG-04 | No hay confirmación visual al crear tarea | Baja | Abierto — mejora UX | TaskForm |
 
 # 5. Bugs Detectados en E2
 
 | ID | Descripción | Severidad | Estado | Módulo |
 | --- | --- | --- | --- | --- |
-| — | — | — | Sin detectar | — |
-
-*Este espacio se completa durante el desarrollo de E2.*
+| BUG-05 | El borde del día en el historial se calcula con `new Date()` (UTC), no con hora local → puede quedar la fila del día en el recuadro equivocado en husos negativos | Baja | Abierto → issue #122 (E3) | HistoryScreen |
+| BUG-06 | IDOR en `/api/sync/migrate`: scope de idempotencia fijo y público, usuario fake compartido → posible replay de token/taskMap ajeno | Alta | Abierto → issue #123 (E3) | sync.migrate |
+| BUG-07 | La app genera una `Idempotency-Key` nueva por llamada → el replay protegido del servidor no se ejerce desde la app (retry de red duplicaría datos) | Media | Abierto → issue #124 (E3) | idempotency.ts |
+| BUG-08 | Los docs del PRD backend usan PUT para steps (el código real usa PUT para update y PATCH solo para `/complete`) | Baja | Abierto → issue #125 (E3) | Docs |
+| BUG-09 | Quedan `as any` residuales en el frontend (slices de la transición JS→TS) | Baja | Abierto → issue #126 (E3) | Frontend |
 
 # 6. Resultados de Ejecución
 
-*Este espacio se completa después de ejecutar los tests.*
+**App (Vitest):** 111 tests / 15 suites — 100% en verde (18/08/2026).
+
+Suites cubiertas: api.test.ts, AuthService.test.ts, StepService.test.ts, SyncService.test.ts, TaskService.test.ts, dateFormat.test.ts, database (migraciones), hooks y componentes del design system.
+
+**Backend (Jest + Supertest):** 94 tests / 9 suites — 100% en verde.
+
+| Suite | Casos |
+| --- | --- |
+| auth | 12 |
+| env | 4 |
+| error-handler | 2 |
+| idempotency | 18 |
+| migration | 1 |
+| progress | 6 |
+| steps | 16 |
+| sync | 21 |
+| tasks | 14 |
+| **Total** | **94** |
+
+> La suite backend corre contra `stepup_test` en PostgreSQL local (provisionada con
+> `docker-compose.yml`). En el entorno de entrega no había Docker, por lo que los
+> 94 resultados provienen de la última corrida de integración (se indican como
+> registrados, no re-ejecutados en vivo).
 
 | Fecha | TC ejecutados | Pasaron | Fallaron | % Éxito |
 | --- | --- | --- | --- | --- |
-| — | — | — | — | — |
+| 18/08/2026 — App (Vitest) | 111 | 111 | 0 | 100% |
+| 18/08/2026 — Backend (Jest, registrado) | 94 | 94 | 0 | 100% |
 
-*StepUp — Testing E2 — Versión 1.0 — Julio 2026*
+*StepUp — Testing E2 — Versión 1.1 — Agosto 2026*
 
 *Ingeniería en Sistemas de Información*

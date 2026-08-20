@@ -49,3 +49,10 @@ stitch_stepup_design_system/
 
 # drive docs
 *.docx
+
+# delivery artifacts (local only)
+StepUp-E2-Presentacion.pptx
+docs-capturas/
+md2docx.js
+pptx-e2.js
+SKILL-BACKEND.md
