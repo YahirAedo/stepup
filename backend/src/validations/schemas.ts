@@ -160,6 +160,10 @@ const syncStepBase = {
   createdAt: isoDateTime.optional(),
   updatedAt: isoDateTime,
   completedAt: parseableDate,
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'date debe tener formato YYYY-MM-DD')
+    .optional(),
 };
 
 export const syncPushSchema = z.object({

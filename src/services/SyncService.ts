@@ -53,6 +53,7 @@ type PushStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type PushResult = {
@@ -172,6 +173,7 @@ export const SyncService = {
           status: step.status,
           updatedAt: normalizeIso(step.updated_at),
           completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
         };
       }),
     };

@@ -77,12 +77,18 @@ const PENDING_IDEMPOTENCY_KEYS_V5: string[] = [
    );`,
 ];
 
+// V6: guardar fecha local de completado para sincronización correcta de zonas horarias.
+const LOCAL_DATE_V6: string[] = [
+  `ALTER TABLE steps ADD COLUMN completed_date TEXT;`,
+];
+
 const MIGRATIONS: Migration[] = [
   { version: 1, statements: BASE_SCHEMA_V1 },
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
   { version: 4, statements: OWNER_USER_V4 },
   { version: 5, statements: PENDING_IDEMPOTENCY_KEYS_V5 },
+  { version: 6, statements: LOCAL_DATE_V6 },
 ];
 
 export async function runMigrations(db: MigrationDb): Promise<void> {
