@@ -5,6 +5,7 @@ import type { SqlParam } from '../database/migrations';
 import { ApiError, apiFetch } from './api';
 import { hasSession } from './session';
 import { syncNow } from './SyncService';
+import { getLocalDate } from '../utils/date';
 
 function toStep(row: Record<string, unknown>): Step {
   return {
@@ -15,6 +16,7 @@ function toStep(row: Record<string, unknown>): Step {
     order_index: row.order_index as number,
     status: row.status as Step['status'],
     completed_at: (row.completed_at as string | null) ?? null,
+    completed_date: (row.completed_date as string | null) ?? null,
     server_id: (row.server_id as string | null) ?? null,
     dirty: (row.dirty as number) ?? 0,
     updated_at: row.updated_at as string,
@@ -22,7 +24,7 @@ function toStep(row: Record<string, unknown>): Step {
 }
 
 function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return getLocalDate();
 }
 
 export const StepService = {
@@ -152,11 +154,12 @@ export const StepService = {
     }
 
     const now = nowIso();
+    const localDate = todayStr();
 
     await db.runAsync(
-      `UPDATE steps SET status = 'completed', completed_at = ?, dirty = 1, updated_at = ?
+      `UPDATE steps SET status = 'completed', completed_at = ?, completed_date = ?, dirty = 1, updated_at = ?
        WHERE id = ?`,
-      [now, now, id],
+      [now, localDate, now, id],
     );
 
     await db.runAsync(

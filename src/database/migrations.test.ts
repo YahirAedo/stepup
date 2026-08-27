@@ -76,7 +76,7 @@ describe('runMigrations — schema de SQLite local', () => {
     await runMigrations(db);
 
     const [row] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-    expect(row.user_version).toBe(4);
+    expect(row.user_version).toBe(5);
   });
 
   it('actualiza una base con el schema viejo sin perder datos', async () => {
