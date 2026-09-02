@@ -6,6 +6,14 @@ export const AUTH_PASSWORD_MIN = 8;
 export const AUTH_PASSWORD_MAX_BYTES = 72;
 export const AUTH_NAME_MAX = 120;
 export const AUTH_EMAIL_MAX = 254;
+export const TASK_DESCRIPTION_MAX = 1000;
+
+const optionalDescription = z
+  .string()
+  .trim()
+  .max(TASK_DESCRIPTION_MAX, `La descripción no puede superar ${TASK_DESCRIPTION_MAX} caracteres`)
+  .nullable()
+  .optional();
 
 const authName = z
   .string({ error: 'El nombre es obligatorio' })
@@ -45,6 +53,7 @@ const parseableDate = z
 
 export const createTaskSchema = z.object({
   name: requiredName,
+  description: optionalDescription,
   dueDate: parseableDate,
 });
 
@@ -55,6 +64,7 @@ function hasAtLeastOneField(value: Record<string, unknown>): boolean {
 export const updateTaskSchema = z
   .object({
     name: requiredName.optional(),
+    description: optionalDescription,
     dueDate: parseableDate,
   })
   .refine(hasAtLeastOneField, { message: 'Debe enviar al menos un campo para actualizar' });
@@ -125,6 +135,7 @@ const syncTaskBase = {
     .positive('localId debe ser mayor a 0')
     .optional(),
   name: requiredName,
+  description: optionalDescription,
   dueDate: parseableDate,
   status: z.enum(['active', 'completed']).optional(),
   createdAt: isoDateTime.optional(),

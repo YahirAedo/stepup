@@ -155,6 +155,17 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
                 {task.name}
               </Text>
 
+              {task.description ? (
+                <Text
+                  style={[
+                    typography['body-md'],
+                    { color: colors['on-surface-variant'], lineHeight: 22 },
+                  ]}
+                >
+                  {task.description}
+                </Text>
+              ) : null}
+
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 16, color: colors['on-surface-variant'] }}>📅</Text>

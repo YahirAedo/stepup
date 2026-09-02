@@ -8,6 +8,12 @@ function parseOptionalDate(value?: string | null): Date | null | undefined {
   return new Date(value);
 }
 
+function normalizeDescription(value?: string | null): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  return value;
+}
+
 export class TaskService {
   private taskRepo = new TaskRepository();
 
@@ -15,6 +21,7 @@ export class TaskService {
     const data = createTaskSchema.parse(input);
     return this.taskRepo.create(userId, {
       name: data.name,
+      description: normalizeDescription(data.description),
       dueDate: parseOptionalDate(data.dueDate),
     });
   }
@@ -35,6 +42,7 @@ export class TaskService {
     const data = updateTaskSchema.parse(input);
     return this.taskRepo.update(userId, id, {
       name: data.name,
+      description: normalizeDescription(data.description),
       dueDate: parseOptionalDate(data.dueDate),
     }, db);
   }
