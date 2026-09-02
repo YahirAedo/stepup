@@ -265,6 +265,7 @@ export class SyncService {
       createdAt?: string;
       updatedAt: string;
       completedAt?: string | null;
+      date?: string;
     },
   ) {
     if (step.id) {
@@ -288,6 +289,9 @@ export class SyncService {
               completedAt: parseOptionalDate(step.completedAt),
             },
           });
+          if (step.status === 'completed' && step.date) {
+            await this.upsertDailyProgress(tx, userId, step.date);
+          }
           return { id: updated.id, applied: true, localId: step.localId };
         }
         return { id: existing.id, applied: false, localId: step.localId };
@@ -307,6 +311,32 @@ export class SyncService {
         completedAt: parseOptionalDate(step.completedAt),
       },
     });
+    if (step.status === 'completed' && step.date) {
+      await this.upsertDailyProgress(tx, userId, step.date);
+    }
     return { id: created.id, applied: true, localId: step.localId };
+  }
+
+  private async upsertDailyProgress(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    date: string,
+  ) {
+    await tx.dailyProgress.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date,
+        },
+      },
+      update: {
+        stepsCompleted: { increment: 1 },
+      },
+      create: {
+        userId,
+        date,
+        stepsCompleted: 1,
+      },
+    });
   }
 }

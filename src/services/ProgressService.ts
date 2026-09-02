@@ -1,13 +1,12 @@
 import { getDb } from '../database/db';
+import { getLocalDate, getLocalDateDaysAgo } from '../utils/date';
 
 function today(): string {
-  return new Date().toISOString().split('T')[0];
+  return getLocalDate();
 }
 
 function getDate(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split('T')[0];
+  return getLocalDateDaysAgo(daysAgo);
 }
 
 export const ProgressService = {
