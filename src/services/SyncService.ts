@@ -23,8 +23,11 @@ import {
   type SyncConflict,
 } from '../database/sync';
 import { apiFetch, ENDPOINTS } from './api';
-import { generateIdempotencyKey } from './idempotency';
+import { clearIdempotencyKey, resolvePersistedIdempotencyKey } from './idempotency';
 import { hasSession, saveSession, type SessionUser } from './session';
+
+const PUSH_SCOPE = 'sync-push';
+const MIGRATE_SCOPE = 'sync-migrate';
 
 type PushTask = {
   id?: string;
@@ -102,7 +105,7 @@ export async function syncNow(): Promise<void> {
 }
 
 export const SyncService = {
-  async push(idempotencyKey: string = generateIdempotencyKey()): Promise<PushSummary> {
+  async push(idempotencyKey?: string): Promise<PushSummary> {
     if (!hasSession()) {
       return { tasks: 0, steps: 0 };
     }
@@ -121,36 +124,41 @@ export const SyncService = {
     const taskByLocal = new Map<number, Task>();
     for (const task of allTasks) taskByLocal.set(task.id, task);
 
+    const payload = {
+      tasks: tasks.map((task): PushTask => ({
+        ...(task.server_id ? { id: task.server_id } : {}),
+        localId: task.id,
+        name: task.name,
+        dueDate: task.due_date,
+        status: task.status,
+        createdAt: normalizeIso(task.created_at),
+        updatedAt: normalizeIso(task.updated_at, task.created_at),
+        completedAt: task.completed_at,
+      })),
+      steps: steps.map((step): PushStep => {
+        const parent = taskByLocal.get(step.task_id);
+        const taskServerId = parent?.server_id ?? null;
+        return {
+          ...(step.server_id ? { id: step.server_id } : {}),
+          localId: step.id,
+          ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
+          name: step.name,
+          durationMin: step.duration_min,
+          orderIndex: step.order_index,
+          status: step.status,
+          updatedAt: normalizeIso(step.updated_at),
+          completedAt: step.completed_at,
+        };
+      }),
+    };
+
+    const managesKey = idempotencyKey === undefined;
+    const key = idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, PUSH_SCOPE, payload));
+
     const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
       method: 'POST',
-      idempotencyKey,
-      body: JSON.stringify({
-        tasks: tasks.map((task): PushTask => ({
-          ...(task.server_id ? { id: task.server_id } : {}),
-          localId: task.id,
-          name: task.name,
-          dueDate: task.due_date,
-          status: task.status,
-          createdAt: normalizeIso(task.created_at),
-          updatedAt: normalizeIso(task.updated_at, task.created_at),
-          completedAt: task.completed_at,
-        })),
-        steps: steps.map((step): PushStep => {
-          const parent = taskByLocal.get(step.task_id);
-          const taskServerId = parent?.server_id ?? null;
-          return {
-            ...(step.server_id ? { id: step.server_id } : {}),
-            localId: step.id,
-            ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
-            name: step.name,
-            durationMin: step.duration_min,
-            orderIndex: step.order_index,
-            status: step.status,
-            updatedAt: normalizeIso(step.updated_at),
-            completedAt: step.completed_at,
-          };
-        }),
-      }),
+      idempotencyKey: key,
+      body: JSON.stringify(payload),
     });
 
     const taskMap: Record<string, string> = {};
@@ -164,6 +172,7 @@ export const SyncService = {
 
     await applyServerIds(db, 'tasks', taskMap);
     await applyServerIds(db, 'steps', stepMap);
+    if (managesKey) await clearIdempotencyKey(db, PUSH_SCOPE);
 
     return { tasks: result.tasks.length, steps: result.steps.length };
   },
@@ -218,7 +227,7 @@ export const SyncService = {
     name: string,
     email: string,
     password: string,
-    idempotencyKey: string = generateIdempotencyKey(),
+    idempotencyKey?: string,
   ): Promise<PushSummary> {
     const db = await getDb();
     const owner = await getLocalOwner(db);
@@ -233,45 +242,52 @@ export const SyncService = {
     const taskByLocal = new Map<number, Task>();
     for (const task of tasks) taskByLocal.set(task.id, task);
 
+    const payload = {
+      name,
+      email,
+      password,
+      tasks: tasks.map((task): MigrateTask => ({
+        ...(task.server_id ? { id: task.server_id } : {}),
+        localId: task.id,
+        name: task.name,
+        dueDate: task.due_date,
+        status: task.status,
+        createdAt: normalizeIso(task.created_at),
+        updatedAt: normalizeIso(task.updated_at, task.created_at),
+        completedAt: task.completed_at,
+      })),
+      steps: steps.map((step): MigrateStep => {
+        const parent = taskByLocal.get(step.task_id);
+        const taskServerId = parent?.server_id ?? null;
+        return {
+          localId: step.id,
+          ...(taskServerId ? { taskId: taskServerId } : {}),
+          taskLocalId: step.task_id,
+          name: step.name,
+          durationMin: step.duration_min,
+          orderIndex: step.order_index,
+          status: step.status,
+          updatedAt: normalizeIso(step.updated_at),
+          completedAt: step.completed_at,
+        };
+      }),
+    };
+
+    const managesKey = idempotencyKey === undefined;
+    const key =
+      idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, MIGRATE_SCOPE, payload));
+
     const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
       method: 'POST',
-      idempotencyKey,
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        tasks: tasks.map((task): MigrateTask => ({
-          ...(task.server_id ? { id: task.server_id } : {}),
-          localId: task.id,
-          name: task.name,
-          dueDate: task.due_date,
-          status: task.status,
-          createdAt: normalizeIso(task.created_at),
-          updatedAt: normalizeIso(task.updated_at, task.created_at),
-          completedAt: task.completed_at,
-        })),
-        steps: steps.map((step): MigrateStep => {
-          const parent = taskByLocal.get(step.task_id);
-          const taskServerId = parent?.server_id ?? null;
-          return {
-            localId: step.id,
-            ...(taskServerId ? { taskId: taskServerId } : {}),
-            taskLocalId: step.task_id,
-            name: step.name,
-            durationMin: step.duration_min,
-            orderIndex: step.order_index,
-            status: step.status,
-            updatedAt: normalizeIso(step.updated_at),
-            completedAt: step.completed_at,
-          };
-        }),
-      }),
+      idempotencyKey: key,
+      body: JSON.stringify(payload),
     });
 
     await saveSession(result.token, result.user);
     await setLocalOwner(db, result.user.id);
     await applyServerIds(db, 'tasks', result.taskMap);
     await applyServerIds(db, 'steps', result.stepMap);
+    if (managesKey) await clearIdempotencyKey(db, MIGRATE_SCOPE);
 
     return { tasks: tasks.length, steps: steps.length };
   },
