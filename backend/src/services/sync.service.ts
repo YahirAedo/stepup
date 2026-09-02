@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma';
 import { signToken } from '../utils/jwt';
+import { IdempotencyService } from './idempotency.service';
 import { syncPushSchema, syncMigrateSchema } from '../validations/schemas';
 
 function parseOptionalDate(value?: string | null): Date | null | undefined {
@@ -55,6 +56,8 @@ function serializeStep(step: {
 }
 
 export class SyncService {
+  private idempotencyService = new IdempotencyService();
+
   async push(userId: string, input: unknown) {
     const data = syncPushSchema.parse(input);
 
@@ -115,10 +118,27 @@ export class SyncService {
   async migrate(input: unknown) {
     const data = syncMigrateSchema.parse(input);
     const email = data.email.trim().toLowerCase();
+    const requestHash = this.idempotencyService.hashRequest('POST', '/api/sync/migrate', data);
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      throw new Error('EMAIL_ALREADY_REGISTERED');
+      const passwordOk = await bcrypt.compare(data.password, existing.password);
+      const maps =
+        passwordOk && existing.migrateMaps !== null
+          ? (JSON.parse(existing.migrateMaps) as {
+              taskMap: Record<string, string>;
+              stepMap: Record<string, string>;
+            })
+          : null;
+      if (!passwordOk || existing.migrateRequestHash !== requestHash || maps === null) {
+        throw new Error('EMAIL_ALREADY_REGISTERED');
+      }
+      return {
+        user: { id: existing.id, name: existing.name, email: existing.email },
+        token: signToken(existing.id),
+        taskMap: maps.taskMap,
+        stepMap: maps.stepMap,
+      };
     }
 
     const password = await bcrypt.hash(data.password, 10);
@@ -169,6 +189,14 @@ export class SyncService {
         });
         stepMap[step.localId] = created.id;
       }
+
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          migrateRequestHash: requestHash,
+          migrateMaps: JSON.stringify({ taskMap, stepMap }),
+        },
+      });
 
       return {
         user: { id: user.id, name: user.name, email: user.email },
