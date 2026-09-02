@@ -1,7 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runMigrations, type MigrationDb } from '../database/migrations';
 import { makeSqlJsDb } from '../database/testDb';
-import { getDirtySteps, getDirtyTasks, getLastSyncAt, getLocalOwner, setLastSyncAt, setLocalOwner, type ServerStep, type ServerTask } from '../database/sync';
+import {
+  getDirtySteps,
+  getDirtyTasks,
+  getLastSyncAt,
+  getLocalOwner,
+  getPendingIdempotencyKey,
+  setLastSyncAt,
+  setLocalOwner,
+  type ServerStep,
+  type ServerTask,
+} from '../database/sync';
 
 const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
@@ -76,17 +86,15 @@ async function insertStep(
   const step = await db.runAsync(
     `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at)
        VALUES (?, 'Paso', 30, 0, 'pending', NULL, ?, ?, ?)`,
-    [
-      taskId,
-      overrides.server_id ?? null,
-      overrides.dirty ?? 0,
-      '2026-08-01T00:00:00.000Z',
-    ],
+    [taskId, overrides.server_id ?? null, overrides.dirty ?? 0, '2026-08-01T00:00:00.000Z'],
   );
   return step.lastInsertRowId;
 }
 
-function pushBody(): { tasks: Array<Record<string, unknown>>; steps: Array<Record<string, unknown>> } {
+function pushBody(): {
+  tasks: Array<Record<string, unknown>>;
+  steps: Array<Record<string, unknown>>;
+} {
   const options = mocks.apiFetch.mock.calls[0][1] as RequestInit;
   return JSON.parse(String(options.body)) as {
     tasks: Array<Record<string, unknown>>;
@@ -233,10 +241,11 @@ describe('SyncService.pull', () => {
       `SELECT name, server_id, dirty FROM tasks`,
       [],
     );
-    const [step] = await db.getAllAsync<{ task_id: number; server_id: string | null; dirty: number }>(
-      `SELECT task_id, server_id, dirty FROM steps`,
-      [],
-    );
+    const [step] = await db.getAllAsync<{
+      task_id: number;
+      server_id: string | null;
+      dirty: number;
+    }>(`SELECT task_id, server_id, dirty FROM steps`, []);
     expect(task).toEqual({ name: 'Remota', server_id: 'uuid-task', dirty: 0 });
     expect(step).toEqual({ task_id: 1, server_id: 'uuid-step', dirty: 0 });
     await expect(getLastSyncAt(db)).resolves.not.toBeNull();
@@ -326,9 +335,12 @@ describe('SyncService.migrate', () => {
       '/api/sync/migrate',
       expect.objectContaining({ method: 'POST' }),
     );
-    const body = JSON.parse(
-      String((mocks.apiFetch.mock.calls[0][1] as RequestInit).body),
-    ) as { name: string; email: string; tasks: Array<Record<string, unknown>>; steps: Array<Record<string, unknown>> };
+    const body = JSON.parse(String((mocks.apiFetch.mock.calls[0][1] as RequestInit).body)) as {
+      name: string;
+      email: string;
+      tasks: Array<Record<string, unknown>>;
+      steps: Array<Record<string, unknown>>;
+    };
     expect(body).toMatchObject({ name: 'Ana', email: 'ana@x.com' });
     expect(body.tasks[0]).toMatchObject({ localId: taskId, name: 'Tarea' });
     expect(body.steps[0]).toMatchObject({ localId: stepId, taskLocalId: taskId });
@@ -363,9 +375,10 @@ describe('SyncService.migrate', () => {
 
     await SyncService.migrate('Ana', 'ana@x.com', 'secreto123');
 
-    const body = JSON.parse(
-      String((mocks.apiFetch.mock.calls[0][1] as RequestInit).body),
-    ) as { tasks: Array<Record<string, unknown>>; steps: Array<Record<string, unknown>> };
+    const body = JSON.parse(String((mocks.apiFetch.mock.calls[0][1] as RequestInit).body)) as {
+      tasks: Array<Record<string, unknown>>;
+      steps: Array<Record<string, unknown>>;
+    };
     expect(body.tasks).toHaveLength(1);
     expect(body.steps[0]).toMatchObject({ taskLocalId: taskId });
   });
@@ -429,5 +442,103 @@ describe('SyncService.migrate', () => {
     await expect(getLocalOwner(db)).resolves.toBe('u1');
     const rows = await db.getAllAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM tasks`, []);
     expect(rows[0].n).toBe(1);
+  });
+});
+
+// Issue #124: la key debe sobrevivir a fallos de red para que el servidor pueda
+// hacer replay. Estos tests reproducen el patrón de syncLifecycle: cada ciclo
+// (active/background) llama a push() sin key explícita.
+describe('idempotencia client-side persistente (issue #124)', () => {
+  function keyOfCall(index: number): string | undefined {
+    return (mocks.apiFetch.mock.calls[index][1] as { idempotencyKey?: string }).idempotencyKey;
+  }
+
+  it('push: reintento tras fallo de red usa la misma key', async () => {
+    const taskId = await insertTask({ dirty: 1 });
+    await insertStep(taskId, { dirty: 1 });
+    mocks.apiFetch.mockRejectedValueOnce(new Error('network timeout'));
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [{ id: 'uuid-task', applied: true, localId: taskId }],
+      steps: [{ id: 'uuid-step', applied: true, localId: 1 }],
+    });
+
+    await expect(SyncService.push()).rejects.toThrow('network timeout');
+    await expect(SyncService.push()).resolves.toEqual({ tasks: 1, steps: 1 });
+
+    expect(mocks.apiFetch).toHaveBeenCalledTimes(2);
+    expect(keyOfCall(0)).toBeDefined();
+    expect(keyOfCall(1)).toBe(keyOfCall(0));
+  });
+
+  it('push: la key queda pendiente tras el fallo y se limpia solo con éxito', async () => {
+    const taskId = await insertTask({ dirty: 1 });
+    mocks.apiFetch.mockRejectedValueOnce(new Error('offline'));
+
+    await expect(SyncService.push()).rejects.toThrow('offline');
+    await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.not.toBeNull();
+
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [{ id: 'uuid-task', applied: true, localId: taskId }],
+      steps: [],
+    });
+    await SyncService.push();
+    await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
+  });
+
+  it('push: si el payload cambia entre reintentos usa una key nueva', async () => {
+    const taskId = await insertTask({ dirty: 1 });
+    mocks.apiFetch.mockRejectedValueOnce(new Error('offline'));
+    await expect(SyncService.push()).rejects.toThrow('offline');
+
+    await db.runAsync(`UPDATE tasks SET name = ? WHERE id = ?`, ['Tarea editada', taskId]);
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [{ id: 'uuid-task', applied: true, localId: taskId }],
+      steps: [],
+    });
+    await SyncService.push();
+
+    expect(keyOfCall(1)).not.toBe(keyOfCall(0));
+  });
+
+  it('migrate: reintento tras timeout usa la misma key y recibe token + maps', async () => {
+    const taskId = await insertTask();
+    const stepId = await insertStep(taskId);
+    const response = {
+      user: { id: 'u1', name: 'Ana', email: 'ana@x.com' },
+      token: 'jwt-migrate',
+      taskMap: { [String(taskId)]: 'uuid-task' },
+      stepMap: { [String(stepId)]: 'uuid-step' },
+    };
+    mocks.apiFetch.mockRejectedValueOnce(new Error('network timeout'));
+    mocks.apiFetch.mockResolvedValueOnce(response);
+
+    await expect(SyncService.migrate('Ana', 'ana@x.com', 'secreto123')).rejects.toThrow(
+      'network timeout',
+    );
+    await expect(SyncService.migrate('Ana', 'ana@x.com', 'secreto123')).resolves.toEqual({
+      tasks: 1,
+      steps: 1,
+    });
+
+    expect(keyOfCall(1)).toBe(keyOfCall(0));
+    expect(mockedSaveSession).toHaveBeenCalledWith('jwt-migrate', {
+      id: 'u1',
+      name: 'Ana',
+      email: 'ana@x.com',
+    });
+    await expect(getPendingIdempotencyKey(db, 'sync-migrate')).resolves.toBeNull();
+  });
+
+  it('push con key explícita no toca las keys pendientes', async () => {
+    const taskId = await insertTask({ dirty: 1 });
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [{ id: 'uuid-task', applied: true, localId: taskId }],
+      steps: [],
+    });
+
+    await SyncService.push('clave-manual');
+
+    expect(keyOfCall(0)).toBe('clave-manual');
+    await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
   });
 });
