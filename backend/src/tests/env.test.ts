@@ -1,4 +1,4 @@
-import { resolveGeminiApiKey, resolveJwtSecret } from '../config/env';
+import { resolveGeminiApiKey, resolveJwtSecret, GEMINI_MODEL } from '../config/env';
 
 describe('JWT fail-closed', () => {
   it('en producción rechaza secret ausente', () => {
@@ -31,5 +31,20 @@ describe('Gemini fail-closed', () => {
 
   it('acepta una key real', () => {
     expect(resolveGeminiApiKey('AIzaSy-test-key', 'production')).toBe('AIzaSy-test-key');
+  });
+});
+
+describe('Gemini model resolution', () => {
+  it('default es gemini-3.5-flash cuando no hay variable de entorno', () => {
+    expect(GEMINI_MODEL).toBe('gemini-3.5-flash');
+  });
+
+  it('el modelo es un string no vacío', () => {
+    expect(typeof GEMINI_MODEL).toBe('string');
+    expect(GEMINI_MODEL.length).toBeGreaterThan(0);
+  });
+
+  it('el modelo sigue el patrón de nomenclatura de Google', () => {
+    expect(GEMINI_MODEL).toMatch(/^gemini-\d+\.\d+-flash/);
   });
 });
