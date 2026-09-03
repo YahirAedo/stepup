@@ -33,7 +33,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada — implementada (issue #71) |
 | DT-22 | GitHub: protección de ramas y gestión de herramientas del repo | Agosto 2026 | Confirmada |
 | DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
-| DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Agosto 2026 | Planificada (E3) |
+| DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Septiembre 2026 | Implementada (E3, issue #154) |
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
 
 # Decisiones detalladas
@@ -253,16 +253,16 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 ---
 
 ## DT-24 IA en E3: Google Gemini vía proxy por el backend
-*Agosto 2026 — Plan de la Entrega 3 (epic #152, PRD en `docs/Entrega 3 PRD.md`)*
+*Agosto 2026 (plan) — Septiembre 2026 (implementación, issue #154)*
 
 | | | |
 | --- | --- | --- |
-| **Estado** | **Planificada (E3)** | |
-| **Contexto** | E3 necesita una IA que sugiera pasos al crear una tarea. El equipo no tiene experiencia previa en integración de IA. Investigación: la alternativa con mejor relación costo/esfuerzo es Google Gemini API (AI Studio) con tier gratis permanente (modelo `gemini-2.5-flash`, ~10 RPM / 250K TPM en el tier gratuito). | |
-| **Decisión** | La IA se consume **vía un endpoint propio del backend** (`POST /api/ai/suggest-steps` + acción de asistente de descripción), que a su vez llama a Gemini. La API key vive **solo en el servidor** (Railway env), nunca en el bundle de la app. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json`. | |
+| **Estado** | **Implementada (E3, issue #154)** | |
+| **Contexto** | E3 necesita una IA que sugiera pasos al crear una tarea. El equipo no tiene experiencia previa en integración de IA. Investigación: la alternativa con mejor relación costo/esfuerzo es Google Gemini API (AI Studio) con tier gratis permanente (~10 RPM / 250K TPM en el tier gratuito). El modelo planificado (`gemini-2.5-flash`) fue deprecado por Google para keys nuevas durante la implementación; el default efectivo pasó a ser `gemini-3.5-flash` (configurable vía `GEMINI_MODEL`). | |
+| **Decisión** | La IA se consume **vía un endpoint propio del backend** (`POST /api/ai/suggest-steps` + `POST /api/ai/describe-help`), que a su vez llama a Gemini. La API key vive **solo en el servidor** (Railway env), nunca en el bundle de la app. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json`. | |
 | **Razonamiento** | No exponer el secreto en un bundle público (la app se distribuye a cualquier dispositivo). Coherente con la arquitectura existente (JWT auth, env.ts fail-closed, error-handler, tests con supertest). Permite centralizar rate limiting, retry con backoff y sanitización de la respuesta. | |
 | **Alternativas descartadas** | Llamada directa desde la app a Gemini (descartado: la key queda expuesta en el bundle). Claude Haiku / GPT-4o mini (descartado: costos o cuotas del tier gratis menos favorables para esta escala). IA on-device (descartado: requiere modelos locales pesados, fuera de alcance académico). Refino conversacional de la sugerencia (descartado en E3: se usa re-generar). | |
-| **Consecuencias** | La app offline no puede usar la IA (requiere red) pero nunca queda bloqueada: sin conexión, el botón de IA no aparece y el flujo manual de creación queda intacto. En el tier gratis Google entrena con los prompts (aceptable para uso académico; no enviar datos sensibles). La mejora continua del prompt queda como trabajo posterior. | |
+| **Consecuencias** | La app offline no puede usar la IA (requiere red) pero nunca queda bloqueada: sin conexión, el botón de IA no aparece y el flujo manual de creación queda intacto. En el tier gratis Google entrena con los prompts (aceptable para uso académico; no enviar datos sensibles). La mejora continua del prompt queda como trabajo posterior. Implementación: `AIService` con timeout (90 s default), retry con backoff exponencial en 429/5xx (3 intentos), sanitizado de la respuesta (nombres no vacíos, duración clamp 5-25, 3-8 pasos) y errores mapeados a 502 (proveedor caído) / 429 (saturado). `GEMINI_API_KEY` fail-closed en `config/env.ts`. | |
 
 ---
 

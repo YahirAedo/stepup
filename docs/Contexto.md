@@ -65,7 +65,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 
 **Foco principal: IA.** Plan detallado en `docs/Entrega 3 PRD.md` (epic #152).
 
-- Integración con **Google Gemini API** (AI Studio, tier gratis, modelo `gemini-2.5-flash` vía backend)
+- Integración con **Google Gemini API** (AI Studio, tier gratis, modelo `gemini-3.5-flash` configurable vía backend)
 - **Sugeridor de pasos:** el usuario escribe nombre + descripción y la app sugiere pasos accionables de 5-25 min (alineados al método Pomodoro), 3-8 según el tamaño de la tarea
 - **Asistente de descripción:** guía de estructura contextual para escribir mejores descripciones
 - La IA propone, el usuario decide: borrador editable → confirmar → la tarea y sus pasos nacen juntos
@@ -260,6 +260,8 @@ stepup/
 | 3 | #155 | Frontend: sugerir pasos con IA al crear tarea (borrador editable + regenerar) | #153, #154 |
 | 4 | #157 | Frontend: generar pasos con IA desde el detalle de tarea | #153, #154 |
 | 5 | #156 | Dashboard de consistencia: racha (1 día de gracia fijo) + tendencia semanal | #122 |
+
+**Estado (septiembre 2026):** slice 2 (#154) implementado y con PR a `develop` (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test contra Gemini real). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
 
 ### Deuda de E2 priorizada (no eliminada)
 - **Alta:** #122 (borde de día UTC — alimenta las rachas), #123 (IDOR en migrate).
