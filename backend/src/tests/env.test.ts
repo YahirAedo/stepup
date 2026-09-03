@@ -1,4 +1,4 @@
-import { resolveJwtSecret } from '../config/env';
+import { resolveGeminiApiKey, resolveJwtSecret } from '../config/env';
 
 describe('JWT fail-closed', () => {
   it('en producción rechaza secret ausente', () => {
@@ -16,5 +16,20 @@ describe('JWT fail-closed', () => {
 
   it('acepta un secret real fuera de test', () => {
     expect(resolveJwtSecret('un-secreto-largo-y-unico', 'production')).toBe('un-secreto-largo-y-unico');
+  });
+});
+
+describe('Gemini fail-closed', () => {
+  it('en producción rechaza key ausente o vacía', () => {
+    expect(() => resolveGeminiApiKey(undefined, 'production')).toThrow(/GEMINI_API_KEY/);
+    expect(() => resolveGeminiApiKey('   ', 'production')).toThrow(/GEMINI_API_KEY/);
+  });
+
+  it('en test permite un fallback sin key', () => {
+    expect(resolveGeminiApiKey(undefined, 'test')).toBe('test-gemini-key');
+  });
+
+  it('acepta una key real', () => {
+    expect(resolveGeminiApiKey('AIzaSy-test-key', 'production')).toBe('AIzaSy-test-key');
   });
 });
