@@ -8,6 +8,7 @@ export type ServerIdMap = Record<string, string>;
 export type ServerTask = {
   id: string;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -161,17 +162,18 @@ export async function forceApplyServerTask(db: MigrationDb, task: ServerTask): P
   const row = existing[0];
   if (row) {
     await db.runAsync(
-      `UPDATE tasks SET name = ?, due_date = ?, status = ?, completed_at = ?, updated_at = ?, dirty = 0
+      `UPDATE tasks SET name = ?, description = ?, due_date = ?, status = ?, completed_at = ?, updated_at = ?, dirty = 0
          WHERE id = ?`,
-      [task.name, task.dueDate, task.status, task.completedAt, task.updatedAt, row.id],
+      [task.name, task.description, task.dueDate, task.status, task.completedAt, task.updatedAt, row.id],
     );
     return;
   }
   await db.runAsync(
-    `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
+    `INSERT INTO tasks (name, description, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
     [
       task.name,
+      task.description,
       task.dueDate,
       task.status,
       task.createdAt,

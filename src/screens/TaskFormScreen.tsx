@@ -22,6 +22,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   const isEditing = !!existingTask;
 
   const [name, setName] = useState(existingTask?.name ?? '');
+  const [description, setDescription] = useState(existingTask?.description ?? '');
   const [dueDate, setDueDate] = useState(existingTask?.due_date ?? '');
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -70,11 +71,13 @@ export default function TaskFormScreen({ navigation, route }: Props) {
       if (isEditing) {
         await TaskService.update(existingTask.id, {
           name: name.trim(),
+          description: description.trim() || null,
           due_date: dueDate.trim() || null,
         });
       } else {
         await TaskService.create({
           name: name.trim(),
+          description: description.trim() || null,
           due_date: dueDate.trim() || null,
         });
       }
@@ -107,6 +110,25 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           autoFocus
           maxLength={120}
           hint="Usá un nombre claro para vos."
+        />
+
+        {/* Description */}
+        <TextField
+          label="Descripción"
+          placeholder="Ej: Parcial de Sistemas Operativos, temas: memoria virtual, procesos, deadlocks..."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={4}
+          maxLength={1000}
+          hint="Opcional. Ayuda a dividir mejor la tarea en pasos."
+          style={{
+            fontSize: 16,
+            fontFamily: 'PlusJakartaSans_400Regular',
+            lineHeight: 22,
+            minHeight: 100,
+            textAlignVertical: 'top',
+          }}
         />
 
         {/* Due date */}

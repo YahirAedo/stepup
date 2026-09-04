@@ -208,6 +208,7 @@ describe('SyncService.pull', () => {
     const serverTask: ServerTask = {
       id: 'uuid-task',
       name: 'Remota',
+      description: null,
       dueDate: null,
       status: 'active',
       createdAt: '2026-08-01T00:00:00.000Z',

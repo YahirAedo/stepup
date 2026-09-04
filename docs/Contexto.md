@@ -104,12 +104,14 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 ```
 id           INTEGER PRIMARY KEY AUTOINCREMENT
 name         TEXT NOT NULL
-description  TEXT (nullable) — contexto de la tarea (agregado en E3)
+description  TEXT (nullable) — contexto de la tarea (agregado en E3, issue #153)
 due_date     TEXT (ISO 8601, nullable)
 status       TEXT — 'active' | 'completed'
 created_at   TEXT (ISO 8601)
 completed_at TEXT (ISO 8601, nullable)
 ```
+
+**Nota E3 (issue #153):** La columna `description` se agregó en la migración V6. Es opcional y persiste a través del sync (push/pull/migrate). El frontend la muestra en TaskDetailScreen y permite editarla en TaskFormScreen (multiline, max 1000 chars).
 
 ### Tabla `steps`
 ```
