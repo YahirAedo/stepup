@@ -61,6 +61,23 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body[0].name).toBe('Tarea offline');
   });
 
+  it('POST /api/sync/push persiste description no nula (AC4 sync)', async () => {
+    const id = crypto.randomUUID();
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea con descripción', description: 'Contexto para IA', updatedAt: new Date().toISOString() }],
+        steps: [],
+      });
+
+    expect(res.status).toBe(200);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].description).toBe('Contexto para IA');
+  });
+
   it('push aplica last-write-wins: la versión más nueva gana y la vieja se ignora', async () => {
     const id = crypto.randomUUID();
     const older = new Date(Date.now() - 60_000).toISOString();
