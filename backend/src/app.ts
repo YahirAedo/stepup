@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { taskRoutes } from './routes/task.routes';
 import { stepRoutes } from './routes/step.routes';
 import { progressRoutes } from './routes/progress.routes';
@@ -28,7 +29,15 @@ export function createApp() {
   app.use('/api/steps', requireAuth, stepRoutes);
   app.use('/api/progress', requireAuth, progressRoutes);
   app.use('/api/sync', syncRoutes);
-  app.use('/api/ai', requireAuth, aiRoutes);
+
+  const aiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Demasiadas solicitudes de IA. Intentá nuevamente en un minuto.' },
+  });
+  app.use('/api/ai', aiLimiter, requireAuth, aiRoutes);
 
   app.use(errorHandler);
 
