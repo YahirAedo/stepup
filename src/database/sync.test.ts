@@ -157,6 +157,22 @@ describe('sync — upserts desde el servidor (pull)', () => {
     expect(rows).toEqual([{ name: 'Tarea del servidor', server_id: 'uuid-task', dirty: 0 }]);
   });
 
+  it('upsertServerTask persiste description no nula (AC4 sync)', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+
+    await upsertServerTask(db, {
+      ...serverTask,
+      description: 'Contexto detallado de la tarea para IA',
+    });
+
+    const [row] = await db.getAllAsync<{ description: string | null }>(
+      `SELECT description FROM tasks WHERE server_id = ?`,
+      ['uuid-task'],
+    );
+    expect(row.description).toBe('Contexto detallado de la tarea para IA');
+  });
+
   it('upsertServerTask actualiza si el servidor es más nuevo', async () => {
     const { db } = await makeSqlJsDb();
     await runMigrations(db);

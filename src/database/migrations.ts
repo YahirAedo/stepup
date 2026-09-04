@@ -90,8 +90,6 @@ const MIGRATIONS: Migration[] = [
   { version: 5, statements: PENDING_IDEMPOTENCY_KEYS_V5 },
   { version: 6, statements: TASK_DESCRIPTION_V6 },
 ];
-
-export async function runMigrations(db: MigrationDb): Promise<void> {
   const rows = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
   const current = rows[0]?.user_version ?? 0;
 
