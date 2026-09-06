@@ -205,7 +205,7 @@ export const StepService = {
     const now = nowIso();
 
     await db.runAsync(
-      `UPDATE steps SET status = 'pending', completed_at = NULL, dirty = 1, updated_at = ?
+      `UPDATE steps SET status = 'pending', completed_at = NULL, completed_date = NULL, dirty = 1, updated_at = ?
        WHERE id = ?`,
       [now, id],
     );
