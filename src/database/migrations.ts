@@ -68,8 +68,8 @@ const OWNER_USER_V4: string[] = [
   `ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`,
 ];
 
-// V5: guardar fecha local de completado para sincronización correcta de zonas horarias.
-const LOCAL_DATE_V5: string[] = [
+// V7: guardar fecha local de completado para sincronización correcta de zonas horarias.
+const LOCAL_DATE_V7: string[] = [
   `ALTER TABLE steps ADD COLUMN completed_date TEXT;`,
 ];
 
@@ -78,7 +78,7 @@ const MIGRATIONS: Migration[] = [
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
   { version: 4, statements: OWNER_USER_V4 },
-  { version: 5, statements: LOCAL_DATE_V5 },
+  { version: 7, statements: LOCAL_DATE_V7 },
 ];
 
 export async function runMigrations(db: MigrationDb): Promise<void> {

@@ -71,7 +71,7 @@ describe('API de progreso diario — métricas', () => {
       .send({ date: '17-08-2026' });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe('La fecha debe tener formato YYYY-MM-DD');
+    expect(res.body.message).toBe('La fecha debe ser válida con formato YYYY-MM-DD');
   });
 
   it('completar dos veces en carrera incrementa daily_progress una sola vez', async () => {

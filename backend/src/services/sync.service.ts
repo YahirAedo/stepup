@@ -278,6 +278,7 @@ export class SyncService {
           throw new Error('RECORD_BELONGS_TO_OTHER_USER');
         }
         if (new Date(step.updatedAt).getTime() > existing.updatedAt.getTime()) {
+          const wasCompleted = existing.status === 'completed';
           const updated = await tx.step.update({
             where: { id: step.id },
             data: {
@@ -289,7 +290,7 @@ export class SyncService {
               completedAt: parseOptionalDate(step.completedAt),
             },
           });
-          if (step.status === 'completed' && step.date) {
+          if (step.status === 'completed' && !wasCompleted && step.date) {
             await this.upsertDailyProgress(tx, userId, step.date);
           }
           return { id: updated.id, applied: true, localId: step.localId };

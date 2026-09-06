@@ -30,6 +30,18 @@ function isParseableIso(value: string): boolean {
   return !Number.isNaN(Date.parse(value));
 }
 
+function isValidDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const [, yearStr, monthStr, dayStr] = match;
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const d = new Date(year, month - 1, day);
+  return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+}
+
 const isoDateTime = z
   .string({ error: 'Debe ser un timestamp ISO' })
   .min(1, 'Debe ser un timestamp ISO')
@@ -89,7 +101,7 @@ export const completeStepSchema = z
   .object({
     date: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato YYYY-MM-DD')
+      .refine(isValidDate, { message: 'La fecha debe ser válida con formato YYYY-MM-DD' })
       .optional(),
   })
   .optional();
@@ -162,7 +174,7 @@ const syncStepBase = {
   completedAt: parseableDate,
   date: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'date debe tener formato YYYY-MM-DD')
+    .refine(isValidDate, { message: 'date debe ser una fecha válida con formato YYYY-MM-DD' })
     .optional(),
 };
 
