@@ -15,6 +15,9 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    base_branches:
+      - develop
+      - develop2
   path_instructions:
     - path: "src/**"
       instructions: |
