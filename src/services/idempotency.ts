@@ -31,28 +31,18 @@ export function canonicalPayload(value: unknown): string {
     .join(',')}}`;
 }
 
-export function hashPayload(payload: unknown): string {
-  const text = canonicalPayload(payload);
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, '0');
-}
-
 export async function resolvePersistedIdempotencyKey(
   db: MigrationDb,
   scope: string,
   payload: unknown,
 ): Promise<string> {
-  const payloadHash = hashPayload(payload);
+  const payloadCanonical = canonicalPayload(payload);
   const pending = await getPendingIdempotencyKey(db, scope);
-  if (pending !== null && pending.payloadHash === payloadHash) {
+  if (pending !== null && pending.payloadHash === payloadCanonical) {
     return pending.key;
   }
   const key = generateIdempotencyKey();
-  await setPendingIdempotencyKey(db, scope, key, payloadHash);
+  await setPendingIdempotencyKey(db, scope, key, payloadCanonical);
   return key;
 }
 

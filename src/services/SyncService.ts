@@ -22,7 +22,7 @@ import {
   type ServerTask,
   type SyncConflict,
 } from '../database/sync';
-import { apiFetch, ENDPOINTS } from './api';
+import { apiFetch, ApiError, ENDPOINTS } from './api';
 import { clearIdempotencyKey, resolvePersistedIdempotencyKey } from './idempotency';
 import { hasSession, saveSession, type SessionUser } from './session';
 
@@ -155,11 +155,19 @@ export const SyncService = {
     const managesKey = idempotencyKey === undefined;
     const key = idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, PUSH_SCOPE, payload));
 
-    const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
-      method: 'POST',
-      idempotencyKey: key,
-      body: JSON.stringify(payload),
-    });
+    let result: PushResult;
+    try {
+      result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
+        method: 'POST',
+        idempotencyKey: key,
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      if (managesKey && error instanceof ApiError && error.status >= 400 && error.status !== 401) {
+        await clearIdempotencyKey(db, PUSH_SCOPE);
+      }
+      throw error;
+    }
 
     const taskMap: Record<string, string> = {};
     for (const item of result.tasks) {
@@ -277,11 +285,19 @@ export const SyncService = {
     const key =
       idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, MIGRATE_SCOPE, payload));
 
-    const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
-      method: 'POST',
-      idempotencyKey: key,
-      body: JSON.stringify(payload),
-    });
+    let result: MigrateResponse;
+    try {
+      result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
+        method: 'POST',
+        idempotencyKey: key,
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      if (managesKey && error instanceof ApiError && error.status >= 400 && error.status !== 401) {
+        await clearIdempotencyKey(db, MIGRATE_SCOPE);
+      }
+      throw error;
+    }
 
     await saveSession(result.token, result.user);
     await setLocalOwner(db, result.user.id);

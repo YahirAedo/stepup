@@ -6,7 +6,6 @@ import {
   canonicalPayload,
   clearIdempotencyKey,
   generateIdempotencyKey,
-  hashPayload,
   resolvePersistedIdempotencyKey,
 } from './idempotency';
 
@@ -35,19 +34,19 @@ describe('generateIdempotencyKey', () => {
   });
 });
 
-describe('hashPayload', () => {
+describe('canonicalPayload', () => {
   it('es determinístico para el mismo payload', () => {
     const payload = { tasks: [{ localId: 1, name: 'Tarea' }], steps: [] };
 
-    expect(hashPayload(payload)).toBe(hashPayload({ ...payload }));
+    expect(canonicalPayload(payload)).toBe(canonicalPayload({ ...payload }));
   });
 
   it('no depende del orden de las claves de los objetos', () => {
-    expect(hashPayload({ a: 1, b: 2 })).toBe(hashPayload({ b: 2, a: 1 }));
+    expect(canonicalPayload({ a: 1, b: 2 })).toBe(canonicalPayload({ b: 2, a: 1 }));
   });
 
   it('cambia cuando cambia el payload', () => {
-    expect(hashPayload({ name: 'A' })).not.toBe(hashPayload({ name: 'B' }));
+    expect(canonicalPayload({ name: 'A' })).not.toBe(canonicalPayload({ name: 'B' }));
   });
 
   it('serializa arrays con orden significativo', () => {

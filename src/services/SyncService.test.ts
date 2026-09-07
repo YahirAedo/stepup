@@ -541,4 +541,48 @@ describe('idempotencia client-side persistente (issue #124)', () => {
     expect(keyOfCall(0)).toBe('clave-manual');
     await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
   });
+
+  it('push: error 4xx (excepto 401) limpia la pending key para evitar stuck', async () => {
+    const { ApiError } = await import('./api');
+    await insertTask({ dirty: 1 });
+    mocks.apiFetch.mockRejectedValueOnce(new ApiError(409, 'Conflict'));
+
+    await expect(SyncService.push()).rejects.toThrow('Conflict');
+
+    await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
+  });
+
+  it('push: error 401 NO limpia la pending key (problema de auth, no de payload)', async () => {
+    const { ApiError } = await import('./api');
+    await insertTask({ dirty: 1 });
+    mocks.apiFetch.mockRejectedValueOnce(new ApiError(401, 'Unauthorized'));
+
+    await expect(SyncService.push()).rejects.toThrow('Unauthorized');
+
+    await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.not.toBeNull();
+  });
+
+  it('migrate: error 4xx (excepto 401) limpia la pending key para evitar stuck', async () => {
+    const { ApiError } = await import('./api');
+    await insertTask();
+    mocks.apiFetch.mockRejectedValueOnce(new ApiError(409, 'Email already registered'));
+
+    await expect(SyncService.migrate('Ana', 'ana@x.com', 'secreto123')).rejects.toThrow(
+      'Email already registered',
+    );
+
+    await expect(getPendingIdempotencyKey(db, 'sync-migrate')).resolves.toBeNull();
+  });
+
+  it('migrate: error 401 NO limpia la pending key (problema de auth, no de payload)', async () => {
+    const { ApiError } = await import('./api');
+    await insertTask();
+    mocks.apiFetch.mockRejectedValueOnce(new ApiError(401, 'Unauthorized'));
+
+    await expect(SyncService.migrate('Ana', 'ana@x.com', 'secreto123')).rejects.toThrow(
+      'Unauthorized',
+    );
+
+    await expect(getPendingIdempotencyKey(db, 'sync-migrate')).resolves.not.toBeNull();
+  });
 });
