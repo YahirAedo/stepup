@@ -41,6 +41,18 @@ export class SyncController {
 
   migrate = async (req: Request, res: Response) => {
     try {
+      const email = req.body.email?.trim().toLowerCase();
+      if (!email) {
+        return res.status(400).json({ message: 'El email es obligatorio' });
+      }
+
+      const requestHash = this.syncService.hashRequest(req.body);
+      const replay = await this.syncService.getMigrateReplay(email, req.body.password, requestHash);
+
+      if (replay) {
+        return res.status(201).json(replay);
+      }
+
       const payload = await this.syncService.migrate(req.body);
       return res.status(201).json(payload);
     } catch (error) {

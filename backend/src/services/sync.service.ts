@@ -2,8 +2,8 @@ import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma';
 import { signToken } from '../utils/jwt';
-import { IdempotencyService } from './idempotency.service';
 import { syncPushSchema, syncMigrateSchema } from '../validations/schemas';
+import { createHash } from 'crypto';
 
 function parseOptionalDate(value?: string | null): Date | null | undefined {
   if (value === undefined) return undefined;
@@ -56,8 +56,6 @@ function serializeStep(step: {
 }
 
 export class SyncService {
-  private idempotencyService = new IdempotencyService();
-
   async push(userId: string, input: unknown) {
     const data = syncPushSchema.parse(input);
 
@@ -118,30 +116,14 @@ export class SyncService {
   async migrate(input: unknown) {
     const data = syncMigrateSchema.parse(input);
     const email = data.email.trim().toLowerCase();
-    const requestHash = this.idempotencyService.hashRequest('POST', '/api/sync/migrate', data);
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      const passwordOk = await bcrypt.compare(data.password, existing.password);
-      const maps =
-        passwordOk && existing.migrateMaps !== null
-          ? (JSON.parse(existing.migrateMaps) as {
-              taskMap: Record<string, string>;
-              stepMap: Record<string, string>;
-            })
-          : null;
-      if (!passwordOk || existing.migrateRequestHash !== requestHash || maps === null) {
-        throw new Error('EMAIL_ALREADY_REGISTERED');
-      }
-      return {
-        user: { id: existing.id, name: existing.name, email: existing.email },
-        token: signToken(existing.id),
-        taskMap: maps.taskMap,
-        stepMap: maps.stepMap,
-      };
+      throw new Error('EMAIL_ALREADY_REGISTERED');
     }
 
     const password = await bcrypt.hash(data.password, 10);
+    const requestHash = this.hashRequest(data);
 
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({ data: { name: data.name, email, password } });
@@ -205,6 +187,40 @@ export class SyncService {
         stepMap,
       };
     });
+  }
+
+  async getMigrateReplay(email: string, password: string, requestHash: string) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (!existing) {
+      return null;
+    }
+
+    const passwordOk = await bcrypt.compare(password, existing.password);
+    if (!passwordOk || existing.migrateRequestHash !== requestHash || !existing.migrateMaps) {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    let maps: { taskMap: Record<string, string>; stepMap: Record<string, string> };
+    try {
+      maps = JSON.parse(existing.migrateMaps);
+    } catch {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    if (!maps.taskMap || !maps.stepMap) {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    return {
+      user: { id: existing.id, name: existing.name, email: existing.email },
+      token: signToken(existing.id),
+      taskMap: maps.taskMap,
+      stepMap: maps.stepMap,
+    };
+  }
+
+  hashRequest(data: unknown): string {
+    return createHash('sha256').update(JSON.stringify(data)).digest('hex');
   }
 
   private async ownsTask(tx: Prisma.TransactionClient, taskId: string, userId: string) {
