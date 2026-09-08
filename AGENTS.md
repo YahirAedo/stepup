@@ -58,6 +58,10 @@ no bloquea el merge):
   (`.opencode/agents/`) y la skill `stepup-review` (`.claude/skills/`). Emite un comentario
   con veredicto sobre fidelidad a la issue, convenciones y diseño. Detalle: DT-26 en
   `docs/Log Decisiones Tecnicas E2.md`.
+- El job `stepup-review` requiere `GITHUB_TOKEN` y `OPENROUTER_API_KEY` como secrets
+  (env del workflow). Los PRs abiertos antes de cambios al workflow no re-ejecutan el
+  check automáticamente: hace falta un nuevo evento (`synchronize`, `reopened` o
+  `ready_for_review`) para re-dispararlo.
 
 Ningún check automático reemplaza la aprobación humana de otro integrante (§7.6).
 
