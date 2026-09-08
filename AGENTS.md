@@ -32,24 +32,34 @@ Nunca commitear directo a `main`.
 
 ```
 main        ← Entrega final. Solo recibe merges desde develop.
-develop     ← Frontend (app RN). Rama base para issues de frontend.
-develop2    ← TRANSIORIO: backend (E2). Se unifica con develop y desaparece.
+develop     ← Rama base para issues de frontend y backend (E2 unificada en PR #121).
 feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripcion>
 ```
 
 Regla de ramas:
-- Issue de **backend** → rama desde `develop2` → PR a `develop2`.
-- Issue de **frontend** → rama desde `develop` → PR a `develop`.
+- Issue de **backend** o **frontend** → rama desde `develop` → PR a `develop`.
 
 Pasos para cada cambio:
 
-1. `git checkout <rama-correcta> && git pull` (develop2 para backend, develop para frontend)
+1. `git checkout develop && git pull`
 2. `git checkout -b feature/<tipo>/<numero>-<descripcion>` (ej. `fix/67-idempotencia-push`)
 3. Hacer commits con formato convencional: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`
 4. **Solo stagear archivos relacionados al cambio** — prohibido `git add -A`, `git add .`, `git commit -a`. Si aparece un alcance nuevo, crear una issue aparte.
 5. `git push origin feature/<tipo>/<numero>-<descripcion>`
 6. Crear Pull Request a la rama correcta siguiendo `.github/PULL_REQUEST_TEMPLATE.md`
 7. Alguien más revisa y mergea con squash (nadie mergea su propio PR)
+
+## Review automatizado de PRs
+
+Desde septiembre 2026 los PRs contra `develop` son revisados automáticamente (rol informativo,
+no bloquea el merge):
+- **CodeRabbit** — configurado en `.coderabbit.yaml` (PR #186).
+- **skill-review** — action `anomalyco/opencode/github` con el agente `skill-reviewer`
+  (`.opencode/agents/`) y la skill `stepup-review` (`.claude/skills/`). Emite un comentario
+  con veredicto sobre fidelidad a la issue, convenciones y diseño. Detalle: DT-26 en
+  `docs/Log Decisiones Tecnicas E2.md`.
+
+Ningún check automático reemplaza la aprobación humana de otro integrante (§7.6).
 
 ## Issues
 
