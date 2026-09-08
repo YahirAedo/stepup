@@ -1,0 +1,50 @@
+name: skill-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [develop]
+
+concurrency:
+  group: skill-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  stepup-review:
+    name: StepUp review
+    if: >
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - name: Check out pull request merge commit
+        uses: actions/checkout@v4
+
+      - name: Review PR (modelo primario)
+        id: review-primary
+        uses: anomalyco/opencode/github@latest
+        continue-on-error: true
+        with:
+          model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+          agent: skill-reviewer
+          use_github_token: true
+          share: false
+
+      - name: Review PR (modelo fallback)
+        if: steps.review-primary.outcome == 'failure'
+        uses: anomalyco/opencode/github@latest
+        continue-on-error: true
+        with:
+          model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+          agent: skill-reviewer
+          use_github_token: true
+          share: false

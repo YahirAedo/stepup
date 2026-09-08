@@ -35,6 +35,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
 | DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Agosto 2026 | Planificada (E3) |
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
+| DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
 
 # Decisiones detalladas
 
@@ -277,6 +278,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | La descripción es el "por qué" de la tarea; descartarla (efímera) impediría re-generar pasos con IA más tarde con el mismo contexto y empobrecería el dashboard futuro. El costo de schema es acotado: ya existen migraciones en SQLite y Prisma, y el sync ya resuelve cambios. | |
 | **Alternativas descartadas** | Descripción efímera (solo para la llamada de IA, no persistida): más simple, pero pierde el contexto y rompe "re-generar pasos después". | |
 | **Consecuencias** | El formulario de crear/editar tarea gana un campo. El detalle muestra la descripción. El sync y las migraciones (local y remota) se actualizan. El campo es opcional: crear sin descripción sigue siendo válido y rápido (HU-2). | |
+
+---
+
+## DT-26 Review automatizado de PRs con skills (opencode + OpenRouter free)
+*Septiembre 2026 — Issue #187*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **En curso** | |
+| **Contexto** | Desde septiembre 2026 existe un review automatizado de PRs contra `develop` en modo informativo (no bloquea el merge): CodeRabbit (`.coderabbit.yaml`, PR #186) como reja, y una skill-review con el agente `skill-reviewer` de opencode que emite un comentario con veredicto sobre fidelidad a la issue, convenciones del repo y diseño. El equipo quiere medir la precisión de la IA antes de decidir si el check pasa a gate (required check). | |
+| **Decisión** | La skill-review no reemplaza la aprobación humana (§7.6). Los PRs contra `develop` corren un job `stepup-review` (workflow `.github/workflows/skill-review.yml`) que invoca la action oficial `anomalyco/opencode/github` con el agente opencode `skill-reviewer` (`.opencode/agents/skill-reviewer.md`, modo `primary`, READ-ONLY) y la skill `stepup-review` (`.claude/skills/stepup-review/SKILL.md`). El modelo es OpenRouter free (`nemotron-3-ultra-550b-a55b:free` con fallback `nemotron-3-super-120b-a12b:free` vía dos pasos en el workflow con `continue-on-error`); usa `share: false` y `use_github_token: true`. El job queda verde siempre (`continue-on-error`), con el error visible en el comentario si ambos modelos fallan. Se skipea cuando el PR no vincula issue (`Closes|Fixes|Resolves #N`), drafts, forks y dependabot. | |
+| **Razonamiento** | Un rol informativo deja medir la precisión real contra el review humano sin fricción extra en el flujo (§7.6 sigue exigiendo 1 aprobación humana). El fallback de modelos y el `continue-on-error` garantizan que un fallo del LLM nunca rompa el merge. `share: false` evita compartir el prompt fuera del repo; `use_github_token: true` evita el intercambio de tokens vía OIDC y la necesidad de una GitHub App. | |
+| **Alternativas descartadas** | Subagentes con modelos pagos (descartado: costo por repo público, no necesario para el alcance). Aprobación automática con `--approve`/`--request-changes` (descartado: el rol es informativo; la promoción futura a gate se logra haciendo el check required, sin cambios de código). | |
+| **Consecuencias** | El check `stepup-review` aparecerá en todos los PRs a `develop` (verde siempre, rol informativo). El agente es estrictamente de solo lectura (permission `edit: deny`, bash restringido a `gh`/`git` read-only, sin `task`, sin `webfetch`/`websearch`) para que nunca pushee cambios. La key de OpenRouter es un secret del repo (`OPENROUTER_API_KEY`). Si se quiere convertir en gate: habilitar el check como required en la protección de `develop`, sin tocar código. A monitorear: precisión de los veredictos vs reviews humanas. |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
