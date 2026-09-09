@@ -61,6 +61,16 @@ no bloquea el merge):
 
 Ningún check automático reemplaza la aprobación humana de otro integrante (§7.6).
 
+## OpenCode en este repo
+
+El archivo `opencode.json` de la raíz define `default_agent: skill-reviewer` para que el
+job `skill-review` corra con el agente read-only correcto (la action ignora el input
+`agent` en v1.18.29; ver issue #192).
+
+**Impacto local:** al abrir opencode en este repo, el agente por defecto es `skill-reviewer`
+(read-only). Para trabajar normalmente usar `opencode run --agent build ...` o cambiar el
+agente desde la TUI.
+
 ## Issues
 
 Los issues de E2 están en GitHub. Al tomar una issue: auto-asignarse (pull rule),
