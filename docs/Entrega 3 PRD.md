@@ -32,9 +32,9 @@ La app incorpora IA (Google Gemini API, tier gratis) en dos capacidades compleme
 
 ## Implementation Decisions
 
-- **Proveedor de IA:** Google Gemini API (AI Studio), modelo `gemini-2.5-flash`, tier gratis permanente. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json` para salida estructurada.
+- **Proveedor de IA:** Google Gemini API (AI Studio), tier gratis permanente. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json` para salida estructurada. Modelo default `gemini-3.5-flash`, configurable vía `GEMINI_MODEL` (el `gemini-2.5-flash` planificado fue deprecado por Google para keys nuevas en septiembre 2026).
 - **La key de Gemini vive SOLO en el backend** (variable de entorno en Railway), nunca en el bundle de la app. La app llama a un endpoint propio.
-- **Backend nuevo:** ruta autenticada `POST /api/ai/suggest-steps` (+ acción para el asistente de descripción). `AIService` valida input con zod, llama a Gemini con prompt fijo y backoff en 429/5xx, y devuelve pasos sanitizados (`name` + `duration_min`).
+- **Backend nuevo:** rutas autenticadas `POST /api/ai/suggest-steps` (devuelve `{ steps: [{ name, duration_min }] }`) y `POST /api/ai/describe-help` (devuelve `{ sections: [{ title, guiding_question }] }` para el asistente de descripción). `AIService` valida input con zod, llama a Gemini con prompt fijo, timeout de 90 s y backoff en 429/5xx (3 intentos), y devuelve pasos sanitizados (`name` + `duration_min` entre 5 y 25, 3-8 pasos). Errores del proveedor se mapean a 502 (caído/timeout) y 429 (saturado).
 - **Prompt engineering:** prompt fijo que codifica las reglas del dominio (verbo concreto, 5-25 min, 3-8 pasos según tamaño, derivar del contexto, orden lógico). Mejora continua de calidad queda como trabajo posterior (issue de seguimiento).
 - **Frontend nuevo:** `AIService` que consume el endpoint; el borrador vive en estado temporal de pantalla (no se persiste hasta confirmar).
 - **Modelo de datos:** se agrega columna `description` a `tasks` (SQLite local + PostgreSQL remoto + contrato de sync). La descripción es opcional y editable.

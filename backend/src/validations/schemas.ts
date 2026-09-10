@@ -112,6 +112,28 @@ export const registerSchema = z.object({
   password: authPassword,
 });
 
+export const AI_TASK_NAME_MAX = 200;
+export const AI_DESCRIPTION_MAX = 1000;
+
+const aiTaskName = z
+  .string({ error: 'taskName es obligatorio' })
+  .trim()
+  .min(1, 'taskName es obligatorio')
+  .max(AI_TASK_NAME_MAX, `taskName no puede superar ${AI_TASK_NAME_MAX} caracteres`);
+
+export const suggestStepsSchema = z.object({
+  taskName: aiTaskName,
+  description: z
+    .string({ error: 'description debe ser un string' })
+    .trim()
+    .max(AI_DESCRIPTION_MAX, `description no puede superar ${AI_DESCRIPTION_MAX} caracteres`)
+    .optional(),
+});
+
+export const describeHelpSchema = z.object({
+  taskName: aiTaskName,
+});
+
 export const loginSchema = z.object({
   email: authEmail,
   password: z.string({ error: 'La contraseña es obligatoria' }).min(1, 'La contraseña es obligatoria'),
