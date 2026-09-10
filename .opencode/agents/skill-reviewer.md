@@ -1,5 +1,5 @@
 ---
-description: Revisión técnica de PRs de StepUp contra develop (issue, convenciones y Zenith Vitality). Solo lectura.
+description: Revisión técnica de PRs de StepUp contra develop (issue, convenciones, Zenith Vitality y contexto completo del PR). Solo lectura.
 mode: primary
 permission:
   edit: deny
@@ -35,9 +35,10 @@ Paso 0 (obligatorio): carga la skill `stepup-review` y luego:
 
 1. Identifica el PR en revisión (lo tienes en el entorno). Lee el body y extrae la issue vinculada (`Closes|Fixes|Resolves #N`). Si no hay issue vinculada, el veredicto es un comentario corto de skip sin análisis del diff.
 2. Lee el estado y el diff del PR contra `develop` con `gh` (comandos de solo lectura). Nunca uses `gh pr checkout`.
-3. Carga los documentos obligatorios del repo cuando apliquen para juzgar convenciones: `AGENTS.md`, `docs/Contexto.md`, `docs/CONVENCIONES.md`, `.claude/skills/zenith-vitality-ds/SKILL.md`.
-4. Evalúa con los tres ejes definidos en la skill: fidelidad a la issue, cumplimiento de convenciones/design system, y calidad/congruencia del código.
-5. Emite el veredicto con el formato exacto que define la skill.
+3. Recolecta el contexto asociado al PR con `gh` (todos comandos read-only): comments y reviews (`gh pr view <n> --json reviews,comments,commits`), threads inline (`gh api repos/<owner>/<repo>/pulls/<n>/comments`) y sub-issues de la issue vinculada (`gh api repos/<owner>/<repo>/issues/<issue>/sub_issues`).
+4. Carga los documentos obligatorios del repo cuando apliquen para juzgar convenciones: `AGENTS.md`, `docs/Contexto.md`, `docs/CONVENCIONES.md`, `.claude/skills/zenith-vitality-ds/SKILL.md`.
+5. Evalúa con los cuatro ejes definidos en la skill: fidelidad a la issue (A), convenciones/design system (B), calidad/congruencia (C) y contexto/trayectoria del PR (D).
+6. Emite el veredicto con los estados que define la skill (`APPROVED` | `NEEDS WORK` | `BLOCKED` | `SKIPPED`) y el formato exacto, incluyendo el bloque de contexto del PR.
 
 ## Salida
 

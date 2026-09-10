@@ -380,7 +380,10 @@ feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripci
 **Review automatizado de PRs (septiembre 2026, rol informativo):** los PRs contra `develop` son
 revisados automáticamente por CodeRabbit (`.coderabbit.yaml`, PR #186) y por la skill-review
 (action `anomalyco/opencode/github` con el agente `skill-reviewer` y la skill `stepup-review`,
-DT-26 en el Log de Decisiones E2). Ningún check automático reemplaza la aprobación humana (§7.6).
+DT-26 en el Log de Decisiones E2). La skill-review considera el contexto completo del PR —
+comments, reviews, threads inline y sub-issues abiertas de la issue vinculada — y emite un
+veredicto `APPROVED` | `NEEDS WORK` | `BLOCKED` | `SKIPPED` (DT-27). Ningún check automático
+reemplaza la aprobación humana (§7.6).
 
 **Formato de commits:**
 ```

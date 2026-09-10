@@ -56,8 +56,10 @@ no bloquea el merge):
 - **CodeRabbit** — configurado en `.coderabbit.yaml` (PR #186).
 - **skill-review** — action `anomalyco/opencode/github` con el agente `skill-reviewer`
   (`.opencode/agents/`) y la skill `stepup-review` (`.claude/skills/`). Emite un comentario
-  con veredicto sobre fidelidad a la issue, convenciones y diseño. Detalle: DT-26 en
-  `docs/Log Decisiones Tecnicas E2.md`.
+  con veredicto sobre fidelidad a la issue, convenciones, diseño y contexto del PR.
+  Veredictos: `APPROVED` | `NEEDS WORK` | `BLOCKED` | `SKIPPED` (`BLOCKED` = el diff está
+  bien pero hay pendientes ajenos, p. ej. sub-issues abiertas o reviews sin resolver).
+  Detalle: DT-26 y DT-27 en `docs/Log Decisiones Tecnicas E2.md`.
 - El job `stepup-review` requiere `GITHUB_TOKEN` y `OPENROUTER_API_KEY` como secrets
   (env del workflow). Los PRs abiertos antes de cambios al workflow no re-ejecutan el
   check automáticamente: hace falta un nuevo evento (`synchronize`, `reopened` o
