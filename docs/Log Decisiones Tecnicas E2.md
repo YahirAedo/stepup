@@ -36,6 +36,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Agosto 2026 | Planificada (E3) |
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
 | DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
+| DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
 
 # Decisiones detalladas
 
@@ -292,6 +293,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | Un rol informativo deja medir la precisión real contra el review humano sin fricción extra en el flujo (§7.6 sigue exigiendo 1 aprobación humana). El fallback de modelos y el `continue-on-error` garantizan que un fallo del LLM nunca rompa el merge. `share: false` evita compartir el prompt fuera del repo; `use_github_token: true` evita el intercambio de tokens vía OIDC y la necesidad de una GitHub App. | |
 | **Alternativas descartadas** | Subagentes con modelos pagos (descartado: costo por repo público, no necesario para el alcance). Aprobación automática con `--approve`/`--request-changes` (descartado: el rol es informativo; la promoción futura a gate se logra haciendo el check required, sin cambios de código). | |
 | **Consecuencias** | El check `stepup-review` aparecerá en todos los PRs a `develop` (verde siempre, rol informativo). El agente es estrictamente de solo lectura (permission `edit: deny`, bash restringido a `gh`/`git` read-only, sin `task`, sin `webfetch`/`websearch`) para que nunca pushee cambios. La key de OpenRouter es un secret del repo (`OPENROUTER_API_KEY`). Si se quiere convertir en gate: habilitar el check como required en la protección de `develop`, sin tocar código. A monitorear: precisión de los veredictos vs reviews humanas. |
+
+---
+
+## DT-27 Skill-review considera el contexto completo del PR (comments, reviews, sub-issues)
+*Septiembre 2026 — Issue #202*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Implementada** | |
+| **Contexto** | La skill-review original (DT-26) evaluaba solo el diff y la issue vinculada, aislada del contexto del PR. En septiembre 2026 se detectó que varios PRs estaban bloqueados por trabajo trackeado fuera del diff: sub-issues abiertas (p. ej. #198/#199 bajo #124), reviews humanas `CHANGES_REQUESTED` sin resolver y threads de review inline. Un veredicto `NEEDS WORK` genérico no distinguía entre defectos del propio PR y pendientes ajenos al diff. | |
+| **Decisión** | Antes de emitir el veredicto, el agente recolecta el contexto asociado al PR con `gh` (solo lectura): comments y reviews (`gh pr view <n> --json reviews,comments,commits`), threads inline (`gh api repos/<owner>/<repo>/pulls/<n>/comments`) y sub-issues de la issue vinculada (`gh api repos/<owner>/<repo>/issues/<issue>/sub_issues`). Se agrega un cuarto eje de revisión **D — contexto y trayectoria** (body vs diff real, hallazgos previos resueltos, threads sin resolver, sub-issues abiertas, coherencia de commits). El veredicto pasa a cuatro estados: `APPROVED`, `NEEDS WORK` (defectos en el propio PR), `BLOCKED` (el diff está bien pero el contexto no lo deja mergear: sub-issues abiertas, reviews/threads sin resolver) y `SKIPPED`. El formato de salida agrega el bloque "Contexto del PR". | |
+| **Razonamiento** | El veredicto debe comunicar QUÉ bloquea, no solo si bloquea: distingue "este PR tiene un bug" de "este PR está bien pero su issue tiene sub-issues abiertas". `BLOCKED` le dice al autor y al revisor humano exactamente dónde está el cuello de botella. La recolección usa los mismos permisos ya granted al agente (`gh *`), sin cambios de seguridad en el workflow. | |
+| **Alternativas descartadas** | Seguir con un solo estado `NEEDS WORK` (descartado: ambigüo, no orienta al autor). Leer GraphQL para threads resueltos (descartado: el REST `pulls/<n>/comments` alcanza; la resolución de threads se infiere del diff e historial de respuestas). Persistir estado entre runs con storage externo (descartado: la trayectoria se reconstruye leyendo los propios comentarios del PR). | |
+| **Consecuencias** | Los veredictos son más descriptivos y accionables: `BLOCKED` señala pendientes trackeados en sub-issues (`#198/#199` bajo `#124` es el caso canónico). El check sigue siendo informativo: `BLOCKED` no bloquea el merge. El agente no requiere permisos nuevos (todo es `gh` read-only). Anti-patrones actualizados para no repetir hallazgos ya resueltos ni reportar sub-issues abiertas como defectos de código. |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
