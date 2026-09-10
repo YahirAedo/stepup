@@ -37,6 +37,7 @@ model Task {
   id          String     @id @default(uuid())
   userId      String     @map("user_id")
   name        String
+  description String?
   dueDate     DateTime?  @map("due_date")
   status      TaskStatus @default(active)
   createdAt   DateTime   @default(now()) @map("created_at")
