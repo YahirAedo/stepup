@@ -37,6 +37,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
 | DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
 | DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
+| DT-28 | Tablero "StepUp - Seguimiento" (GitHub Projects v2) como fuente de estado real de issues/PRs | Septiembre 2026 | Implementada |
 
 # Decisiones detalladas
 
@@ -307,6 +308,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | El veredicto debe comunicar QUÉ bloquea, no solo si bloquea: distingue "este PR tiene un bug" de "este PR está bien pero su issue tiene sub-issues abiertas". `BLOCKED` le dice al autor y al revisor humano exactamente dónde está el cuello de botella. La recolección usa los mismos permisos ya granted al agente (`gh *`), sin cambios de seguridad en el workflow. | |
 | **Alternativas descartadas** | Seguir con un solo estado `NEEDS WORK` (descartado: ambigüo, no orienta al autor). Leer GraphQL para threads resueltos (descartado: el REST `pulls/<n>/comments` alcanza; la resolución de threads se infiere del diff e historial de respuestas). Persistir estado entre runs con storage externo (descartado: la trayectoria se reconstruye leyendo los propios comentarios del PR). | |
 | **Consecuencias** | Los veredictos son más descriptivos y accionables: `BLOCKED` señala pendientes trackeados en sub-issues (`#198/#199` bajo `#124` es el caso canónico). El check sigue siendo informativo: `BLOCKED` no bloquea el merge. El agente no requiere permisos nuevos (todo es `gh` read-only). Anti-patrones actualizados para no repetir hallazgos ya resueltos ni reportar sub-issues abiertas como defectos de código. |
+
+---
+
+## DT-28 Tablero "StepUp - Seguimiento" (GitHub Projects v2)
+*Septiembre 2026 — Gestión del repo*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Implementada** | |
+| **Contexto** | El estado de una issue se deducía del label, el assignee y el milestone (CONVENCIONES §7.8), pero no había una vista unificada que mostrara qué está bloqueado, listo, en progreso, en review y mergeado, ni las fases (Entregas). GitHub no expone Projects v2 por la API REST, solo por GraphQL o el CLI `gh`. | |
+| **Decisión** | Habilitar el proyecto **"StepUp - Seguimiento"** (https://github.com/users/YahirAedo/projects/2, proyecto v2 reutilizado de la cuenta `YahirAedo`), reutilizando el campo **Status** nativo con 7 opciones: `Backlog`, `Ready`, `In Progress`, `Blocked`, `In Review`, `Merged`, `Done`. Vista principal tipo **Board** agrupada por Status. Todo issue y PR se agrega al tablero; el movimiento de tarjetas es manual según las reglas documentadas en CONVENCIONES §7.8. Las issues **bloqueadas** llevan además el label `blocked` (creado: `#B60205`). | |
+| **Razonamiento** | Projects v2 es la herramienta nativa de GitHub: la tarjeta se vincula sola al issue/PR y el drag & drop es cero-fricción para el equipo. Un board por Status reemplaza la deducción implícita del §7.8 anterior con una vista visual gráfica (lo que el equipo pidió en vez de una tabla). Los blockers ya existían en los bodies de las issues (`## Blocked by`); el tablero los hace visibles de un vistazo. | |
+| **Alternativas descartadas** | Vista Table con columnas por milestone (descartada por el equipo: prefiere el board gráfico). Automatizar el movimiento por CI/action en cada evento (descartado: mandato manual, menos ruido; la población inicial se hizo con `gh project item-add` + GraphQL `updateProjectV2Field`). | |
+| **Consecuencias** | El estado real de cada issue/PR es visible en el tablero (11 In Progress, 28 Ready, 6 Blocked, 14 In Review al poblarlo). Reglas de movimiento en CONVENCIONES §7.8: tomar issue → In Progress; PR abierto → In Review; merge → PR a Merged e issue a Done; bloqueada → Blocked + label `blocked`. El label `blocked` se puede consultar/filtrar como cualquier label. A monitorear: que el equipo mantenga el tablero al día (regla manual). |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
