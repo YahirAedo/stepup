@@ -340,9 +340,125 @@ describe('API de sincronización — push, pull y migrate', () => {
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);
-    expect(second.body.token).toBe(first.body.token);
+    expect(second.body.user.id).toBe(first.body.user.id);
     expect(second.body.taskMap).toEqual(first.body.taskMap);
     expect(second.body.user.email).toBe('retry@stepup.app');
+
+    const list = await request(app).get('/api/tasks').set(authHeader(second.body.token));
+    expect(list.status).toBe(200);
+    expect(list.body).toHaveLength(1);
+  });
+
+  it('POST /api/sync/migrate no crea usuario interno de scope ni deja claves de idempotencia', async () => {
+    const res = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', crypto.randomUUID())
+      .send({
+        name: 'Sin Scope',
+        email: 'sinscope@stepup.app',
+        password: 'secret123',
+        tasks: [],
+        steps: [],
+      });
+
+    expect(res.status).toBe(201);
+
+    const scopeUsers = await prisma.user.count({
+      where: { email: 'idempotency-migrate@internal.stepup' },
+    });
+    expect(scopeUsers).toBe(0);
+    expect(await prisma.idempotencyKey.count()).toBe(0);
+  });
+
+  it('POST /api/sync/migrate con email existente y password incorrecta devuelve 409', async () => {
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', crypto.randomUUID())
+      .send({
+        name: 'Original',
+        email: 'duenio@stepup.app',
+        password: 'secret123',
+        tasks: [],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', crypto.randomUUID())
+      .send({
+        name: 'Intruso',
+        email: 'duenio@stepup.app',
+        password: 'otra-clave-123',
+        tasks: [],
+        steps: [],
+      });
+    expect(second.status).toBe(409);
+  });
+
+  it('POST /api/sync/migrate la misma key usada por otro cliente no fuga datos ajenos', async () => {
+    const key = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente A',
+        email: 'cliente-a@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Tarea privada', updatedAt: now }],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente B',
+        email: 'cliente-b@stepup.app',
+        password: 'secret123',
+        tasks: [],
+        steps: [],
+      });
+
+    expect(second.status).toBe(201);
+    expect(second.body.user.email).toBe('cliente-b@stepup.app');
+    expect(second.body.token).not.toBe(first.body.token);
+    expect(second.body.taskMap).toEqual({});
+
+    const tasksB = await request(app).get('/api/tasks').set(authHeader(second.body.token));
+    expect(tasksB.body).toEqual([]);
+  });
+
+  it('POST /api/sync/migrate mismo email con payload distinto devuelve 409 aunque repita la key', async () => {
+    const key = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente A',
+        email: 'replay-distinto@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Original', updatedAt: now }],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente A',
+        email: 'replay-distinto@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Otra tarea', updatedAt: now }],
+        steps: [],
+      });
+    expect(second.status).toBe(409);
   });
 
   it('POST /api/sync/migrate con email existente devuelve 409', async () => {

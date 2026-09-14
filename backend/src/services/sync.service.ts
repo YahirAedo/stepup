@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma';
 import { signToken } from '../utils/jwt';
 import { syncPushSchema, syncMigrateSchema } from '../validations/schemas';
+import { createHash } from 'crypto';
 
 function parseOptionalDate(value?: string | null): Date | null | undefined {
   if (value === undefined) return undefined;
@@ -122,6 +123,7 @@ export class SyncService {
     }
 
     const password = await bcrypt.hash(data.password, 10);
+    const requestHash = this.hashRequest(data);
 
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({ data: { name: data.name, email, password } });
@@ -170,6 +172,14 @@ export class SyncService {
         stepMap[step.localId] = created.id;
       }
 
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          migrateRequestHash: requestHash,
+          migrateMaps: JSON.stringify({ taskMap, stepMap }),
+        },
+      });
+
       return {
         user: { id: user.id, name: user.name, email: user.email },
         token: signToken(user.id),
@@ -177,6 +187,40 @@ export class SyncService {
         stepMap,
       };
     });
+  }
+
+  async getMigrateReplay(email: string, password: string, requestHash: string) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (!existing) {
+      return null;
+    }
+
+    const passwordOk = await bcrypt.compare(password, existing.password);
+    if (!passwordOk || existing.migrateRequestHash !== requestHash || !existing.migrateMaps) {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    let maps: { taskMap: Record<string, string>; stepMap: Record<string, string> };
+    try {
+      maps = JSON.parse(existing.migrateMaps);
+    } catch {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    if (!maps.taskMap || !maps.stepMap) {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    return {
+      user: { id: existing.id, name: existing.name, email: existing.email },
+      token: signToken(existing.id),
+      taskMap: maps.taskMap,
+      stepMap: maps.stepMap,
+    };
+  }
+
+  hashRequest(data: unknown): string {
+    return createHash('sha256').update(JSON.stringify(data)).digest('hex');
   }
 
   private async ownsTask(tx: Prisma.TransactionClient, taskId: string, userId: string) {
