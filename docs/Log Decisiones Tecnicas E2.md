@@ -38,6 +38,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
 | DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
 | DT-28 | Tablero "StepUp - Seguimiento" (GitHub Projects v2) como fuente de estado real de issues/PRs | Septiembre 2026 | Implementada |
+| DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
 
 # Decisiones detalladas
 
@@ -322,6 +323,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | Projects v2 es la herramienta nativa de GitHub: la tarjeta se vincula sola al issue/PR y el drag & drop es cero-fricción para el equipo. Un board por Status reemplaza la deducción implícita del §7.8 anterior con una vista visual gráfica (lo que el equipo pidió en vez de una tabla). Los blockers ya existían en los bodies de las issues (`## Blocked by`); el tablero los hace visibles de un vistazo. | |
 | **Alternativas descartadas** | Vista Table con columnas por milestone (descartada por el equipo: prefiere el board gráfico). Automatizar el movimiento por CI/action en cada evento (descartado: mandato manual, menos ruido; la población inicial se hizo con `gh project item-add` + GraphQL `updateProjectV2Field`). | |
 | **Consecuencias** | El estado real de cada issue/PR es visible en el tablero (11 In Progress, 28 Ready, 6 Blocked, 14 In Review al poblarlo). Reglas de movimiento en CONVENCIONES §7.8: tomar issue → In Progress; PR abierto → In Review; merge → PR a Merged e issue a Done; bloqueada → Blocked + label `blocked`. El label `blocked` se puede consultar/filtrar como cualquier label. A monitorear: que el equipo mantenga el tablero al día (regla manual). |
+
+---
+
+## DT-29 Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs
+*Septiembre 2026 — Issue #233 (PR #234)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | La nueva guía móvil canónica (`docs/GUIA-DISENO-MOVIL.md`) codifica el diseño como fuente de verdad. Para que la norma no se congele ni se contradiga, el equipo aclara que el diseño (visual y de documentación) está sujeto a cambios: si algo no cuadra al implementar o validar, se documenta el hallazgo y se actualizan las documentaciones afectadas. | |
+| **Decisión** | El diseño no es intocable, y el flujo ante un desajuste es: (1) documentar el hallazgo, (2) actualizar la documentación afectada (guía, CONVENCIONES, DS SKILL, DESIGN.md local o tokens del theme) dentro de la misma rama del cambio (CONVENCIONES §7.9), (3) registrar la decisión en este log, y (4) despachar el cambio como issue/PR con revisión. Queda prohibido resolver el desajuste solo en código dejando los docs desactualizados, o congelar la norma por el hecho de estar escrita. | |
+| **Razonamiento** | Una guía escrita no debe convertirse en dogma: los hallazgos reales de UX, accesibilidad y performance (p. ej. una skill que contradice una regla de casing) deben poder corregir la norma. Mantener docs y código en la misma rama evita el desincronismo clásico entre "lo que dice la doc" y "lo que hace la app", y queda trackeado para review. | |
+| **Alternativas descartadas** | Considerar la guía inmutable hasta una revisión periódica (descartado: los hallazgos aparecen durante el trabajo, no en ventanas programadas). Documentar solo en comments de código (descartado: sin registro formal no hay trazabilidad para el equipo ni para los agentes). | |
+| **Consecuencias** | Cada cambio de norma va acompañado de su doc actualizada y su ADR, todo dentro del mismo PR. Los reviews (humanos y skill-review) pueden exigir la doc al día como parte del diff. La cláusula vive en la guía (#233) como fuente de referencia para todo el equipo. |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
