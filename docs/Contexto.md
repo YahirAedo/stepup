@@ -456,7 +456,7 @@ El sistema de diseño completo está en `stitch_stepup_design_system/` con proto
 
 | Carpeta | Pantalla | Estado |
 |---------|----------|--------|
-| `zenith_vitality/` | Documento maestro de diseño (DESIGN.md) | ⏳ A implementar |
+| `zenith_vitality/` | Documento maestro de diseño (DESIGN.md) | ✅ Documentado en `docs/GUIA-DISENO-MOVIL.md` |
 | `ahora_enfoque_redise_o/` | FocusScreen con timer glassmorpho | ⏳ A implementar |
 | `ahora_sin_tareas/` | Estado vacío "Mente clara, espacio libre" | ⏳ A implementar |
 | `tareas_gesti_n_redise_o/` | TaskList con bento grid | ⏳ A implementar |
