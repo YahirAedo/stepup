@@ -395,6 +395,12 @@ refactor: separar logica del timer en TimerService
 chore: instalar expo-sqlite y configurar
 ```
 
+**Tablero de estado (septiembre 2026):** el estado real de issues/PRs se ve en el
+proyecto **"StepUp - Seguimiento"** — https://github.com/users/YahirAedo/projects/2
+(GitHub Projects v2, vista Board por Status). Columnas: Backlog, Ready,
+In Progress, Blocked, In Review, Merged, Done. Reglas de movimiento y label
+`blocked` en `docs/CONVENCIONES.md` §7.8 (DT-28 en el Log de Decisiones E2).
+
 Al cerrar cada entrega: merge develop → main, crear tag (ej: v1.0-E1, v2.0-E2)
 y publicar el release correspondiente con notas (ver release `entrega-1`). Las
 issues de cada entrega se agrupan en su milestone (E1/E2/E3) — ver DT-16 y
