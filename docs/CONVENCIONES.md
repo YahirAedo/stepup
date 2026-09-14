@@ -7,6 +7,12 @@
 
 ## 1. Estilos y presentación
 
+> La guía móvil canónica es `docs/GUIA-DISENO-MOVIL.md` (4º documento obligatorio
+> del onboarding). Ahí viven: casing/tipografía, colores tokens-only, responsive,
+> chrome nativo Android-first, catálogo completo de componentes y anti-patterns.
+> CONVENCIONES define las reglas base; la guía las detalla para móvil sin
+> duplicarlas.
+
 ### 1.1 Siempre usar theme tokens, NUNCA colores hardcodeados
 
 ```tsx

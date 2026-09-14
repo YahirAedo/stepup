@@ -15,8 +15,9 @@
 | 1 | `docs/Contexto.md` | Contexto completo del proyecto, entregas, decisiones técnicas |
 | 2 | `docs/CONVENCIONES.md` | Reglas de estilo, arquitectura, git y calidad para el equipo |
 | 3 | `.claude/skills/zenith-vitality-ds/SKILL.md` | Design System: tokens, componentes, anti-patterns |
+| 4 | `docs/GUIA-DISENO-MOVIL.md` | Guía móvil canónica: tokens, casing, responsive, chrome nativo, catálogo |
 
-**Regla:** cualquier agente que genere código debe leer estos 3 documentos primero.
+**Regla:** cualquier agente que genere código debe leer estos 4 documentos primero.
 No hacerlo produce código inconsistente y PRs rechazadas.
 
 ## Diseño y componentes
