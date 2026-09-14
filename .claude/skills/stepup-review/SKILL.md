@@ -42,6 +42,7 @@ Identificar en los comentarios si ya existe una revisión skill-review anterior 
 ### 4. Cargar convenciones del repo
 
 - `AGENTS.md`, `docs/Contexto.md`, `docs/CONVENCIONES.md`, `.claude/skills/zenith-vitality-ds/SKILL.md`.
+- Para diseño móvil, la fuente de verdad es `docs/GUIA-DISENO-MOVIL.md` (§1–§9); el SKILL del DS es el catálogo de tokens/componentes.
 - Usarlos para juzgar el eje de convenciones; no comentar los archivos de workflow/CI del propio PR.
 
 ### 5. Ejes de revisión
@@ -55,7 +56,7 @@ Identificar en los comentarios si ya existe una revisión skill-review anterior 
 **B. Convenciones del repo y design system.**
 - Git/workflow: ramas `feature/<tipo>/<numero>-<descripcion>`, commits convencionales, PR a `develop` (no a `main`), solo archivos relacionados al cambio.
 - Backend: Express + Prisma + schema en `prisma/`, validación Zod en `schemas.ts`, JWT fail-closed, idempotencia en writes, tests con supertest.
-- Frontend/Design System Zenith Vitality: colores/tipografía/espaciado/sombras SIEMPRE desde el theme en `src/theme/` — nunca hardcodear. Componentes reutilizables en `src/components/`, no en screens. Respetar tokens y anti-patterns del SKILL del DS.
+- Frontend/Design System Zenith Vitality: colores/tipografía/espaciado/sombras SIEMPRE desde el theme en `src/theme/` — nunca hardcodear. Componentes reutilizables en `src/components/`, no en screens. Respetar tokens y anti-patterns del SKILL del DS y validar contra la guía `docs/GUIA-DISENO-MOVIL.md` (§1–§8): casing (`label-sm` UPPERCASE, botones en oración), safe areas (`insets.top + token`, nunca `paddingTop` fijo), responsive (`scale()` solo para tamaños absolutos, nunca spacing/typography), tokens glass, sin `StyleSheet.create` ni `fontSize`/`fontFamily`/`fontWeight`/`letterSpacing` inline.
 
 **C. Calidad y congruencia del código.**
 - TypeScript estricto: sin `as any` (valores reales, tipado honesto), sin `@ts-ignore`, sin duplicar tipos que ya existen.

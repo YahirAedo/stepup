@@ -2,6 +2,12 @@
 
 > Cargar este skill antes de escribir o modificar cualquier componente UI/pantalla.
 > Todos los valores deben leerse desde los archivos del theme, no hardcodearse.
+>
+> **Fuente de verdad móvil:** la guía canónica es `docs/GUIA-DISENO-MOVIL.md`
+> (4º documento obligatorio de AGENTS.md, §1–§9). Este skill es el catálogo de
+> tokens, componentes y anti-patterns del DS; la guía manda en casing, safe
+> areas, responsive, breakpoints, glass y chrome nativo. Ante un conflicto,
+> mandan la guía y los tokens del theme.
 
 ---
 
@@ -266,3 +272,4 @@ const { scale: s } = useResponsive();
 - [ ] El componente existe en `src/components/` si se repite en 2+ pantallas
 - [ ] Las fuentes Manrope/Plus Jakarta Sans están cargadas en App.tsx
 - [ ] Las pantallas nuevas están agregadas a la navegación en App.tsx
+- [ ] Sin hits de los sweeps §8 de `docs/GUIA-DISENO-MOVIL.md` (colores hardcodeados, tipografía inline, `StyleSheet`, `paddingTop` fijo, `gestureEnabled: false`)
