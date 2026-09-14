@@ -444,7 +444,7 @@ real de UX, accesibilidad o performance — el proceso es:
    o los propios tokens del theme — **dentro de la misma rama del cambio**
    (CONVENCIONES §7.9: los docs se actualizan con el PR, no como post-proceso).
 3. **Actualizar el log de decisiones** con la entrada ADR correspondiente
-   (ver DT-28 en `docs/Log Decisiones Tecnicas E2.md`).
+   (ver DT-29 en `docs/Log Decisiones Tecnicas E2.md`).
 4. Despachar el cambio como issue/PR propio con revisión (nadie mergea su propio
    PR).
 

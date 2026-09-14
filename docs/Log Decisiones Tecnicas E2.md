@@ -37,7 +37,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
 | DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
 | DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
-| DT-28 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
+| DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
 
 # Decisiones detalladas
 
@@ -311,7 +311,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 
 ---
 
-## DT-28 Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs
+## DT-29 Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs
 *Septiembre 2026 — Issue #233 (PR #234)*
 
 | | | |
