@@ -469,4 +469,125 @@ describe('API de sincronización — push, pull y migrate', () => {
     const afterGood = await request(app).get(`/api/tasks/${taskId}`).set(authHeader(token));
     expect(afterGood.body.status).toBe('completed');
   });
+
+  it('push de step completado con date incrementa daily_progress una sola vez', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const localDate = '2026-08-26';
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: now,
+            date: localDate,
+          },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+
+    const progress = await request(app).get('/api/progress').set(authHeader(token));
+    const entry = progress.body.find((p: { date: string }) => p.date === localDate);
+    expect(entry).toBeTruthy();
+    expect(entry.stepsCompleted).toBe(1);
+  });
+
+  it('re-push del mismo step completado no duplica daily_progress', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const later = new Date(Date.now() + 10_000).toISOString();
+    const localDate = '2026-08-26';
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: now,
+            date: localDate,
+          },
+        ],
+      });
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: later,
+            date: localDate,
+          },
+        ],
+      });
+
+    const progress = await request(app).get('/api/progress').set(authHeader(token));
+    const entry = progress.body.find((p: { date: string }) => p.date === localDate);
+    expect(entry.stepsCompleted).toBe(1);
+  });
+
+  it('push con date inválida (2026-99-99) devuelve 400', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: now,
+            date: '2026-99-99',
+          },
+        ],
+      });
+
+    expect(res.status).toBe(400);
+  });
 });
