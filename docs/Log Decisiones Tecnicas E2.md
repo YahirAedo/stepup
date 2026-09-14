@@ -37,6 +37,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
 | DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
 | DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
+| DT-28 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
 
 # Decisiones detalladas
 
@@ -307,6 +308,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | El veredicto debe comunicar QUÉ bloquea, no solo si bloquea: distingue "este PR tiene un bug" de "este PR está bien pero su issue tiene sub-issues abiertas". `BLOCKED` le dice al autor y al revisor humano exactamente dónde está el cuello de botella. La recolección usa los mismos permisos ya granted al agente (`gh *`), sin cambios de seguridad en el workflow. | |
 | **Alternativas descartadas** | Seguir con un solo estado `NEEDS WORK` (descartado: ambigüo, no orienta al autor). Leer GraphQL para threads resueltos (descartado: el REST `pulls/<n>/comments` alcanza; la resolución de threads se infiere del diff e historial de respuestas). Persistir estado entre runs con storage externo (descartado: la trayectoria se reconstruye leyendo los propios comentarios del PR). | |
 | **Consecuencias** | Los veredictos son más descriptivos y accionables: `BLOCKED` señala pendientes trackeados en sub-issues (`#198/#199` bajo `#124` es el caso canónico). El check sigue siendo informativo: `BLOCKED` no bloquea el merge. El agente no requiere permisos nuevos (todo es `gh` read-only). Anti-patrones actualizados para no repetir hallazgos ya resueltos ni reportar sub-issues abiertas como defectos de código. |
+
+---
+
+## DT-28 Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs
+*Septiembre 2026 — Issue #233 (PR #234)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | La nueva guía móvil canónica (`docs/GUIA-DISENO-MOVIL.md`) codifica el diseño como fuente de verdad. Para que la norma no se congele ni se contradiga, el equipo aclara que el diseño (visual y de documentación) está sujeto a cambios: si algo no cuadra al implementar o validar, se documenta el hallazgo y se actualizan las documentaciones afectadas. | |
+| **Decisión** | El diseño no es intocable, y el flujo ante un desajuste es: (1) documentar el hallazgo, (2) actualizar la documentación afectada (guía, CONVENCIONES, DS SKILL, DESIGN.md local o tokens del theme) dentro de la misma rama del cambio (CONVENCIONES §7.9), (3) registrar la decisión en este log, y (4) despachar el cambio como issue/PR con revisión. Queda prohibido resolver el desajuste solo en código dejando los docs desactualizados, o congelar la norma por el hecho de estar escrita. | |
+| **Razonamiento** | Una guía escrita no debe convertirse en dogma: los hallazgos reales de UX, accesibilidad y performance (p. ej. una skill que contradice una regla de casing) deben poder corregir la norma. Mantener docs y código en la misma rama evita el desincronismo clásico entre "lo que dice la doc" y "lo que hace la app", y queda trackeado para review. | |
+| **Alternativas descartadas** | Considerar la guía inmutable hasta una revisión periódica (descartado: los hallazgos aparecen durante el trabajo, no en ventanas programadas). Documentar solo en comments de código (descartado: sin registro formal no hay trazabilidad para el equipo ni para los agentes). | |
+| **Consecuencias** | Cada cambio de norma va acompañado de su doc actualizada y su ADR, todo dentro del mismo PR. Los reviews (humanos y skill-review) pueden exigir la doc al día como parte del diff. La cláusula vive en la guía (#233) como fuente de referencia para todo el equipo. |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 

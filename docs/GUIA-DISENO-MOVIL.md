@@ -6,9 +6,9 @@
 > **No es opcional.** Si una PR rompe estas reglas, se rechaza hasta corregirlas.
 >
 > Estado de validación: sujeto a revisión por las skills de diseño móvil
-> instaladas (ver [§9](#9-referencias)). Nada en este documento es intocable:
-> la norma es refinar todo para que se vea bien y sea accesible en móvil, bajo
-> una única convención para toda la app.
+> instaladas (ver [§9](#9-referencias)). El diseño y esta guía **están sujetos a
+> cambios** (ver §Cláusula de evolución): lo que no cuadra se documenta y se
+> actualizan las documentaciones.
 
 ---
 
@@ -430,3 +430,24 @@ existentes):
   ramas; **no** se mezclan en esta PR.
 - Esta guía es el **4º documento obligatorio** del onboarding (AGENTS.md:
   Contexto → CONVENCIONES → DS SKILL → esta guía).
+
+### Cláusula de evolución del diseño
+
+**El diseño está sujeto a cambios: nada es intocable, tampoco esta guía.** Si al
+implementar, validar o testear algo **no cuadra** — un token que no comunica la
+intención del diseño, una regla que contradice una skill instalada, o un hallazgo
+real de UX, accesibilidad o performance — el proceso es:
+
+1. **Documentar el hallazgo** (dónde y por qué no cuadra, con evidencia).
+2. **Actualizar la documentación afectada** — esta guía, `docs/CONVENCIONES.md`,
+   `.claude/skills/zenith-vitality-ds/SKILL.md`, `DESIGN.md` (local, gitignored)
+   o los propios tokens del theme — **dentro de la misma rama del cambio**
+   (CONVENCIONES §7.9: los docs se actualizan con el PR, no como post-proceso).
+3. **Actualizar el log de decisiones** con la entrada ADR correspondiente
+   (ver DT-28 en `docs/Log Decisiones Tecnicas E2.md`).
+4. Despachar el cambio como issue/PR propio con revisión (nadie mergea su propio
+   PR).
+
+**Queda prohibido** resolver el desajuste solo en código y dejar la documentación
+desactualizada, o congelar la norma "porque ya está escrita". La regla se actualiza
+con el cambio.
