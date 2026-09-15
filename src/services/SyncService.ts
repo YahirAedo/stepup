@@ -30,6 +30,7 @@ type PushTask = {
   id?: string;
   localId: number;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -66,6 +67,7 @@ type MigrateTask = {
   id?: string;
   localId: number;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -129,6 +131,7 @@ export const SyncService = {
           ...(task.server_id ? { id: task.server_id } : {}),
           localId: task.id,
           name: task.name,
+          description: task.description,
           dueDate: task.due_date,
           status: task.status,
           createdAt: normalizeIso(task.created_at),
@@ -244,6 +247,7 @@ export const SyncService = {
           ...(task.server_id ? { id: task.server_id } : {}),
           localId: task.id,
           name: task.name,
+          description: task.description,
           dueDate: task.due_date,
           status: task.status,
           createdAt: normalizeIso(task.created_at),
