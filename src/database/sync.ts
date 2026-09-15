@@ -61,7 +61,11 @@ export async function markDirty(db: MigrationDb, table: SyncTable, localId: numb
   ]);
 }
 
-export async function clearDirty(db: MigrationDb, table: SyncTable, localId: number): Promise<void> {
+export async function clearDirty(
+  db: MigrationDb,
+  table: SyncTable,
+  localId: number,
+): Promise<void> {
   await db.runAsync(`UPDATE ${table} SET dirty = 0 WHERE id = ?`, [localId]);
 }
 
@@ -127,6 +131,41 @@ export async function setLocalOwner(db: MigrationDb, userId: string): Promise<vo
   );
 }
 
+export type PendingIdempotencyKey = { key: string; payloadHash: string };
+
+export async function getPendingIdempotencyKey(
+  db: MigrationDb,
+  scope: string,
+): Promise<PendingIdempotencyKey | null> {
+  const rows = await db.getAllAsync<{ key: string; payload_hash: string }>(
+    `SELECT key, payload_hash FROM pending_idempotency_keys WHERE scope = ?`,
+    [scope],
+  );
+  const row = rows[0];
+  return row ? { key: row.key, payloadHash: row.payload_hash } : null;
+}
+
+export async function setPendingIdempotencyKey(
+  db: MigrationDb,
+  scope: string,
+  key: string,
+  payloadHash: string,
+): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO pending_idempotency_keys (scope, key, payload_hash, created_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(scope) DO UPDATE SET
+         key = excluded.key,
+         payload_hash = excluded.payload_hash,
+         created_at = excluded.created_at`,
+    [scope, key, payloadHash, nowIso()],
+  );
+}
+
+export async function clearPendingIdempotencyKey(db: MigrationDb, scope: string): Promise<void> {
+  await db.runAsync(`DELETE FROM pending_idempotency_keys WHERE scope = ?`, [scope]);
+}
+
 export async function resetLocalData(db: MigrationDb): Promise<void> {
   await db.runAsync(`DELETE FROM sync_conflicts`, []);
   await db.runAsync(`DELETE FROM steps`, []);
@@ -147,7 +186,10 @@ export async function setLastSyncAt(db: MigrationDb, iso: string): Promise<void>
   }
 }
 
-export async function getTaskIdByServerId(db: MigrationDb, serverId: string): Promise<number | null> {
+export async function getTaskIdByServerId(
+  db: MigrationDb,
+  serverId: string,
+): Promise<number | null> {
   const rows = await db.getAllAsync<{ id: number }>(`SELECT id FROM tasks WHERE server_id = ?`, [
     serverId,
   ]);
@@ -155,9 +197,10 @@ export async function getTaskIdByServerId(db: MigrationDb, serverId: string): Pr
 }
 
 export async function forceApplyServerTask(db: MigrationDb, task: ServerTask): Promise<void> {
-  const existing = await db.getAllAsync<{ id: number }>(`SELECT id FROM tasks WHERE server_id = ?`, [
-    task.id,
-  ]);
+  const existing = await db.getAllAsync<{ id: number }>(
+    `SELECT id FROM tasks WHERE server_id = ?`,
+    [task.id],
+  );
   const row = existing[0];
   if (row) {
     await db.runAsync(
@@ -187,9 +230,10 @@ export async function forceApplyServerStep(
   step: ServerStep,
   taskId: number,
 ): Promise<void> {
-  const existing = await db.getAllAsync<{ id: number }>(`SELECT id FROM steps WHERE server_id = ?`, [
-    step.id,
-  ]);
+  const existing = await db.getAllAsync<{ id: number }>(
+    `SELECT id FROM steps WHERE server_id = ?`,
+    [step.id],
+  );
   const row = existing[0];
   if (row) {
     await db.runAsync(
@@ -231,17 +275,26 @@ export async function upsertServerTask(db: MigrationDb, task: ServerTask): Promi
     status: string;
     updated_at: string | null;
     dirty: number;
-  }>(`SELECT id, name, status, updated_at, dirty FROM tasks WHERE server_id = ?`,
-    [task.id],
-  );
+  }>(`SELECT id, name, status, updated_at, dirty FROM tasks WHERE server_id = ?`, [task.id]);
   const row = existing[0];
   if (row) {
-    if (row.updated_at !== null && row.dirty === 1 && isNearTimestamp(row.updated_at, task.updatedAt)) {
-      await saveConflict(db, 'tasks', row.id, task.id, {
-        name: row.name,
-        status: row.status,
-        updatedAt: row.updated_at,
-      }, task);
+    if (
+      row.updated_at !== null &&
+      row.dirty === 1 &&
+      isNearTimestamp(row.updated_at, task.updatedAt)
+    ) {
+      await saveConflict(
+        db,
+        'tasks',
+        row.id,
+        task.id,
+        {
+          name: row.name,
+          status: row.status,
+          updatedAt: row.updated_at,
+        },
+        task,
+      );
       return;
     }
     if (row.updated_at !== null && row.updated_at >= task.updatedAt) {
@@ -262,17 +315,26 @@ export async function upsertServerStep(
     status: string;
     updated_at: string | null;
     dirty: number;
-  }>(`SELECT id, name, status, updated_at, dirty FROM steps WHERE server_id = ?`,
-    [step.id],
-  );
+  }>(`SELECT id, name, status, updated_at, dirty FROM steps WHERE server_id = ?`, [step.id]);
   const row = existing[0];
   if (row) {
-    if (row.updated_at !== null && row.dirty === 1 && isNearTimestamp(row.updated_at, step.updatedAt)) {
-      await saveConflict(db, 'steps', row.id, step.id, {
-        name: row.name,
-        status: row.status,
-        updatedAt: row.updated_at,
-      }, step);
+    if (
+      row.updated_at !== null &&
+      row.dirty === 1 &&
+      isNearTimestamp(row.updated_at, step.updatedAt)
+    ) {
+      await saveConflict(
+        db,
+        'steps',
+        row.id,
+        step.id,
+        {
+          name: row.name,
+          status: row.status,
+          updatedAt: row.updated_at,
+        },
+        step,
+      );
       return;
     }
     if (row.updated_at !== null && row.updated_at >= step.updatedAt) {
@@ -326,10 +388,7 @@ export async function deleteConflict(db: MigrationDb, conflictId: number): Promi
   await db.runAsync(`DELETE FROM sync_conflicts WHERE id = ?`, [conflictId]);
 }
 
-export async function resolveConflictKeepLocal(
-  db: MigrationDb,
-  conflictId: number,
-): Promise<void> {
+export async function resolveConflictKeepLocal(db: MigrationDb, conflictId: number): Promise<void> {
   const rows = await db.getAllAsync<{ table_name: SyncTable; local_id: number }>(
     `SELECT table_name, local_id FROM sync_conflicts WHERE id = ?`,
     [conflictId],

@@ -64,8 +64,17 @@ const CONFLICTS_V3: string[] = [
 ];
 
 // V4: aislar la DB local por usuario — sync_meta guarda el owner_user_id actual.
-const OWNER_USER_V4: string[] = [
-  `ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`,
+const OWNER_USER_V4: string[] = [`ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`];
+
+// V5: keys de idempotencia pendientes — se reusan en retries hasta confirmar éxito
+// en el servidor (issue #124). Una fila por operación (scope).
+const PENDING_IDEMPOTENCY_KEYS_V5: string[] = [
+  `CREATE TABLE IF NOT EXISTS pending_idempotency_keys (
+     scope        TEXT PRIMARY KEY,
+     key          TEXT NOT NULL,
+     payload_hash TEXT NOT NULL,
+     created_at   TEXT NOT NULL
+   );`,
 ];
 
 const MIGRATIONS: Migration[] = [
@@ -73,6 +82,7 @@ const MIGRATIONS: Migration[] = [
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
   { version: 4, statements: OWNER_USER_V4 },
+  { version: 5, statements: PENDING_IDEMPOTENCY_KEYS_V5 },
 ];
 
 export async function runMigrations(db: MigrationDb): Promise<void> {
