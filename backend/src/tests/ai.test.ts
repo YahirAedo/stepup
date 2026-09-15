@@ -1,4 +1,6 @@
 import request from 'supertest';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { app, authHeader, registerUser, resetDb } from './helpers';
 import {
   AiProviderError,
@@ -306,5 +308,40 @@ describe('sanitizeSections', () => {
     });
     expect(result).toHaveLength(validSections.length);
     expect(() => sanitizeSections({ sections: [{ title: 'Incompleta' }] })).toThrow(AiProviderError);
+  });
+});
+
+describe('Rate limiter con trust proxy (#195)', () => {
+  let limiterApp: express.Express;
+
+  beforeAll(() => {
+    limiterApp = express();
+    limiterApp.set('trust proxy', true);
+    const limiter = rateLimit({
+      windowMs: 60 * 1000,
+      max: 2,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { message: 'Rate limited' },
+    });
+    limiterApp.use('/api/test', limiter, (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+  });
+
+  it('buckets separados por IP (X-Forwarded-For)', async () => {
+    const ip1 = '1.1.1.1';
+    const ip2 = '2.2.2.2';
+
+    const res1a = await request(limiterApp).get('/api/test').set('X-Forwarded-For', ip1);
+    const res1b = await request(limiterApp).get('/api/test').set('X-Forwarded-For', ip1);
+    const res1c = await request(limiterApp).get('/api/test').set('X-Forwarded-For', ip1);
+
+    expect(res1a.status).toBe(200);
+    expect(res1b.status).toBe(200);
+    expect(res1c.status).toBe(429);
+
+    const res2a = await request(limiterApp).get('/api/test').set('X-Forwarded-For', ip2);
+    expect(res2a.status).toBe(200);
   });
 });
