@@ -6,10 +6,12 @@ import {
   canonicalPayload,
   clearIdempotencyKey,
   generateIdempotencyKey,
+  hashPayload,
   resolvePersistedIdempotencyKey,
 } from './idempotency';
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const SHA256_HEX = /^[0-9a-f]{64}$/;
 
 describe('generateIdempotencyKey', () => {
   it('devuelve un string con formato UUID v4 y longitud 36', () => {
@@ -54,6 +56,25 @@ describe('canonicalPayload', () => {
   });
 });
 
+describe('hashPayload', () => {
+  it('devuelve un hash sha-256 en formato hex (64 caracteres)', async () => {
+    const hash = await hashPayload('test');
+    expect(hash).toMatch(SHA256_HEX);
+  });
+
+  it('es determinístico para el mismo input', async () => {
+    const hash1 = await hashPayload('mismo-input');
+    const hash2 = await hashPayload('mismo-input');
+    expect(hash1).toBe(hash2);
+  });
+
+  it('cambia cuando cambia el input', async () => {
+    const hash1 = await hashPayload('input-a');
+    const hash2 = await hashPayload('input-b');
+    expect(hash1).not.toBe(hash2);
+  });
+});
+
 describe('resolvePersistedIdempotencyKey / clearIdempotencyKey', () => {
   let db: MigrationDb;
 
@@ -93,5 +114,17 @@ describe('resolvePersistedIdempotencyKey / clearIdempotencyKey', () => {
     await clearIdempotencyKey(db, 'sync-push');
 
     await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
+  });
+
+  it('guarda el hash sha-256 del payload, no el payload completo (#198)', async () => {
+    const payload = { email: 'test@stepup.app', password: 'mi-password-secreta-123' };
+
+    await resolvePersistedIdempotencyKey(db, 'sync-migrate', payload);
+    const pending = await getPendingIdempotencyKey(db, 'sync-migrate');
+
+    expect(pending).not.toBeNull();
+    expect(pending!.payloadHash).toMatch(SHA256_HEX);
+    expect(pending!.payloadHash).not.toContain('mi-password-secreta-123');
+    expect(pending!.payloadHash).not.toContain('test@stepup.app');
   });
 });
