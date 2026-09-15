@@ -110,7 +110,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           backgroundColor: colors.surface,
         }}
       >
-        <Text style={{ color: colors['on-surface-variant'], fontSize: 14 }}>
+        <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
           No se encontró la tarea.
         </Text>
       </View>
@@ -159,7 +159,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
                 <Text
                   style={[
                     typography['body-md'],
-                    { color: colors['on-surface-variant'], lineHeight: 22 },
+                    { color: colors['on-surface-variant'] },
                   ]}
                 >
                   {task.description}
@@ -299,7 +299,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           }}
         >
           <Text style={{ fontSize: 20, color: colors['on-tertiary'] }}>▶</Text>
-          <Text style={[typography['label-md'], { color: colors['on-tertiary'], fontSize: 16 }]}>
+          <Text style={[typography['label-md'], { color: colors['on-tertiary'] }]}>
             Comenzar ahora
           </Text>
         </TouchableOpacity>

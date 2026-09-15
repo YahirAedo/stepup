@@ -123,9 +123,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           maxLength={1000}
           hint="Opcional. Ayuda a dividir mejor la tarea en pasos."
           style={{
-            fontSize: 16,
-            fontFamily: 'PlusJakartaSans_400Regular',
-            lineHeight: 22,
+            ...typography['body-md'],
             minHeight: 100,
             textAlignVertical: 'top',
           }}
@@ -176,8 +174,9 @@ export default function TaskFormScreen({ navigation, route }: Props) {
                   border: 'none',
                   background: 'transparent',
                   outline: 'none',
-                  fontSize: 16,
-                  fontFamily: 'PlusJakartaSans_400Regular',
+                  fontSize: typography['body-md'].fontSize,
+                  fontFamily: typography['body-md'].fontFamily,
+                  lineHeight: typography['body-md'].lineHeight,
                   color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
                 }}
               />
@@ -281,7 +280,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
             💡 Tip
           </Text>
           <Text
-            style={[typography['body-md'], { color: colors['on-primary-fixed'], lineHeight: 22 }]}
+            style={[typography['body-md'], { color: colors['on-primary-fixed'] }]}
           >
             Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la
             pantalla de detalle.
