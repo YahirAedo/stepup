@@ -32,7 +32,7 @@ export function createApp() {
 
   const aiLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 10,
+    max: process.env.NODE_ENV === 'test' ? 10000 : 10,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Demasiadas solicitudes de IA. Intentá nuevamente en un minuto.' },
