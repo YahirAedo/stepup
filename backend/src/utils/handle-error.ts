@@ -5,6 +5,7 @@ import {
   IdempotencyNotReadyError,
   IdempotencyRecordMissingError,
 } from '../services/idempotency.service';
+import { AiProviderError, AiRateLimitError } from '../services/ai.service';
 
 const KNOWN_MESSAGES: Record<string, { status: number; message: string }> = {
   CANNOT_COMPLETE_WITH_PENDING_STEPS: {
@@ -42,6 +43,18 @@ export function handleError(res: Response, error: unknown) {
 
   if (error instanceof IdempotencyRecordMissingError) {
     return res.status(503).json({ message: error.message });
+  }
+
+  if (error instanceof AiRateLimitError) {
+    return res
+      .status(429)
+      .json({ message: 'El servicio de IA está saturado en este momento. Intentá nuevamente en unos minutos.' });
+  }
+
+  if (error instanceof AiProviderError) {
+    return res
+      .status(502)
+      .json({ message: 'El servicio de IA no está disponible en este momento. Intentá nuevamente en unos minutos.' });
   }
 
   const prismaError = error as { code?: string; meta?: unknown };
