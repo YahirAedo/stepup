@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { SyncService } from '../services/sync.service';
 import { IdempotencyService } from '../services/idempotency.service';
 import { handleError } from '../utils/handle-error';
+import { syncMigrateSchema } from '../validations/schemas';
 
 export class SyncController {
   private syncService = new SyncService();
@@ -41,19 +42,17 @@ export class SyncController {
 
   migrate = async (req: Request, res: Response) => {
     try {
-      const email = req.body.email?.trim().toLowerCase();
-      if (!email) {
-        return res.status(400).json({ message: 'El email es obligatorio' });
-      }
+      const data = syncMigrateSchema.parse(req.body);
+      const email = data.email.trim().toLowerCase();
 
-      const requestHash = this.syncService.hashRequest(req.body);
-      const replay = await this.syncService.getMigrateReplay(email, req.body.password, requestHash);
+      const requestHash = this.syncService.hashRequest(data);
+      const replay = await this.syncService.getMigrateReplay(email, data.password, requestHash);
 
       if (replay) {
         return res.status(201).json(replay);
       }
 
-      const payload = await this.syncService.migrate(req.body);
+      const payload = await this.syncService.migrate(data);
       return res.status(201).json(payload);
     } catch (error) {
       return handleError(res, error);

@@ -35,6 +35,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
 | DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Agosto 2026 | Planificada (E3) |
 | DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
+| DT-27 | Replay de migrate sin scope compartido (fix IDOR) | Septiembre 2026 | Confirmada — PR #174 (issue #123) |
 
 # Decisiones detalladas
 
@@ -277,6 +278,18 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | La descripción es el "por qué" de la tarea; descartarla (efímera) impediría re-generar pasos con IA más tarde con el mismo contexto y empobrecería el dashboard futuro. El costo de schema es acotado: ya existen migraciones en SQLite y Prisma, y el sync ya resuelve cambios. | |
 | **Alternativas descartadas** | Descripción efímera (solo para la llamada de IA, no persistida): más simple, pero pierde el contexto y rompe "re-generar pasos después". | |
 | **Consecuencias** | El formulario de crear/editar tarea gana un campo. El detalle muestra la descripción. El sync y las migraciones (local y remota) se actualizan. El campo es opcional: crear sin descripción sigue siendo válido y rápido (HU-2). | |
+
+## DT-27 Replay de migrate sin scope compartido (fix IDOR)
+*Septiembre 2026 — Sprint 3 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — PR #174 (issue #123) | |
+| **Contexto** | El migrate usaba `runIdempotent` con un scope fijo y público (`MIGRATE_IDEMPOTENCY_SCOPE`, UUID hardcodeado) y un usuario fake `idempotency-migrate@internal.stepup` que se hacía upsert en `users` en producción (ver DT-20). Todos los clients compartían el mismo `user_id` de idempotencia → un 2do `POST /api/sync/migrate` (misma key, otro cliente) devolvía el replay del primero (token + taskMap/stepMap del otro usuario) → **IDOR**. | |
+| **Decisión** | Eliminar `runIdempotent` del migrate y el usuario fake. Con nuevos campos `users.migrateRequestHash` y `users.migrateMaps` (almacenados en el propio user): si el email ya existe y `bcrypt.compare(password)` coincide y el hash del payload coincide, se devuelve el replay (token + maps). Si no, `EMAIL_ALREADY_REGISTERED` (409). El hash se computa con `createHash('sha256')` sobre el body **ya validado con Zod** — el mismo valor que se persiste en el primer migrate. | |
+| **Razonamiento** | El "scope" de idempotencia pasa a ser la identidad del propio email (único), sin UUID compartido ni usuario sintético en producción. Los maps viven en el user (fuente de verdad) y un reintento legítimo replays el mismo token/maps. | |
+| **Alternativas descartadas** | Mantener `runIdempotent` con scope derivado del user (imposible antes de conocer el user en el primer intento). Usuario fake por email (complejidad de cleanup). | |
+| **Consecuencias** | migrate ya no graba filas en `idempotency_keys` (test: contador 0). El replay es byte-idéntico. **Gotcha:** el hash DEBE calcularse sobre el payload post-Zod; si se hashea el body crudo, un reintento de un cliente que serializa en otro orden de keys o con espacios difiere y recibe 409 aunque el payload sea el mismo (corregido en la rama del PR; coherencia con la contraparte client-side en DT-26 / PR #175). | |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 

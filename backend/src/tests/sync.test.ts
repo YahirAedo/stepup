@@ -349,6 +349,38 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body).toHaveLength(1);
   });
 
+  it('POST /api/sync/migrate retry replaya aunque el cliente serialice el body en otro orden o con espacios', async () => {
+    const key = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Retry Order',
+        email: 'retry-order@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Migrada', updatedAt: now }],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        password: 'secret123',
+        steps: [],
+        tasks: [{ updatedAt: now, name: '  Migrada  ', localId: 1 }],
+        email: 'retry-order@stepup.app',
+        name: 'Retry Order',
+      });
+
+    expect(second.status).toBe(201);
+    expect(second.body.user.id).toBe(first.body.user.id);
+    expect(second.body.taskMap).toEqual(first.body.taskMap);
+  });
+
   it('POST /api/sync/migrate no crea usuario interno de scope ni deja claves de idempotencia', async () => {
     const res = await request(app)
       .post('/api/sync/migrate')
