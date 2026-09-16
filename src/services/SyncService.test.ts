@@ -7,8 +7,10 @@ import {
   getLastSyncAt,
   getLocalOwner,
   getPendingIdempotencyKey,
+  resetLocalData,
   setLastSyncAt,
   setLocalOwner,
+  setPendingIdempotencyKey,
   type ServerStep,
   type ServerTask,
 } from '../database/sync';
@@ -426,6 +428,16 @@ describe('SyncService.migrate', () => {
     expect(body.tasks).toEqual([]);
     expect(body.steps).toEqual([]);
     await expect(getLocalOwner(db)).resolves.toBe('u-new');
+  });
+
+  it('resetLocalData limpia pending_idempotency_keys (owner previo no reutiliza key)', async () => {
+    await setPendingIdempotencyKey(db, 'sync-migrate', 'clave-vieja', 'hash-viejo');
+    await setPendingIdempotencyKey(db, 'sync-push', 'clave-push', 'hash-push');
+
+    await resetLocalData(db);
+
+    await expect(getPendingIdempotencyKey(db, 'sync-migrate')).resolves.toBeNull();
+    await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
   });
 
   it('marca el owner local tras un migrate exitoso (datos sin owner se migran)', async () => {

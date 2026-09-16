@@ -167,6 +167,7 @@ export async function clearPendingIdempotencyKey(db: MigrationDb, scope: string)
 }
 
 export async function resetLocalData(db: MigrationDb): Promise<void> {
+  await db.runAsync(`DELETE FROM pending_idempotency_keys`, []);
   await db.runAsync(`DELETE FROM sync_conflicts`, []);
   await db.runAsync(`DELETE FROM steps`, []);
   await db.runAsync(`DELETE FROM tasks`, []);
