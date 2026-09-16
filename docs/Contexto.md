@@ -263,7 +263,7 @@ stepup/
 
 ### Deuda de E2 priorizada (no eliminada)
 - **Alta:** #122 (borde de día UTC — alimenta las rachas), #123 (IDOR en migrate).
-- **Media:** #124 (idempotencia client-side anulada).
+- **Media (resuelta en el PR #175):** #124 (idempotencia client-side anulada) — key persistente por operación (migración V5 `pending_idempotency_keys`), hash de payload con `expo-crypto` (#198), y tests de retry con misma key en `syncLifecycle` (#199).
 - **Baja:** #126 (`as any` restantes).
 - **Cerrada sin hacer:** #125 (docs PRD — el PRD se actualiza en E3).
 
