@@ -29,7 +29,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-17 | JWT fail-closed: rechazar arranque sin secret o con placeholder | Agosto 2026 | Confirmada |
 | DT-18 | Contrato de password unificado: min 8, max 72 bytes, email trim | Agosto 2026 | Confirmada |
 | DT-19 | Validación ISO real de fechas (400 vs 500) | Agosto 2026 | Confirmada |
-| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | Server confirmado · cliente pendiente (#123 IDOR, #124 key por llamada) |
+| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | Server confirmado · cliente idempotente (DT-31) · scope migrate con identidad propia (DT-30 / PR #174) |
 | DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada — implementada (issue #71) |
 | DT-22 | GitHub: protección de ramas y gestión de herramientas del repo | Agosto 2026 | Confirmada |
 | DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
@@ -40,6 +40,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-28 | Tablero "StepUp - Seguimiento" (GitHub Projects v2) como fuente de estado real de issues/PRs | Septiembre 2026 | Implementada |
 | DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
 | DT-30 | Replay de migrate sin scope compartido (fix IDOR) | Septiembre 2026 | Confirmada — PR #174 (issue #123) |
+| DT-31 | Idempotencia client-side persistente (key por operación en SQLite) | Septiembre 2026 | Confirmada — PR #175 (issues #124, #198, #199) |
 
 # Decisiones detalladas
 
@@ -350,6 +351,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | El "scope" de idempotencia pasa a ser la identidad del propio email (único), sin UUID compartido ni usuario sintético en producción. Los maps viven en el user (fuente de verdad) y un reintento legítimo replays el mismo token/maps. | |
 | **Alternativas descartadas** | Mantener `runIdempotent` con scope derivado del user (imposible antes de conocer el user en el primer intento). Usuario fake por email (complejidad de cleanup). | |
 | **Consecuencias** | migrate ya no graba filas en `idempotency_keys` (test: contador 0). El replay es byte-idéntico. **Gotcha:** el hash DEBE calcularse sobre el payload post-Zod; si se hashea el body crudo, un reintento de un cliente que serializa en otro orden de keys o con espacios difiere y recibe 409 aunque el payload sea el mismo (corregido en la rama del PR; coherencia con la contraparte client-side en DT-31 / PR #175). | |
+
+---
+
+## DT-31 Idempotencia client-side persistente (key por operación en SQLite)
+*Septiembre 2026 — Sprint 3 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada y testeada en el PR #175 (issues #124, #198, #199) | |
+| **Contexto** | Tras #67 la idempotencia quedó resuelta del lado servidor, pero el cliente la anulaba: `push` y `migrate` generaban una key NUEVA por llamada (`SyncService.ts` con `idempotencyKey = generateIdempotencyKey()`), y `syncLifecycle` invocaba `push()` sin key. Un retry tras timeout de red llegaba con key distinta → el backend no podía hacer replay → push duplicado o migración atascada en `409 EMAIL_ALREADY_REGISTERED` sin token ni ids nuevos (#124). | |
+| **Decisión** | Persistir la key por operación en SQLite (tabla `pending_idempotency_keys`, migración V5, scope `sync-push`/`sync-migrate`). `push`/`migrate` reutilizan la key persistida hasta confirmar 2xx; el `catch {}` de `syncLifecycle` traga el error y deja la key pegada para el próximo ciclo. El hash del payload se calcula con `expo-crypto` (SHA-256) para derivar una key nueva cuando el payload cambia (#198), y se limpia solo con 2xx o 4xx excepto 401 (evita stuck permanente ante payloads rechazados). | |
+| **Razonamiento** | Patrón análogo al del servidor (Stripe): un reintento tras error de red (sin respuesta del server) reutiliza la misma key y habilita el replay. La key se genera por operación, no por request — es la única forma de que el servidor identifique el retry. `expo-crypto` reemplaza a `crypto.subtle` porque este no está disponible en todos los runtimes de React Native/Hermes. | |
+| **Alternativas descartadas** | Key derivada determinísticamente por entidad (hash de `taskLocalId` + `updated_at` en `push`): más frágil con varios registros dirty y sin análogo para `migrate`. `crypto.subtle.digest` (web): descartado por indisponibilidad en Hermes — se migró a `expo-crypto`. Empty `catch {}` sin documentar: queda cubierto por tests. | |
+| **Consecuencias** | Migración SQLite **V5** `pending_idempotency_keys`. Tests de retry-same-key en `SyncService.test.ts` (patrón push/migrate, #124 AC1-AC3) y en `syncLifecycle.idempotency.test.ts` vía ciclos de `onAppActive` (#124 AC4 / #199 AC1-AC2). Nueva dependencia `expo-crypto` (+ mock de test en `vitest.setup.ts`). Tensión conocida: limpiar la key en 4xx≠401 puede destruir una key sin token recibido ante un 409 a mitad de migración — registrada para revisión en la review del PR #175 (ver #201, también aplica a #174). | |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
