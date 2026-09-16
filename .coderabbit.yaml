@@ -1,0 +1,33 @@
+language: "es"
+early_access: true
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  changed_files_summary: true
+  path_filters:
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - develop
+      - develop2
+  path_instructions:
+    - path: "src/**"
+      instructions: |
+        Frontend React Native + Expo SDK 54. Always use the Zenith Vitality design system:
+        colors, typography, spacing, and shadows from `src/theme/` — never hardcode them.
+        Reusable components belong in `src/components/`. Reject any `any` or unnecessary `as` casts.
+    - path: "backend/**"
+      instructions: |
+        Backend Node.js + Express + Prisma + PostgreSQL. Validate user input server-side,
+        parameterize queries via Prisma (no raw string concatenation), no secrets in code,
+        no tokens committed.
+chat:
+  auto_reply: true
