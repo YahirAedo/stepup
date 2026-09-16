@@ -262,7 +262,7 @@ stepup/
 | 5 | #156 | Dashboard de consistencia: racha (1 día de gracia fijo) + tendencia semanal | #122 |
 
 ### Deuda de E2 priorizada (no eliminada)
-- **Alta:** #122 (borde de día UTC — alimenta las rachas), #123 (IDOR en migrate).
+- **Alta:** #122 (borde de día UTC — alimenta las rachas). **#123 (IDOR en migrate) resuelto en el PR #174:** se eliminó el scope fijo `MIGRATE_IDEMPOTENCY_SCOPE` y el usuario fake de `users`; el replay de migrate ahora se autoriza por `email + password + hash del payload` (los maps se guardan en el propio user, no en `idempotency_keys`).
 - **Media:** #124 (idempotencia client-side anulada).
 - **Baja:** #126 (`as any` restantes).
 - **Cerrada sin hacer:** #125 (docs PRD — el PRD se actualiza en E3).

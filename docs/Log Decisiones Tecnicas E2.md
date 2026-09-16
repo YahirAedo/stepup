@@ -39,6 +39,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
 | DT-28 | Tablero "StepUp - Seguimiento" (GitHub Projects v2) como fuente de estado real de issues/PRs | Septiembre 2026 | Implementada |
 | DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
+| DT-30 | Replay de migrate sin scope compartido (fix IDOR) | Septiembre 2026 | Confirmada — PR #174 (issue #123) |
 
 # Decisiones detalladas
 
@@ -337,6 +338,18 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | Una guía escrita no debe convertirse en dogma: los hallazgos reales de UX, accesibilidad y performance (p. ej. una skill que contradice una regla de casing) deben poder corregir la norma. Mantener docs y código en la misma rama evita el desincronismo clásico entre "lo que dice la doc" y "lo que hace la app", y queda trackeado para review. | |
 | **Alternativas descartadas** | Considerar la guía inmutable hasta una revisión periódica (descartado: los hallazgos aparecen durante el trabajo, no en ventanas programadas). Documentar solo en comments de código (descartado: sin registro formal no hay trazabilidad para el equipo ni para los agentes). | |
 | **Consecuencias** | Cada cambio de norma va acompañado de su doc actualizada y su ADR, todo dentro del mismo PR. Los reviews (humanos y skill-review) pueden exigir la doc al día como parte del diff. La cláusula vive en la guía (#233) como fuente de referencia para todo el equipo. |
+
+## DT-30 Replay de migrate sin scope compartido (fix IDOR)
+*Septiembre 2026 — Sprint 3 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — PR #174 (issue #123) | |
+| **Contexto** | El migrate usaba `runIdempotent` con un scope fijo y público (`MIGRATE_IDEMPOTENCY_SCOPE`, UUID hardcodeado) y un usuario fake `idempotency-migrate@internal.stepup` que se hacía upsert en `users` en producción (ver DT-20). Todos los clients compartían el mismo `user_id` de idempotencia → un 2do `POST /api/sync/migrate` (misma key, otro cliente) devolvía el replay del primero (token + taskMap/stepMap del otro usuario) → **IDOR**. | |
+| **Decisión** | Eliminar `runIdempotent` del migrate y el usuario fake. Con nuevos campos `users.migrateRequestHash` y `users.migrateMaps` (almacenados en el propio user): si el email ya existe y `bcrypt.compare(password)` coincide y el hash del payload coincide, se devuelve el replay (token + maps). Si no, `EMAIL_ALREADY_REGISTERED` (409). El hash se computa con `createHash('sha256')` sobre el body **ya validado con Zod** — el mismo valor que se persiste en el primer migrate. | |
+| **Razonamiento** | El "scope" de idempotencia pasa a ser la identidad del propio email (único), sin UUID compartido ni usuario sintético en producción. Los maps viven en el user (fuente de verdad) y un reintento legítimo replays el mismo token/maps. | |
+| **Alternativas descartadas** | Mantener `runIdempotent` con scope derivado del user (imposible antes de conocer el user en el primer intento). Usuario fake por email (complejidad de cleanup). | |
+| **Consecuencias** | migrate ya no graba filas en `idempotency_keys` (test: contador 0). El replay es byte-idéntico. **Gotcha:** el hash DEBE calcularse sobre el payload post-Zod; si se hashea el body crudo, un reintento de un cliente que serializa en otro orden de keys o con espacios difiere y recibe 409 aunque el payload sea el mismo (corregido en la rama del PR; coherencia con la contraparte client-side en DT-31 / PR #175). | |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
