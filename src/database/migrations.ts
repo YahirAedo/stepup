@@ -68,11 +68,17 @@ const OWNER_USER_V4: string[] = [
   `ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`,
 ];
 
+// V6: descripción de tarea (contexto para IA) — issue #153
+const TASK_DESCRIPTION_V6: string[] = [
+  `ALTER TABLE tasks ADD COLUMN description TEXT;`,
+];
+
 const MIGRATIONS: Migration[] = [
   { version: 1, statements: BASE_SCHEMA_V1 },
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
   { version: 4, statements: OWNER_USER_V4 },
+  { version: 6, statements: TASK_DESCRIPTION_V6 },
 ];
 
 export async function runMigrations(db: MigrationDb): Promise<void> {

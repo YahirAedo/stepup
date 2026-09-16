@@ -14,6 +14,7 @@ function parseOptionalDate(value?: string | null): Date | null | undefined {
 function serializeTask(task: {
   id: string;
   name: string;
+  description: string | null;
   dueDate: Date | null;
   status: string;
   createdAt: Date;
@@ -23,6 +24,7 @@ function serializeTask(task: {
   return {
     id: task.id,
     name: task.name,
+    description: task.description,
     dueDate: task.dueDate?.toISOString() ?? null,
     status: task.status,
     createdAt: task.createdAt.toISOString(),
@@ -137,6 +139,7 @@ export class SyncService {
             id: task.id ?? undefined,
             userId: user.id,
             name: task.name,
+            description: task.description ?? null,
             dueDate: parseOptionalDate(task.dueDate),
             status: task.status ?? 'active',
             createdAt: task.createdAt ? new Date(task.createdAt) : undefined,
@@ -251,6 +254,7 @@ export class SyncService {
       id?: string;
       localId?: number;
       name: string;
+      description?: string | null;
       dueDate?: string | null;
       status?: 'active' | 'completed';
       createdAt?: string;
@@ -269,6 +273,7 @@ export class SyncService {
             where: { id: task.id },
             data: {
               name: task.name,
+              description: task.description ?? null,
               dueDate: parseOptionalDate(task.dueDate),
               status: task.status,
               completedAt: parseOptionalDate(task.completedAt),
@@ -285,6 +290,7 @@ export class SyncService {
         id: task.id ?? undefined,
         userId,
         name: task.name,
+        description: task.description ?? null,
         dueDate: parseOptionalDate(task.dueDate),
         status: task.status ?? 'active',
         createdAt: task.createdAt ? new Date(task.createdAt) : undefined,
