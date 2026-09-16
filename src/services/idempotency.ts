@@ -1,7 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import type { MigrationDb } from '../database/migrations';
 import {
-  clearPendingIdempotencyKey,
   getPendingIdempotencyKey,
   setPendingIdempotencyKey,
 } from '../database/sync';
@@ -50,8 +49,4 @@ export async function resolvePersistedIdempotencyKey(
   const key = generateIdempotencyKey();
   await setPendingIdempotencyKey(db, scope, key, payloadHash);
   return key;
-}
-
-export async function clearIdempotencyKey(db: MigrationDb, scope: string): Promise<void> {
-  await clearPendingIdempotencyKey(db, scope);
 }

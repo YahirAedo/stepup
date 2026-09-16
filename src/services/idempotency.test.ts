@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { runMigrations, type MigrationDb } from '../database/migrations';
 import { makeSqlJsDb } from '../database/testDb';
-import { getPendingIdempotencyKey } from '../database/sync';
+import { clearPendingIdempotencyKey, getPendingIdempotencyKey } from '../database/sync';
 import {
   canonicalPayload,
-  clearIdempotencyKey,
   generateIdempotencyKey,
   hashPayload,
   resolvePersistedIdempotencyKey,
@@ -75,7 +74,7 @@ describe('hashPayload', () => {
   });
 });
 
-describe('resolvePersistedIdempotencyKey / clearIdempotencyKey', () => {
+describe('resolvePersistedIdempotencyKey / clearPendingIdempotencyKey', () => {
   let db: MigrationDb;
 
   beforeEach(async () => {
@@ -107,11 +106,11 @@ describe('resolvePersistedIdempotencyKey / clearIdempotencyKey', () => {
     expect(migrateKey).not.toBe(pushKey);
   });
 
-  it('clearIdempotencyKey elimina la key pendiente (solo tras éxito)', async () => {
+  it('clearPendingIdempotencyKey elimina la key pendiente (solo tras éxito)', async () => {
     await resolvePersistedIdempotencyKey(db, 'sync-push', { a: 1 });
     await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.not.toBeNull();
 
-    await clearIdempotencyKey(db, 'sync-push');
+    await clearPendingIdempotencyKey(db, 'sync-push');
 
     await expect(getPendingIdempotencyKey(db, 'sync-push')).resolves.toBeNull();
   });

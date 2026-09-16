@@ -1,7 +1,9 @@
 import type { Task } from '../types';
 import { getDb } from '../database/db';
+import type { MigrationDb } from '../database/migrations';
 import {
   applyServerIds,
+  clearPendingIdempotencyKey,
   getAllSteps,
   getAllTasks,
   getConflicts as getStoredConflicts,
@@ -23,7 +25,7 @@ import {
   type SyncConflict,
 } from '../database/sync';
 import { apiFetch, ApiError, ENDPOINTS } from './api';
-import { clearIdempotencyKey, resolvePersistedIdempotencyKey } from './idempotency';
+import { resolvePersistedIdempotencyKey } from './idempotency';
 import { hasSession, saveSession, type SessionUser } from './session';
 
 const PUSH_SCOPE = 'sync-push';
@@ -63,6 +65,28 @@ export type PushSummary = { tasks: number; steps: number };
 function normalizeIso(value: string | null | undefined, fallback?: string): string {
   if (value && !Number.isNaN(Date.parse(value))) return value;
   return fallback ?? nowIso();
+}
+
+async function withIdempotencyKey<T>(
+  db: MigrationDb,
+  scope: string,
+  payload: unknown,
+  idempotencyKey: string | undefined,
+  run: (key: string) => Promise<T>,
+): Promise<T> {
+  const managesKey = idempotencyKey === undefined;
+  const key = idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, scope, payload));
+
+  try {
+    const result = await run(key);
+    if (managesKey) await clearPendingIdempotencyKey(db, scope);
+    return result;
+  } catch (error) {
+    if (managesKey && error instanceof ApiError && error.status >= 400 && error.status !== 401) {
+      await clearPendingIdempotencyKey(db, scope);
+    }
+    throw error;
+  }
 }
 
 type MigrateTask = {
@@ -152,37 +176,27 @@ export const SyncService = {
       }),
     };
 
-    const managesKey = idempotencyKey === undefined;
-    const key = idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, PUSH_SCOPE, payload));
-
-    let result: PushResult;
-    try {
-      result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
+    return withIdempotencyKey(db, PUSH_SCOPE, payload, idempotencyKey, async (key) => {
+      const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
         method: 'POST',
         idempotencyKey: key,
         body: JSON.stringify(payload),
       });
-    } catch (error) {
-      if (managesKey && error instanceof ApiError && error.status >= 400 && error.status !== 401) {
-        await clearIdempotencyKey(db, PUSH_SCOPE);
+
+      const taskMap: Record<string, string> = {};
+      for (const item of result.tasks) {
+        if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
       }
-      throw error;
-    }
+      const stepMap: Record<string, string> = {};
+      for (const item of result.steps) {
+        if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
+      }
 
-    const taskMap: Record<string, string> = {};
-    for (const item of result.tasks) {
-      if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
-    }
-    const stepMap: Record<string, string> = {};
-    for (const item of result.steps) {
-      if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
-    }
+      await applyServerIds(db, 'tasks', taskMap);
+      await applyServerIds(db, 'steps', stepMap);
 
-    await applyServerIds(db, 'tasks', taskMap);
-    await applyServerIds(db, 'steps', stepMap);
-    if (managesKey) await clearIdempotencyKey(db, PUSH_SCOPE);
-
-    return { tasks: result.tasks.length, steps: result.steps.length };
+      return { tasks: result.tasks.length, steps: result.steps.length };
+    });
   },
 
   async pull(): Promise<PushSummary> {
@@ -281,30 +295,19 @@ export const SyncService = {
       }),
     };
 
-    const managesKey = idempotencyKey === undefined;
-    const key =
-      idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, MIGRATE_SCOPE, payload));
-
-    let result: MigrateResponse;
-    try {
-      result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
+    return withIdempotencyKey(db, MIGRATE_SCOPE, payload, idempotencyKey, async (key) => {
+      const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
         method: 'POST',
         idempotencyKey: key,
         body: JSON.stringify(payload),
       });
-    } catch (error) {
-      if (managesKey && error instanceof ApiError && error.status >= 400 && error.status !== 401) {
-        await clearIdempotencyKey(db, MIGRATE_SCOPE);
-      }
-      throw error;
-    }
 
-    await saveSession(result.token, result.user);
-    await setLocalOwner(db, result.user.id);
-    await applyServerIds(db, 'tasks', result.taskMap);
-    await applyServerIds(db, 'steps', result.stepMap);
-    if (managesKey) await clearIdempotencyKey(db, MIGRATE_SCOPE);
+      await saveSession(result.token, result.user);
+      await setLocalOwner(db, result.user.id);
+      await applyServerIds(db, 'tasks', result.taskMap);
+      await applyServerIds(db, 'steps', result.stepMap);
 
-    return { tasks: tasks.length, steps: steps.length };
+      return { tasks: tasks.length, steps: steps.length };
+    });
   },
 };
