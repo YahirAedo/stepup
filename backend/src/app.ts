@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { taskRoutes } from './routes/task.routes';
 import { stepRoutes } from './routes/step.routes';
@@ -10,11 +11,29 @@ import { aiRoutes } from './routes/ai.routes';
 import { requireAuth } from './middleware/auth';
 import { errorHandler } from './middleware/error-handler';
 
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:8081,http://localhost:19006,exp://localhost:8081')
+  .split(',')
+  .map((origin) => origin.trim());
+
 export function createApp() {
   const app = express();
 
   app.set('trust proxy', 1);
-  app.use(cors());
+  app.disable('x-powered-by');
+  app.use(helmet());
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || CORS_ORIGINS.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(null, false);
+        }
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json());
 
   app.get('/health', (_req, res) => {
