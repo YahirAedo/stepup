@@ -30,10 +30,33 @@ function isParseableIso(value: string): boolean {
   return !Number.isNaN(Date.parse(value));
 }
 
+const CLOCK_SKEW_TOLERANCE_MS = 60 * 1000;
+
+function isNotFutureTimestamp(value: string): boolean {
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return false;
+  const now = Date.now();
+  return timestamp <= now + CLOCK_SKEW_TOLERANCE_MS;
+}
+
+function isAfterCreatedAt(updatedAt: string, createdAt?: string): boolean {
+  if (!createdAt) return true;
+  const updatedAtMs = Date.parse(updatedAt);
+  const createdAtMs = Date.parse(createdAt);
+  if (Number.isNaN(updatedAtMs) || Number.isNaN(createdAtMs)) return false;
+  return updatedAtMs >= createdAtMs;
+}
+
 const isoDateTime = z
   .string({ error: 'Debe ser un timestamp ISO' })
   .min(1, 'Debe ser un timestamp ISO')
   .refine(isParseableIso, { message: 'Debe ser un timestamp ISO válido' });
+
+const syncUpdatedAt = z
+  .string({ error: 'Debe ser un timestamp ISO' })
+  .min(1, 'Debe ser un timestamp ISO')
+  .refine(isParseableIso, { message: 'Debe ser un timestamp ISO válido' })
+  .refine(isNotFutureTimestamp, { message: 'updatedAt no puede estar en el futuro' });
 
 const parseableDate = z
   .string()
@@ -128,7 +151,7 @@ const syncTaskBase = {
   dueDate: parseableDate,
   status: z.enum(['active', 'completed']).optional(),
   createdAt: isoDateTime.optional(),
-  updatedAt: isoDateTime,
+  updatedAt: syncUpdatedAt,
   completedAt: parseableDate,
 };
 
@@ -158,13 +181,23 @@ const syncStepBase = {
     .min(0, 'orderIndex debe ser mayor o igual a 0'),
   status: z.enum(['pending', 'completed']).optional(),
   createdAt: isoDateTime.optional(),
-  updatedAt: isoDateTime,
+  updatedAt: syncUpdatedAt,
   completedAt: parseableDate,
 };
 
 export const syncPushSchema = z.object({
   tasks: z.array(z.object(syncTaskBase), { error: 'tasks debe ser un array' }).default([]),
   steps: z.array(z.object(syncStepBase), { error: 'steps debe ser un array' }).default([]),
+}).refine((data) => {
+  return data.tasks.every((task) => !task.createdAt || new Date(task.updatedAt) >= new Date(task.createdAt));
+}, {
+  message: 'updatedAt no puede ser anterior a createdAt',
+  path: ['tasks'],
+}).refine((data) => {
+  return data.steps.every((step) => !step.createdAt || new Date(step.updatedAt) >= new Date(step.createdAt));
+}, {
+  message: 'updatedAt no puede ser anterior a createdAt',
+  path: ['steps'],
 });
 
 export const syncMigrateSchema = z.object({
@@ -199,4 +232,14 @@ export const syncMigrateSchema = z.object({
       { error: 'steps debe ser un array' },
     )
     .default([]),
+}).refine((data) => {
+  return data.tasks.every((task) => !task.createdAt || new Date(task.updatedAt) >= new Date(task.createdAt));
+}, {
+  message: 'updatedAt no puede ser anterior a createdAt',
+  path: ['tasks'],
+}).refine((data) => {
+  return data.steps.every((step) => !step.createdAt || new Date(step.updatedAt) >= new Date(step.createdAt));
+}, {
+  message: 'updatedAt no puede ser anterior a createdAt',
+  path: ['steps'],
 });
