@@ -417,3 +417,6 @@ describe('Prompt injection protection (#243)', () => {
     expect(res.body.steps).toHaveLength(validSteps.length);
   });
 });
+
+// Tests de integración de cache se mueven a cache.test.ts
+// Los tests de cache unitario verifican que el cache funciona correctamente

@@ -1,4 +1,5 @@
-import { GEMINI_API_KEY, GEMINI_MODEL } from '../config/env';
+import { GEMINI_API_KEY, GEMINI_MODEL, AI_CACHE_TTL_SECONDS, AI_CACHE_MAX_SIZE } from '../config/env';
+import { ResponseCache } from './cache';
 
 export class AiProviderError extends Error {
   constructor(message = 'El servicio de IA no está disponible') {
@@ -41,6 +42,8 @@ export interface AIServiceOptions {
   maxAttempts?: number;
   baseDelayMs?: number;
   fetchImpl?: typeof fetch;
+  cacheTtlSeconds?: number;
+  cacheMaxSize?: number;
 }
 
 function buildSuggestStepsPrompt(taskName: string, description?: string): string {
@@ -89,6 +92,16 @@ function buildDescribeHelpPrompt(taskName: string): string {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function generateCacheKey(endpoint: string, taskName: string, description?: string): Promise<string> {
+  const normalizedDescription = description?.trim() || '';
+  const input = `${endpoint}:${taskName.trim()}:${normalizedDescription}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function extractArray(raw: unknown): unknown[] {
@@ -161,6 +174,8 @@ export class AIService {
   private readonly maxAttempts: number;
   private readonly baseDelayMs: number;
   private readonly fetchImpl: typeof fetch;
+  private readonly suggestStepsCache: ResponseCache<SuggestedStep[]>;
+  private readonly describeHelpCache: ResponseCache<DescriptionSection[]>;
 
   constructor(options: AIServiceOptions = {}) {
     this.apiKey = options.apiKey ?? GEMINI_API_KEY;
@@ -169,16 +184,48 @@ export class AIService {
     this.maxAttempts = options.maxAttempts ?? 3;
     this.baseDelayMs = options.baseDelayMs ?? (Number(process.env.GEMINI_RETRY_BASE_DELAY_MS) || 1000);
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
+    
+    // Deshabilitar cache en modo test para evitar interferencias entre tests
+    const isTest = process.env.NODE_ENV === 'test';
+    const cacheTtl = isTest ? 0 : (options.cacheTtlSeconds ?? AI_CACHE_TTL_SECONDS);
+    const cacheMaxSize = isTest ? 0 : (options.cacheMaxSize ?? AI_CACHE_MAX_SIZE);
+    this.suggestStepsCache = new ResponseCache<SuggestedStep[]>(cacheTtl, cacheMaxSize);
+    this.describeHelpCache = new ResponseCache<DescriptionSection[]>(cacheTtl, cacheMaxSize);
   }
 
   async suggestSteps(taskName: string, description?: string): Promise<SuggestedStep[]> {
+    const cacheKey = await generateCacheKey('suggest-steps', taskName, description);
+    
+    const cached = this.suggestStepsCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
     const raw = await this.callGemini(buildSuggestStepsPrompt(taskName, description));
-    return sanitizeSteps(raw);
+    const result = sanitizeSteps(raw);
+    
+    this.suggestStepsCache.set(cacheKey, result);
+    return result;
   }
 
   async describeHelp(taskName: string): Promise<DescriptionSection[]> {
+    const cacheKey = await generateCacheKey('describe-help', taskName);
+    
+    const cached = this.describeHelpCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
     const raw = await this.callGemini(buildDescribeHelpPrompt(taskName));
-    return sanitizeSections(raw);
+    const result = sanitizeSections(raw);
+    
+    this.describeHelpCache.set(cacheKey, result);
+    return result;
+  }
+
+  clearCache(): void {
+    this.suggestStepsCache.clear();
+    this.describeHelpCache.clear();
   }
 
   private async callGemini(prompt: string): Promise<unknown> {

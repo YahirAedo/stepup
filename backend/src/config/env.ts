@@ -39,3 +39,6 @@ export function resolveGeminiApiKey(key: string | undefined, nodeEnv: string | u
 export const GEMINI_API_KEY = resolveGeminiApiKey(process.env.GEMINI_API_KEY, process.env.NODE_ENV);
 
 export const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash';
+
+export const AI_CACHE_TTL_SECONDS = Number(process.env.AI_CACHE_TTL_SECONDS) || 3600;
+export const AI_CACHE_MAX_SIZE = Number(process.env.AI_CACHE_MAX_SIZE) || 100;
