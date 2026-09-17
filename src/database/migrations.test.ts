@@ -67,6 +67,18 @@ describe('runMigrations — schema de SQLite local', () => {
       'server_payload',
       'created_at',
     ]);
+
+    const pendingKeys = raw.exec(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pending_idempotency_keys'`,
+    );
+    expect(pendingKeys.length).toBe(1);
+    const pendingKeyCols = await tableColumns(raw, 'pending_idempotency_keys');
+    expect(pendingKeyCols.map((c) => c.name)).toEqual([
+      'scope',
+      'key',
+      'payload_hash',
+      'created_at',
+    ]);
   });
 
   it('deja user_version en la última migración y es idempotente', async () => {
@@ -76,7 +88,7 @@ describe('runMigrations — schema de SQLite local', () => {
     await runMigrations(db);
 
     const [row] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-    expect(row.user_version).toBe(4);
+    expect(row.user_version).toBe(5);
   });
 
   it('actualiza una base con el schema viejo sin perder datos', async () => {
@@ -106,10 +118,10 @@ describe('runMigrations — schema de SQLite local', () => {
         steps_completed INTEGER NOT NULL DEFAULT 0
       );
     `);
-    raw.run(
-      `INSERT INTO tasks (name, created_at) VALUES (?, ?)`,
-      ['Tarea existente', '2026-01-01T00:00:00.000Z'],
-    );
+    raw.run(`INSERT INTO tasks (name, created_at) VALUES (?, ?)`, [
+      'Tarea existente',
+      '2026-01-01T00:00:00.000Z',
+    ]);
 
     await runMigrations(db);
 
@@ -125,10 +137,9 @@ describe('runMigrations — schema de SQLite local', () => {
     const { db, raw } = await makeSqlJsDb();
     await runMigrations(db);
 
-    await db.runAsync(
-      `INSERT INTO sync_meta (id, last_sync_at) VALUES (1, ?)`,
-      ['2026-08-10T00:00:00.000Z'],
-    );
+    await db.runAsync(`INSERT INTO sync_meta (id, last_sync_at) VALUES (1, ?)`, [
+      '2026-08-10T00:00:00.000Z',
+    ]);
     expect(() => {
       raw.exec(`INSERT INTO sync_meta (id, last_sync_at) VALUES (2, ?)`, [
         '2026-08-10T00:00:00.000Z',

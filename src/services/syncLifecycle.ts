@@ -2,7 +2,7 @@ import { AppState } from 'react-native';
 import { loadSession, hasSession } from './session';
 import { SyncService } from './SyncService';
 
-async function onAppActive(): Promise<void> {
+export async function onAppActive(): Promise<void> {
   await loadSession();
   if (!hasSession()) return;
   try {
@@ -13,7 +13,7 @@ async function onAppActive(): Promise<void> {
   }
 }
 
-async function onAppBackground(): Promise<void> {
+export async function onAppBackground(): Promise<void> {
   if (!hasSession()) return;
   try {
     await SyncService.push();

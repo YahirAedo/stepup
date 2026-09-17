@@ -264,8 +264,8 @@ stepup/
 **Estado (septiembre 2026):** slice 2 (#154) implementado y con PR a `develop` (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test contra Gemini real). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
 
 ### Deuda de E2 priorizada (no eliminada)
-- **Alta:** #122 (borde de día UTC — alimenta las rachas), #123 (IDOR en migrate).
-- **Media:** #124 (idempotencia client-side anulada).
+- **Alta:** #122 (borde de día UTC — alimenta las rachas). **#123 (IDOR en migrate) resuelto en el PR #174:** se eliminó el scope fijo `MIGRATE_IDEMPOTENCY_SCOPE` y el usuario fake de `users`; el replay de migrate ahora se autoriza por `email + password + hash del payload` (los maps se guardan en el propio user, no en `idempotency_keys`).
+- **Media (resuelta en el PR #175):** #124 (idempotencia client-side anulada) — key persistente por operación (migración V5 `pending_idempotency_keys`), hash de payload con `expo-crypto` (#198), y tests de retry con misma key en `syncLifecycle` (#199).
 - **Baja:** #126 (`as any` restantes).
 - **Cerrada sin hacer:** #125 (docs PRD — el PRD se actualiza en E3).
 
@@ -379,6 +379,14 @@ feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripci
 
 **Regla de oro:** nunca commitear directo a `main` ni a `develop`. Todo cambio entra por `feature/*` → rama destino (según área) → (integración) → `main`.
 
+**Review automatizado de PRs (septiembre 2026, rol informativo):** los PRs contra `develop` son
+revisados automáticamente por CodeRabbit (`.coderabbit.yaml`, PR #186) y por la skill-review
+(action `anomalyco/opencode/github` con el agente `skill-reviewer` y la skill `stepup-review`,
+DT-26 en el Log de Decisiones E2). La skill-review considera el contexto completo del PR —
+comments, reviews, threads inline y sub-issues abiertas de la issue vinculada — y emite un
+veredicto `APPROVED` | `NEEDS WORK` | `BLOCKED` | `SKIPPED` (DT-27). Ningún check automático
+reemplaza la aprobación humana (§7.6).
+
 **Formato de commits:**
 ```
 feat: agregar formulario de creacion de tarea
@@ -388,6 +396,12 @@ docs: actualizar README
 refactor: separar logica del timer en TimerService
 chore: instalar expo-sqlite y configurar
 ```
+
+**Tablero de estado (septiembre 2026):** el estado real de issues/PRs se ve en el
+proyecto **"StepUp - Seguimiento"** — https://github.com/users/YahirAedo/projects/2
+(GitHub Projects v2, vista Board por Status). Columnas: Backlog, Ready,
+In Progress, Blocked, In Review, Merged, Done. Reglas de movimiento y label
+`blocked` en `docs/CONVENCIONES.md` §7.8 (DT-28 en el Log de Decisiones E2).
 
 Al cerrar cada entrega: merge develop → main, crear tag (ej: v1.0-E1, v2.0-E2)
 y publicar el release correspondiente con notas (ver release `entrega-1`). Las
@@ -450,7 +464,7 @@ El sistema de diseño completo está en `stitch_stepup_design_system/` con proto
 
 | Carpeta | Pantalla | Estado |
 |---------|----------|--------|
-| `zenith_vitality/` | Documento maestro de diseño (DESIGN.md) | ⏳ A implementar |
+| `zenith_vitality/` | Documento maestro de diseño (DESIGN.md) | ✅ Documentado en `docs/GUIA-DISENO-MOVIL.md` |
 | `ahora_enfoque_redise_o/` | FocusScreen con timer glassmorpho | ⏳ A implementar |
 | `ahora_sin_tareas/` | Estado vacío "Mente clara, espacio libre" | ⏳ A implementar |
 | `tareas_gesti_n_redise_o/` | TaskList con bento grid | ⏳ A implementar |
