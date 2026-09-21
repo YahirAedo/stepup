@@ -78,6 +78,93 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body[0].description).toBe('Contexto para IA');
   });
 
+  it('push preserva description existente cuando el cliente no la envía (AC4)', async () => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const create = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea', description: 'Original', updatedAt: now }],
+        steps: [],
+      });
+    expect(create.status).toBe(200);
+
+    const update = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Renombrada', updatedAt: new Date(Date.now() + 10_000).toISOString() }],
+        steps: [],
+      });
+    expect(update.status).toBe(200);
+    expect(update.body.tasks[0].applied).toBe(true);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].name).toBe('Renombrada');
+    expect(list.body[0].description).toBe('Original');
+  });
+
+  it('push actualiza description cuando el cliente la envía en un update (AC4)', async () => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const create = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id, name: 'Tarea', updatedAt: now }], steps: [] });
+    expect(create.status).toBe(200);
+
+    const update = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [
+          { id, name: 'Tarea', description: 'Ahora sí', updatedAt: new Date(Date.now() + 10_000).toISOString() },
+        ],
+        steps: [],
+      });
+    expect(update.status).toBe(200);
+    expect(update.body.tasks[0].applied).toBe(true);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].description).toBe('Ahora sí');
+  });
+
+  it('push con description vacía la normaliza a null (AC4)', async () => {
+    const id = crypto.randomUUID();
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea', description: '   ', updatedAt: new Date().toISOString() }],
+        steps: [],
+      });
+    expect(res.status).toBe(200);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].description).toBeNull();
+  });
+
+  it('GET /api/sync/pull retorna description de la tarea (AC4)', async () => {
+    const id = crypto.randomUUID();
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea', description: 'Contexto IA', updatedAt: new Date().toISOString() }],
+        steps: [],
+      });
+
+    const past = await request(app)
+      .get('/api/sync/pull?since=2020-01-01T00:00:00.000Z')
+      .set(authHeader(token));
+    expect(past.body.tasks).toHaveLength(1);
+    expect(past.body.tasks[0].description).toBe('Contexto IA');
+  });
+
   it('push aplica last-write-wins: la versión más nueva gana y la vieja se ignora', async () => {
     const id = crypto.randomUUID();
     const older = new Date(Date.now() - 60_000).toISOString();
@@ -313,6 +400,24 @@ describe('API de sincronización — push, pull y migrate', () => {
     const list = await request(app).get('/api/tasks').set(authHeader(res.body.token));
     expect(list.body).toHaveLength(1);
     expect(list.body[0].name).toBe('Migrada');
+  });
+
+  it('POST /api/sync/migrate persiste description de tareas migradas (AC4)', async () => {
+    const taskLocalId = 9;
+    const taskId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Migra Desc',
+      email: 'migra-desc@stepup.app',
+      password: 'secret123',
+      tasks: [{ localId: taskLocalId, id: taskId, name: 'Migrada', description: 'Contexto', updatedAt: now }],
+      steps: [],
+    });
+    expect(res.status).toBe(201);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(res.body.token));
+    expect(list.body[0].description).toBe('Contexto');
   });
 
   it('POST /api/sync/migrate con password corta devuelve 400', async () => {
