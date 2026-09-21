@@ -153,6 +153,27 @@ describe('SyncService.push', () => {
     await expect(getDirtySteps(db)).resolves.toEqual([]);
   });
 
+  it('envía description en el payload del push (AC4)', async () => {
+    const taskId = await db.runAsync(
+      `INSERT INTO tasks (name, description, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('Con desc', 'Contexto para IA', NULL, 'active', '2026-08-01T00:00:00.000Z', NULL, NULL, 1, '2026-08-01T00:00:00.000Z')`,
+      [],
+    );
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [{ id: 'uuid-task', applied: true, localId: taskId.lastInsertRowId }],
+      steps: [],
+    });
+
+    await SyncService.push();
+
+    const body = pushBody();
+    expect(body.tasks[0]).toMatchObject({
+      localId: taskId.lastInsertRowId,
+      name: 'Con desc',
+      description: 'Contexto para IA',
+    });
+  });
+
   it('re-envía con id (UUID) y taskId cuando ya tiene server_id', async () => {
     const taskId = await insertTask({ server_id: 'uuid-task', dirty: 1 });
     await insertStep(taskId, { dirty: 1 });

@@ -61,6 +61,42 @@ describe('TaskService', () => {
     expect(mocks.syncNow).toHaveBeenCalled();
   });
 
+  it('create persiste description no nula (AC4)', async () => {
+    const task = await TaskService.create({ name: 'Nueva', description: 'Contexto local' });
+
+    expect(task.description).toBe('Contexto local');
+
+    const [row] = await db.getAllAsync<{ description: string | null }>(
+      `SELECT description FROM tasks WHERE id = ?`,
+      [task.id],
+    );
+    expect(row.description).toBe('Contexto local');
+  });
+
+  it('update sin description preserva la existente (AC4)', async () => {
+    const task = await TaskService.create({ name: 'Tarea', description: 'Original' });
+
+    await TaskService.update(task.id, { name: 'Renombrada' });
+
+    const [row] = await db.getAllAsync<{ name: string; description: string | null; dirty: number }>(
+      `SELECT name, description, dirty FROM tasks WHERE id = ?`,
+      [task.id],
+    );
+    expect(row).toEqual({ name: 'Renombrada', description: 'Original', dirty: 1 });
+  });
+
+  it('update con description la actualiza (AC4)', async () => {
+    const task = await TaskService.create({ name: 'Tarea', description: 'Antes' });
+
+    await TaskService.update(task.id, { description: 'Después' });
+
+    const [row] = await db.getAllAsync<{ description: string | null; dirty: number }>(
+      `SELECT description, dirty FROM tasks WHERE id = ?`,
+      [task.id],
+    );
+    expect(row).toEqual({ description: 'Después', dirty: 1 });
+  });
+
   it('getAll ordena por created_at desc', async () => {
     await insertTask();
     await db.runAsync(

@@ -208,7 +208,7 @@ export async function forceApplyServerTask(db: MigrationDb, task: ServerTask): P
     await db.runAsync(
       `UPDATE tasks SET name = ?, description = ?, due_date = ?, status = ?, completed_at = ?, updated_at = ?, dirty = 0
          WHERE id = ?`,
-      [task.name, task.description, task.dueDate, task.status, task.completedAt, task.updatedAt, row.id],
+      [task.name, task.description ?? null, task.dueDate, task.status, task.completedAt, task.updatedAt, row.id],
     );
     return;
   }
@@ -217,7 +217,7 @@ export async function forceApplyServerTask(db: MigrationDb, task: ServerTask): P
        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
     [
       task.name,
-      task.description,
+      task.description ?? null,
       task.dueDate,
       task.status,
       task.createdAt,

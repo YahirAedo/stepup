@@ -220,7 +220,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
               />
               <Text
                 style={[
-                  dueDate ? typography['body-md'] : typography['body-md'],
+                  typography['body-md'],
                   {
                     color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
                     flex: 1,

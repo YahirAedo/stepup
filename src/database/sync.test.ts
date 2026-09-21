@@ -173,6 +173,44 @@ describe('sync — upserts desde el servidor (pull)', () => {
     expect(row.description).toBe('Contexto detallado de la tarea para IA');
   });
 
+  it('forceApplyServerTask actualiza description en la rama UPDATE (AC4)', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+    await upsertServerTask(db, {
+      ...serverTask,
+      description: 'Antes',
+    });
+
+    await upsertServerTask(db, {
+      ...serverTask,
+      description: 'Después',
+      updatedAt: '2026-08-03T00:00:00.000Z',
+    });
+
+    const [row] = await db.getAllAsync<{ description: string | null }>(
+      `SELECT description FROM tasks WHERE server_id = ?`,
+      ['uuid-task'],
+    );
+    expect(row.description).toBe('Después');
+  });
+
+  it('forceApplyServerTask tolera description ausente en el payload (rollout seguro)', async () => {
+    const { db } = await makeSqlJsDb();
+    await runMigrations(db);
+
+    const legacy = { ...serverTask } as Omit<ServerTask, 'description'>;
+    delete (legacy as { description?: string | null }).description;
+
+    await upsertServerTask(db, legacy as ServerTask);
+
+    const [row] = await db.getAllAsync<{ description: string | null }>(
+      `SELECT description FROM tasks WHERE server_id = ?`,
+      ['uuid-task'],
+    );
+    expect(row.description).toBeNull();
+    expect(() => upsertServerTask(db, legacy as ServerTask)).not.toThrow();
+  });
+
   it('upsertServerTask actualiza si el servidor es más nuevo', async () => {
     const { db } = await makeSqlJsDb();
     await runMigrations(db);
