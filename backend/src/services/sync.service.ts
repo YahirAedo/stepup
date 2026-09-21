@@ -11,9 +11,39 @@ function parseOptionalDate(value?: string | null): Date | null | undefined {
   return new Date(value);
 }
 
+function normalizeSyncDescription(value?: string | null): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  return value;
+}
+
+function normalizeSyncName(value?: string | null): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+function canonicalizeSyncPayload(value: unknown): unknown {
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map((item) => canonicalizeSyncPayload(item));
+  return Object.keys(value as Record<string, unknown>)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, key) => {
+      const raw = (value as Record<string, unknown>)[key];
+      if (typeof raw === 'string') {
+        acc[key] = key === 'description' ? normalizeSyncDescription(raw) : normalizeSyncName(raw);
+      } else {
+        acc[key] = canonicalizeSyncPayload(raw);
+      }
+      return acc;
+    }, {});
+}
+
 function serializeTask(task: {
   id: string;
   name: string;
+  description: string | null;
   dueDate: Date | null;
   status: string;
   createdAt: Date;
@@ -23,6 +53,7 @@ function serializeTask(task: {
   return {
     id: task.id,
     name: task.name,
+    description: task.description,
     dueDate: task.dueDate?.toISOString() ?? null,
     status: task.status,
     createdAt: task.createdAt.toISOString(),
@@ -137,6 +168,7 @@ export class SyncService {
             id: task.id ?? undefined,
             userId: user.id,
             name: task.name,
+            description: normalizeSyncDescription(task.description),
             dueDate: parseOptionalDate(task.dueDate),
             status: task.status ?? 'active',
             createdAt: task.createdAt ? new Date(task.createdAt) : undefined,
@@ -220,7 +252,9 @@ export class SyncService {
   }
 
   hashRequest(data: unknown): string {
-    return createHash('sha256').update(JSON.stringify(data)).digest('hex');
+    return createHash('sha256')
+      .update(JSON.stringify(canonicalizeSyncPayload(data)))
+      .digest('hex');
   }
 
   private async ownsTask(tx: Prisma.TransactionClient, taskId: string, userId: string) {
@@ -251,6 +285,7 @@ export class SyncService {
       id?: string;
       localId?: number;
       name: string;
+      description?: string | null;
       dueDate?: string | null;
       status?: 'active' | 'completed';
       createdAt?: string;
@@ -269,6 +304,7 @@ export class SyncService {
             where: { id: task.id },
             data: {
               name: task.name,
+              description: normalizeSyncDescription(task.description),
               dueDate: parseOptionalDate(task.dueDate),
               status: task.status,
               completedAt: parseOptionalDate(task.completedAt),
@@ -285,6 +321,7 @@ export class SyncService {
         id: task.id ?? undefined,
         userId,
         name: task.name,
+        description: normalizeSyncDescription(task.description),
         dueDate: parseOptionalDate(task.dueDate),
         status: task.status ?? 'active',
         createdAt: task.createdAt ? new Date(task.createdAt) : undefined,

@@ -1,9 +1,17 @@
 import { prisma, Db } from '../config/prisma';
 
 export class TaskRepository {
-  async create(userId: string, data: { name: string; dueDate?: Date | null }) {
+  async create(
+    userId: string,
+    data: { name: string; description?: string | null; dueDate?: Date | null },
+  ) {
     return prisma.task.create({
-      data: { userId, name: data.name, dueDate: data.dueDate ?? null },
+      data: {
+        userId,
+        name: data.name,
+        description: data.description ?? null,
+        dueDate: data.dueDate ?? null,
+      },
     });
   }
 
@@ -33,12 +41,12 @@ export class TaskRepository {
   async update(
     userId: string,
     id: string,
-    data: { name?: string; dueDate?: Date | null },
+    data: { name?: string; description?: string | null; dueDate?: Date | null },
     db: Db = prisma,
   ) {
     return db.task.update({
       where: { id, userId },
-      data: { name: data.name, dueDate: data.dueDate },
+      data: { name: data.name, description: data.description, dueDate: data.dueDate },
     });
   }
 

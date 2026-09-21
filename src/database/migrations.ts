@@ -6,7 +6,7 @@ export interface MigrationDb {
   runAsync: (sql: string, params: SqlParam[]) => Promise<{ lastInsertRowId: number }>;
 }
 
-type Migration = {
+export type Migration = {
   version: number;
   statements: string[];
 };
@@ -77,23 +77,38 @@ const PENDING_IDEMPOTENCY_KEYS_V5: string[] = [
    );`,
 ];
 
+// V6: descripción de tarea (contexto para IA) — issue #153
+const TASK_DESCRIPTION_V6: string[] = [
+  `ALTER TABLE tasks ADD COLUMN description TEXT;`,
+];
+
 const MIGRATIONS: Migration[] = [
   { version: 1, statements: BASE_SCHEMA_V1 },
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
   { version: 4, statements: OWNER_USER_V4 },
   { version: 5, statements: PENDING_IDEMPOTENCY_KEYS_V5 },
+  { version: 6, statements: TASK_DESCRIPTION_V6 },
 ];
 
-export async function runMigrations(db: MigrationDb): Promise<void> {
+export async function runMigrations(
+  db: MigrationDb,
+  migrations: Migration[] = MIGRATIONS,
+): Promise<void> {
   const rows = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-  const current = rows[0]?.user_version ?? 0;
+  let current = rows[0]?.user_version ?? 0;
 
-  for (const migration of MIGRATIONS) {
+  for (const migration of migrations) {
     if (migration.version <= current) continue;
+    if (migration.version !== current + 1) {
+      throw new Error(
+        `Gap en migraciones: falta la versión ${current + 1} (siguiente encontrada: ${migration.version})`,
+      );
+    }
     for (const statement of migration.statements) {
       await db.execAsync(statement);
     }
     await db.execAsync(`PRAGMA user_version = ${migration.version}`);
+    current = migration.version;
   }
 }
