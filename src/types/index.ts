@@ -19,6 +19,7 @@ export interface Step {
   order_index: number;
   status: 'pending' | 'completed';
   completed_at: string | null;
+  completed_date: string | null;
   server_id: string | null;
   dirty: number;
   updated_at: string;

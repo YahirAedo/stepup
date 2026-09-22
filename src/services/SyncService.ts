@@ -54,6 +54,7 @@ type PushStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type PushResult = {
@@ -112,6 +113,7 @@ type MigrateStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type MigrateResponse = {
@@ -175,6 +177,7 @@ export const SyncService = {
           status: step.status,
           updatedAt: normalizeIso(step.updated_at),
           completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
         };
       }),
     };
@@ -295,6 +298,7 @@ export const SyncService = {
           status: step.status,
           updatedAt: normalizeIso(step.updated_at),
           completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
         };
       }),
     };

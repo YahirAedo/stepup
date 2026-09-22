@@ -202,6 +202,9 @@ export class SyncService {
           },
         });
         stepMap[step.localId] = created.id;
+        if (created.status === 'completed' && step.date) {
+          await this.upsertDailyProgress(tx, user.id, step.date);
+        }
       }
 
       await tx.user.update({
@@ -346,6 +349,7 @@ export class SyncService {
       createdAt?: string;
       updatedAt: string;
       completedAt?: string | null;
+      date?: string;
     },
   ) {
     if (step.id) {
@@ -358,6 +362,15 @@ export class SyncService {
           throw new Error('RECORD_BELONGS_TO_OTHER_USER');
         }
         if (new Date(step.updatedAt).getTime() > existing.updatedAt.getTime()) {
+          if (step.status === 'completed' && step.date) {
+            const claim = await tx.step.updateMany({
+              where: { id: step.id, status: 'pending' },
+              data: { status: 'completed' },
+            });
+            if (claim.count > 0) {
+              await this.upsertDailyProgress(tx, userId, step.date);
+            }
+          }
           const updated = await tx.step.update({
             where: { id: step.id },
             data: {
@@ -388,6 +401,32 @@ export class SyncService {
         completedAt: parseOptionalDate(step.completedAt),
       },
     });
+    if (step.status === 'completed' && step.date) {
+      await this.upsertDailyProgress(tx, userId, step.date);
+    }
     return { id: created.id, applied: true, localId: step.localId };
+  }
+
+  private async upsertDailyProgress(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    date: string,
+  ) {
+    await tx.dailyProgress.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date,
+        },
+      },
+      update: {
+        stepsCompleted: { increment: 1 },
+      },
+      create: {
+        userId,
+        date,
+        stepsCompleted: 1,
+      },
+    });
   }
 }

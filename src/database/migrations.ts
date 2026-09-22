@@ -82,6 +82,11 @@ const TASK_DESCRIPTION_V6: string[] = [
   `ALTER TABLE tasks ADD COLUMN description TEXT;`,
 ];
 
+// V7: guardar fecha local de completado para sincronización correcta de zonas horarias.
+const LOCAL_DATE_V7: string[] = [
+  `ALTER TABLE steps ADD COLUMN completed_date TEXT;`,
+];
+
 const MIGRATIONS: Migration[] = [
   { version: 1, statements: BASE_SCHEMA_V1 },
   { version: 2, statements: OFFLINE_SYNC_V2 },
@@ -89,6 +94,7 @@ const MIGRATIONS: Migration[] = [
   { version: 4, statements: OWNER_USER_V4 },
   { version: 5, statements: PENDING_IDEMPOTENCY_KEYS_V5 },
   { version: 6, statements: TASK_DESCRIPTION_V6 },
+  { version: 7, statements: LOCAL_DATE_V7 },
 ];
 
 export async function runMigrations(

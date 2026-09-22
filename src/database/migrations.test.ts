@@ -44,7 +44,7 @@ describe('runMigrations — schema de SQLite local', () => {
 
     const stepCols = await tableColumns(raw, 'steps');
     expect(stepCols.map((c) => c.name)).toEqual(
-      expect.arrayContaining(['server_id', 'dirty', 'updated_at']),
+      expect.arrayContaining(['server_id', 'dirty', 'updated_at', 'completed_date']),
     );
 
     const meta = raw.exec(
@@ -89,7 +89,7 @@ describe('runMigrations — schema de SQLite local', () => {
     await runMigrations(db);
 
     const [row] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-    expect(row.user_version).toBe(6);
+    expect(row.user_version).toBe(7);
   });
 
   it('rechaza una lista de migraciones con un gap de versiones', async () => {
