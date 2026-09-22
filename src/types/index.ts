@@ -1,6 +1,7 @@
 export interface Task {
   id: number;
   name: string;
+  description: string | null;
   due_date: string | null;
   status: 'active' | 'completed';
   created_at: string;
@@ -18,6 +19,7 @@ export interface Step {
   order_index: number;
   status: 'pending' | 'completed';
   completed_at: string | null;
+  completed_date: string | null;
   server_id: string | null;
   dirty: number;
   updated_at: string;
@@ -36,11 +38,13 @@ export interface SyncMeta {
 
 export interface CreateTaskInput {
   name: string;
+  description?: string | null;
   due_date?: string | null;
 }
 
 export interface UpdateTaskInput {
   name?: string;
+  description?: string | null;
   due_date?: string | null;
 }
 

@@ -35,6 +35,7 @@ type PushTask = {
   id?: string;
   localId: number;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -53,6 +54,7 @@ type PushStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type PushResult = {
@@ -93,6 +95,7 @@ type MigrateTask = {
   id?: string;
   localId: number;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -110,6 +113,7 @@ type MigrateStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type MigrateResponse = {
@@ -153,6 +157,7 @@ export const SyncService = {
         ...(task.server_id ? { id: task.server_id } : {}),
         localId: task.id,
         name: task.name,
+        description: task.description,
         dueDate: task.due_date,
         status: task.status,
         createdAt: normalizeIso(task.created_at),
@@ -172,6 +177,7 @@ export const SyncService = {
           status: step.status,
           updatedAt: normalizeIso(step.updated_at),
           completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
         };
       }),
     };
@@ -272,6 +278,7 @@ export const SyncService = {
         ...(task.server_id ? { id: task.server_id } : {}),
         localId: task.id,
         name: task.name,
+        description: task.description,
         dueDate: task.due_date,
         status: task.status,
         createdAt: normalizeIso(task.created_at),
@@ -291,6 +298,7 @@ export const SyncService = {
           status: step.status,
           updatedAt: normalizeIso(step.updated_at),
           completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
         };
       }),
     };

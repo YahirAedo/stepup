@@ -10,6 +10,7 @@ function toTask(row: Record<string, unknown>): Task {
   return {
     id: row.id as number,
     name: row.name as string,
+    description: (row.description as string | null) ?? null,
     due_date: (row.due_date as string | null) ?? null,
     status: row.status as Task['status'],
     created_at: row.created_at as string,
@@ -25,9 +26,9 @@ export const TaskService = {
     const db = await getDb();
     const now = nowIso();
     const res = await db.runAsync(
-      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, dirty, updated_at)
-       VALUES (?, ?, 'active', ?, NULL, 1, ?)`,
-      [input.name, input.due_date ?? null, now, now],
+      `INSERT INTO tasks (name, description, due_date, status, created_at, completed_at, dirty, updated_at)
+       VALUES (?, ?, ?, 'active', ?, NULL, 1, ?)`,
+      [input.name, input.description ?? null, input.due_date ?? null, now, now],
     );
     const id = res.lastInsertRowId;
     const [row] = await db.getAllAsync<Record<string, unknown>>(
@@ -64,6 +65,10 @@ export const TaskService = {
     if (input.name !== undefined) {
       sets.push('name = ?');
       params.push(input.name);
+    }
+    if (input.description !== undefined) {
+      sets.push('description = ?');
+      params.push(input.description);
     }
     if (input.due_date !== undefined) {
       sets.push('due_date = ?');

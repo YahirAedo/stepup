@@ -6,6 +6,14 @@ export const AUTH_PASSWORD_MIN = 8;
 export const AUTH_PASSWORD_MAX_BYTES = 72;
 export const AUTH_NAME_MAX = 120;
 export const AUTH_EMAIL_MAX = 254;
+export const TASK_DESCRIPTION_MAX = 1000;
+
+const optionalDescription = z
+  .string()
+  .trim()
+  .max(TASK_DESCRIPTION_MAX, `La descripción no puede superar ${TASK_DESCRIPTION_MAX} caracteres`)
+  .nullable()
+  .optional();
 
 const authName = z
   .string({ error: 'El nombre es obligatorio' })
@@ -30,6 +38,18 @@ function isParseableIso(value: string): boolean {
   return !Number.isNaN(Date.parse(value));
 }
 
+function isValidDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const [, yearStr, monthStr, dayStr] = match;
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const d = new Date(year, month - 1, day);
+  return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+}
+
 const isoDateTime = z
   .string({ error: 'Debe ser un timestamp ISO' })
   .min(1, 'Debe ser un timestamp ISO')
@@ -45,6 +65,7 @@ const parseableDate = z
 
 export const createTaskSchema = z.object({
   name: requiredName,
+  description: optionalDescription,
   dueDate: parseableDate,
 });
 
@@ -55,6 +76,7 @@ function hasAtLeastOneField(value: Record<string, unknown>): boolean {
 export const updateTaskSchema = z
   .object({
     name: requiredName.optional(),
+    description: optionalDescription,
     dueDate: parseableDate,
   })
   .refine(hasAtLeastOneField, { message: 'Debe enviar al menos un campo para actualizar' });
@@ -89,7 +111,7 @@ export const completeStepSchema = z
   .object({
     date: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato YYYY-MM-DD')
+      .refine(isValidDate, { message: 'La fecha debe ser válida con formato YYYY-MM-DD' })
       .optional(),
   })
   .optional();
@@ -147,6 +169,7 @@ const syncTaskBase = {
     .positive('localId debe ser mayor a 0')
     .optional(),
   name: requiredName,
+  description: optionalDescription,
   dueDate: parseableDate,
   status: z.enum(['active', 'completed']).optional(),
   createdAt: isoDateTime.optional(),
@@ -182,6 +205,10 @@ const syncStepBase = {
   createdAt: isoDateTime.optional(),
   updatedAt: isoDateTime,
   completedAt: parseableDate,
+  date: z
+    .string()
+    .refine(isValidDate, { message: 'date debe ser una fecha válida con formato YYYY-MM-DD' })
+    .optional(),
 };
 
 export const syncPushSchema = z.object({

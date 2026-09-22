@@ -102,6 +102,47 @@ describe('API de tareas — invariante de negocio', () => {
     expect(res.body.message).toBe('Debe enviar al menos un campo para actualizar');
   });
 
+  it('PUT /api/tasks/:id sin description preserva la existente (AC4)', async () => {
+    const created = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .send({ name: 'Tarea con contexto', description: 'Contexto original' });
+    expect(created.status).toBe(201);
+
+    const res = await request(app)
+      .put(`/api/tasks/${created.body.id}`)
+      .set(authHeader(token))
+      .send({ name: 'Renombrada' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Renombrada');
+    expect(res.body.description).toBe('Contexto original');
+  });
+
+  it('POST /api/tasks rechaza description de más de 1000 caracteres (400)', async () => {
+    const longDescription = 'a'.repeat(1001);
+
+    const res = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .send({ name: 'Tarea', description: longDescription });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('La descripción no puede superar 1000 caracteres');
+  });
+
+  it('POST /api/tasks acepta description de exactamente 1000 caracteres (201)', async () => {
+    const longDescription = 'a'.repeat(1000);
+
+    const res = await request(app)
+      .post('/api/tasks')
+      .set(authHeader(token))
+      .send({ name: 'Tarea límite', description: longDescription });
+
+    expect(res.status).toBe(201);
+    expect(res.body.description).toBe(longDescription);
+  });
+
   it('GET /api/tasks/:taskId/steps devuelve los pasos en orden (nested)', async () => {
     const task = await createTask(token, 'Tarea anidada');
     await addStep(token, task.id, 'Primero');

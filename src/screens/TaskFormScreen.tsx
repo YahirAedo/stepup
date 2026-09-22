@@ -22,6 +22,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   const isEditing = !!existingTask;
 
   const [name, setName] = useState(existingTask?.name ?? '');
+  const [description, setDescription] = useState(existingTask?.description ?? '');
   const [dueDate, setDueDate] = useState(existingTask?.due_date ?? '');
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -70,11 +71,13 @@ export default function TaskFormScreen({ navigation, route }: Props) {
       if (isEditing) {
         await TaskService.update(existingTask.id, {
           name: name.trim(),
+          description: description.trim() || null,
           due_date: dueDate.trim() || null,
         });
       } else {
         await TaskService.create({
           name: name.trim(),
+          description: description.trim() || null,
           due_date: dueDate.trim() || null,
         });
       }
@@ -107,6 +110,23 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           autoFocus
           maxLength={120}
           hint="Usá un nombre claro para vos."
+        />
+
+        {/* Description */}
+        <TextField
+          label="Descripción"
+          placeholder="Ej: Parcial de Sistemas Operativos, temas: memoria virtual, procesos, deadlocks..."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={4}
+          maxLength={1000}
+          hint="Opcional. Ayuda a dividir mejor la tarea en pasos."
+          style={{
+            ...typography['body-md'],
+            minHeight: 100,
+            textAlignVertical: 'top',
+          }}
         />
 
         {/* Due date */}
@@ -154,8 +174,9 @@ export default function TaskFormScreen({ navigation, route }: Props) {
                   border: 'none',
                   background: 'transparent',
                   outline: 'none',
-                  fontSize: 16,
-                  fontFamily: 'PlusJakartaSans_400Regular',
+                  fontSize: typography['body-md'].fontSize,
+                  fontFamily: typography['body-md'].fontFamily,
+                  lineHeight: typography['body-md'].lineHeight,
                   color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
                 }}
               />
@@ -199,7 +220,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
               />
               <Text
                 style={[
-                  dueDate ? typography['body-md'] : typography['body-md'],
+                  typography['body-md'],
                   {
                     color: dueDate ? colors['on-surface'] : colors['on-surface-variant'],
                     flex: 1,
@@ -259,7 +280,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
             💡 Tip
           </Text>
           <Text
-            style={[typography['body-md'], { color: colors['on-primary-fixed'], lineHeight: 22 }]}
+            style={[typography['body-md'], { color: colors['on-primary-fixed'] }]}
           >
             Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la
             pantalla de detalle.
