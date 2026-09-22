@@ -250,10 +250,10 @@ export default function ProfileScreen({ navigation }: Props) {
         >
           <Text style={{ fontSize: 24 }}>🔄</Text>
           <View style={{ flex: 1 }}>
-            <Text style={[typography['body-md'] as any, { color: colors['on-surface'] }]}>
+            <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
               Sincronización
             </Text>
-            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+            <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               Resolver conflictos de datos
             </Text>
           </View>
