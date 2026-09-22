@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Alert, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, Alert, ScrollView, Pressable, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -181,13 +181,19 @@ export default function TaskFormScreen({ navigation, route }: Props) {
                 }}
               />
               {dueDate ? (
-                <TouchableOpacity onPress={handleClearDate} hitSlop={8}>
+                <Pressable
+                  onPress={handleClearDate}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Borrar fecha límite"
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                >
                   <MaterialCommunityIcons
                     name="close-circle"
                     size={20}
                     color={colors['on-surface-variant']}
                   />
-                </TouchableOpacity>
+                </Pressable>
               ) : (
                 <MaterialCommunityIcons
                   name="chevron-down"
@@ -197,10 +203,11 @@ export default function TaskFormScreen({ navigation, route }: Props) {
               )}
             </View>
           ) : (
-            <TouchableOpacity
+            <Pressable
               onPress={openDatePicker}
-              activeOpacity={0.7}
-              style={{
+              accessibilityRole="button"
+              accessibilityLabel="Seleccionar fecha límite"
+              style={({ pressed }) => ({
                 backgroundColor: colors['surface-container-lowest'],
                 borderWidth: 1,
                 borderColor: colors['outline-variant'],
@@ -211,7 +218,8 @@ export default function TaskFormScreen({ navigation, route }: Props) {
                 alignItems: 'center',
                 gap: spacing['stack-gap'] - 4,
                 ...shadows.ambient,
-              }}
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
               <MaterialCommunityIcons
                 name="calendar-month-outline"
@@ -231,13 +239,19 @@ export default function TaskFormScreen({ navigation, route }: Props) {
                 {dueDate ? formatDateForDisplay(dueDate) : 'Seleccionar fecha'}
               </Text>
               {dueDate ? (
-                <TouchableOpacity onPress={handleClearDate} hitSlop={8}>
+                <Pressable
+                  onPress={handleClearDate}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Borrar fecha límite"
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                >
                   <MaterialCommunityIcons
                     name="close-circle"
                     size={20}
                     color={colors['on-surface-variant']}
                   />
-                </TouchableOpacity>
+                </Pressable>
               ) : (
                 <MaterialCommunityIcons
                   name="chevron-down"
@@ -245,7 +259,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
                   color={colors['on-surface-variant']}
                 />
               )}
-            </TouchableOpacity>
+            </Pressable>
           )}
           <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
             Opcional. Ayuda a priorizar.
