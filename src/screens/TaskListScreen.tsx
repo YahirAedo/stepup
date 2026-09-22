@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
   ActivityIndicator,
   StatusBar,
@@ -142,18 +142,22 @@ export default function TaskListScreen({ navigation }: Props) {
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
             <Text style={[typography['headline-md'], { color: colors.primary }]}>StepUp</Text>
-            <TouchableOpacity
-              style={{
+            <Pressable
+              onPress={() => (navigation as any).navigate('Profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Ver perfil"
+              style={({ pressed }) => ({
                 width: 40,
                 height: 40,
                 borderRadius: 20,
                 backgroundColor: colors['surface-variant'],
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
               <Text style={{ fontSize: 20 }}>👤</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -225,17 +229,20 @@ export default function TaskListScreen({ navigation }: Props) {
               marginBottom: spacing['stack-gap'],
             }}
           >
-            <TouchableOpacity
+            <Pressable
               onPress={() => navigation.navigate('TaskDetail', { taskId: featured.id })}
               onLongPress={() => handleDelete(featured)}
-              activeOpacity={0.85}
-              style={{
+              accessibilityRole="button"
+              accessibilityLabel={`Ver detalle de ${featured.name}`}
+              accessibilityHint="Mantener para eliminar la tarea"
+              style={({ pressed }) => ({
                 backgroundColor: '#FFFFFF',
                 borderRadius: borderRadius.xl + 8,
                 padding: 32,
                 overflow: 'hidden',
                 ...shadows.ambient,
-              }}
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <View
                 style={{
@@ -306,9 +313,9 @@ export default function TaskListScreen({ navigation }: Props) {
                   />
                 </View>
               </View>
-            </TouchableOpacity>
-          </View>
-        )}
+</Pressable>
+           </View>
+         )}
 
         {/* Secondary cards grid */}
         {secondary.length > 0 && (
@@ -320,12 +327,14 @@ export default function TaskListScreen({ navigation }: Props) {
           >
             <View style={{ flexDirection: 'row', gap: spacing['stack-gap'] }}>
               {secondary.map((task, i) => (
-                <TouchableOpacity
+                <Pressable
                   key={task.id}
                   onPress={() => navigation.navigate('TaskDetail', { taskId: task.id })}
                   onLongPress={() => handleDelete(task)}
-                  activeOpacity={0.85}
-                  style={{
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver detalle de ${task.name}`}
+                  accessibilityHint="Mantener para eliminar la tarea"
+                  style={({ pressed }) => ({
                     flex: 1,
                     backgroundColor: i === 0 ? `${colors['secondary-fixed']}33` : '#FFFFFF',
                     borderRadius: borderRadius.xl + 8,
@@ -333,7 +342,8 @@ export default function TaskListScreen({ navigation }: Props) {
                     borderWidth: i === 0 ? 1 : 0,
                     borderColor: `${colors['secondary-fixed']}4D`,
                     ...shadows.ambient,
-                  }}
+                    opacity: pressed ? 0.85 : 1,
+                  })}
                 >
                   <View
                     style={{
@@ -366,21 +376,24 @@ export default function TaskListScreen({ navigation }: Props) {
                       progress={task.stepsTotal > 0 ? task.stepsCompleted / task.stepsTotal : 0}
                       color={colors.secondary}
                     />
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => navigation.navigate('TaskDetail', { taskId: task.id })}
-                      style={{
+                      accessibilityRole="button"
+                      accessibilityLabel={`Continuar con ${task.name}`}
+                      style={({ pressed }) => ({
                         marginTop: 12,
                         paddingVertical: 8,
                         backgroundColor: colors.secondary,
                         borderRadius: borderRadius.full,
                         alignItems: 'center',
-                      }}
+                        opacity: pressed ? 0.7 : 1,
+                      })}
                     >
                       <Text style={[typography['label-md'], { color: '#FFFFFF' }]}>Continuar</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
-                </TouchableOpacity>
-              ))}
+</Pressable>
+               ))}
             </View>
           </View>
         )}
@@ -408,12 +421,14 @@ export default function TaskListScreen({ navigation }: Props) {
             </Text>
             <View style={{ gap: spacing['stack-gap'] }}>
               {activeTasks.slice(2, 4).map((task) => (
-                <TouchableOpacity
+                <Pressable
                   key={task.id}
                   onPress={() => navigation.navigate('TaskDetail', { taskId: task.id })}
                   onLongPress={() => handleDelete(task)}
-                  activeOpacity={0.85}
-                  style={{
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver detalle de ${task.name}`}
+                  accessibilityHint="Mantener para eliminar la tarea"
+                  style={({ pressed }) => ({
                     backgroundColor: '#FFFFFF',
                     borderRadius: borderRadius.xl + 8,
                     padding: 20,
@@ -423,7 +438,8 @@ export default function TaskListScreen({ navigation }: Props) {
                     borderWidth: 1,
                     borderColor: colors['surface-container'],
                     ...shadows.ambient,
-                  }}
+                    opacity: pressed ? 0.85 : 1,
+                  })}
                 >
                   <View
                     style={{
@@ -462,14 +478,15 @@ export default function TaskListScreen({ navigation }: Props) {
                       color={colors.secondary}
                     />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               ))}
 
               {/* New task button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={() => navigation.navigate('TaskForm', {})}
-                activeOpacity={0.7}
-                style={{
+                accessibilityRole="button"
+                accessibilityLabel="Crear nueva tarea"
+                style={({ pressed }) => ({
                   backgroundColor: colors['surface-container-low'],
                   borderRadius: borderRadius.xl + 8,
                   padding: 20,
@@ -481,7 +498,8 @@ export default function TaskListScreen({ navigation }: Props) {
                   minHeight: 72,
                   flexDirection: 'row',
                   gap: spacing.unit * 2,
-                }}
+                  opacity: pressed ? 0.7 : 1,
+                })}
               >
                 <View
                   style={{
@@ -500,7 +518,7 @@ export default function TaskListScreen({ navigation }: Props) {
                 <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
                   Nueva Tarea
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         )}
@@ -570,10 +588,12 @@ export default function TaskListScreen({ navigation }: Props) {
             Siguientes pasos
           </Text>
           {activeTasks.slice(0, 5).map((task) => (
-            <TouchableOpacity
+            <Pressable
               key={task.id}
               onPress={() => navigation.navigate('TaskDetail', { taskId: task.id })}
-              style={{
+              accessibilityRole="button"
+              accessibilityLabel={`Ver siguiente paso de ${task.name}`}
+              style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -581,7 +601,8 @@ export default function TaskListScreen({ navigation }: Props) {
                 backgroundColor: 'rgba(255,255,255,0.5)',
                 borderRadius: borderRadius.lg,
                 marginBottom: spacing.unit,
-              }}
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
               <View
                 style={{
@@ -603,8 +624,8 @@ export default function TaskListScreen({ navigation }: Props) {
                 {task.stepsTotal - task.stepsCompleted} paso
                 {task.stepsTotal - task.stepsCompleted !== 1 ? 's' : ''}
               </Text>
-            </TouchableOpacity>
-          ))}
+</Pressable>
+               ))}
         </View>
         </ScrollView>
       </View>
