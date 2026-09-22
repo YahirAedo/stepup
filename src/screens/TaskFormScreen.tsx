@@ -273,8 +273,8 @@ export default function TaskFormScreen({ navigation, route }: Props) {
         >
           <Text
             style={[
-              typography['label-md'],
-              { color: colors['on-primary-fixed'], marginBottom: spacing.unit },
+              typography['label-sm'],
+              { color: colors['on-primary-fixed'], textTransform: 'uppercase', marginBottom: spacing.unit },
             ]}
           >
             💡 Tip

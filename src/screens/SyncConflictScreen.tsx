@@ -256,7 +256,12 @@ export default function SyncConflictScreen({ navigation }: Props) {
 
             {conflicts.map((conflict) => (
               <View key={conflict.id} style={{ gap: spacing['stack-gap'] }}>
-                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+                <Text
+                  style={[
+                    typography['label-sm'] as any,
+                    { color: colors['on-surface-variant'], textTransform: 'uppercase' },
+                  ]}
+                >
                   {conflict.tableName === 'tasks' ? 'Tarea' : 'Paso'} modificada en ambos lugares
                 </Text>
                 <View

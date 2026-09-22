@@ -195,7 +195,12 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
+          <Text
+            style={[
+              typography['label-sm'] as TextStyle,
+              { color: colors['on-surface-variant'], textTransform: 'uppercase' },
+            ]}
+          >
             Ajustes
           </Text>
 
