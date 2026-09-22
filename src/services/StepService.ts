@@ -165,7 +165,7 @@ export const StepService = {
     await db.runAsync(
       `INSERT INTO daily_progress (date, steps_completed) VALUES (?, 1)
        ON CONFLICT(date) DO UPDATE SET steps_completed = steps_completed + 1`,
-      [todayStr()],
+      [localDate],
     );
 
     const pending = await db.getAllAsync<Record<string, unknown>>(
