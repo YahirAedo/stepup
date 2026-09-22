@@ -263,7 +263,7 @@ stepup/
 | 4 | #157 | Frontend: generar pasos con IA desde el detalle de tarea | #153, #154 |
 | 5 | #156 | Dashboard de consistencia: racha (1 día de gracia fijo) + tendencia semanal | #122 |
 
-**Estado (septiembre 2026):** slice 2 (#154) implementado y con PR a `develop` (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test contra Gemini real). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
+**Estado (septiembre 2026):** slices 1-3 implementados y mergeados a `develop`. #153 (descripción persistente), #154 (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test) y #155 (integración en TaskFormScreen: sugerir pasos con IA, borrador editable, "Otra propuesta", asistente de descripción; la sección IA solo aparece con sesión activa y conexión — ver DT-32). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
 
 ### Deuda de E2 priorizada (no eliminada)
 - **Alta:** #122 (borde de día UTC — alimenta las rachas). **#123 (IDOR en migrate) resuelto en el PR #174:** se eliminó el scope fijo `MIGRATE_IDEMPOTENCY_SCOPE` y el usuario fake de `users`; el replay de migrate ahora se autoriza por `email + password + hash del payload` (los maps se guardan en el propio user, no en `idempotency_keys`).

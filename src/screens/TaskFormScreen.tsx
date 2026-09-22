@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Alert, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+  type TextStyle,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -8,13 +18,22 @@ import DateTimePicker, {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TasksStackParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
+import { AIService, aiErrorMessage } from '../services/AIService';
+import { hasSession } from '../services/session';
 import { parseISODate, toISODate, formatDateForDisplay } from '../services/dateFormat';
-import { Task } from '../types';
+import { Task, DescriptionSection } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
+import { useIsOnline } from '../hooks/useIsOnline';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
 
 type Props = NativeStackScreenProps<TasksStackParamList, 'TaskForm'>;
+
+type DraftStep = {
+  key: string;
+  name: string;
+  durationMin: string;
+};
 
 export default function TaskFormScreen({ navigation, route }: Props) {
   const { contentPaddingBottom } = useBottomLayout();
@@ -27,6 +46,16 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [pickerDate, setPickerDate] = useState(() => new Date());
+
+  const isOnline = useIsOnline();
+  const aiVisible = !isEditing && isOnline && hasSession();
+  const [suggesting, setSuggesting] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<DraftStep[] | null>(null);
+  const [describing, setDescribing] = useState(false);
+  const [describeError, setDescribeError] = useState<string | null>(null);
+  const [describeSections, setDescribeSections] = useState<DescriptionSection[] | null>(null);
+  const nextDraftKey = useRef(0);
 
   function openDatePicker() {
     setPickerDate(dueDate ? parseISODate(dueDate) : new Date());
@@ -60,10 +89,98 @@ export default function TaskFormScreen({ navigation, route }: Props) {
     });
   }, []);
 
+  // IA — sugerir pasos (HU-4..HU-8, HU-10). "Otra propuesta" re-usa esta misma función:
+  // descarta el borrador actual y regenera la secuencia completa.
+  async function handleSuggestSteps() {
+    if (!name.trim()) {
+      Alert.alert('Nombre requerido', 'Poné un nombre a la tarea para que la IA tenga contexto.');
+      return;
+    }
+    setSuggesting(true);
+    setAiError(null);
+    setDraft(null);
+    try {
+      const steps = await AIService.suggestSteps(name, description);
+      setDraft(
+        steps.map((step, index) => ({
+          key: `ai-${index}`,
+          name: step.name,
+          durationMin: String(step.duration_min),
+        })),
+      );
+    } catch (err) {
+      setAiError(aiErrorMessage(err));
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  // IA — asistente de descripción (HU-3): muestra una estructura contextual para completar.
+  async function handleDescribeHelp() {
+    if (!name.trim()) {
+      Alert.alert('Nombre requerido', 'Poné un nombre a la tarea para armar la estructura.');
+      return;
+    }
+    setDescribing(true);
+    setDescribeError(null);
+    try {
+      const sections = await AIService.describeHelp(name);
+      setDescribeSections(sections);
+    } catch (err) {
+      setDescribeError(aiErrorMessage(err));
+    } finally {
+      setDescribing(false);
+    }
+  }
+
+  function updateDraftName(index: number, value: string) {
+    setDraft(
+      (prev) => prev && prev.map((step, i) => (i === index ? { ...step, name: value } : step)),
+    );
+  }
+
+  function updateDraftDuration(index: number, value: string) {
+    setDraft(
+      (prev) =>
+        prev && prev.map((step, i) => (i === index ? { ...step, durationMin: value } : step)),
+    );
+  }
+
+  function removeDraftStep(index: number) {
+    setDraft((prev) => (prev ? prev.filter((_, i) => i !== index) : prev));
+  }
+
+  function addManualStep() {
+    const key = `manual-${nextDraftKey.current}`;
+    nextDraftKey.current += 1;
+    setDraft((prev) => [...(prev ?? []), { key, name: '', durationMin: '' }]);
+  }
+
   async function handleSave() {
     if (!name.trim()) {
       Alert.alert('Campo requerido', 'El nombre de la tarea no puede estar vacío.');
       return;
+    }
+
+    const parsedSteps: Array<{ name: string; duration_min: number | null }> = [];
+    if (!isEditing && draft && draft.length > 0) {
+      for (let i = 0; i < draft.length; i++) {
+        const stepName = draft[i].name.trim();
+        if (!stepName) {
+          Alert.alert('Paso vacío', `El paso ${i + 1} del borrador tiene que tener un nombre.`);
+          return;
+        }
+        const rawDuration = draft[i].durationMin.trim();
+        const duration = rawDuration ? Number(rawDuration) : null;
+        if (rawDuration && (!Number.isInteger(duration) || (duration ?? 0) <= 0)) {
+          Alert.alert(
+            'Duración inválida',
+            `La duración del paso ${i + 1} debe ser un número de minutos válido.`,
+          );
+          return;
+        }
+        parsedSteps.push({ name: stepName, duration_min: duration });
+      }
     }
 
     setSaving(true);
@@ -74,6 +191,16 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           description: description.trim() || null,
           due_date: dueDate.trim() || null,
         });
+      } else if (parsedSteps.length > 0) {
+        // HU-12: la tarea y sus pasos nacen juntos en una sola acción.
+        await TaskService.createWithSteps(
+          {
+            name: name.trim(),
+            description: description.trim() || null,
+            due_date: dueDate.trim() || null,
+          },
+          parsedSteps,
+        );
       } else {
         await TaskService.create({
           name: name.trim(),
@@ -88,6 +215,11 @@ export default function TaskFormScreen({ navigation, route }: Props) {
       setSaving(false);
     }
   }
+
+  const labelSmUppercase: TextStyle[] = [
+    typography['label-sm'],
+    { color: colors.secondary, textTransform: 'uppercase' },
+  ];
 
   return (
     <ScrollView
@@ -113,21 +245,289 @@ export default function TaskFormScreen({ navigation, route }: Props) {
         />
 
         {/* Description */}
-        <TextField
-          label="Descripción"
-          placeholder="Ej: Parcial de Sistemas Operativos, temas: memoria virtual, procesos, deadlocks..."
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={4}
-          maxLength={1000}
-          hint="Opcional. Ayuda a dividir mejor la tarea en pasos."
-          style={{
-            ...typography['body-md'],
-            minHeight: 100,
-            textAlignVertical: 'top',
-          }}
-        />
+        <View style={{ gap: spacing['stack-gap'] - 4 }}>
+          <TextField
+            label="Descripción"
+            placeholder="Ej: Parcial de Sistemas Operativos, temas: memoria virtual, procesos, deadlocks..."
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+            maxLength={1000}
+            hint="Opcional. Ayuda a dividir mejor la tarea en pasos."
+            style={{
+              ...typography['body-md'],
+              minHeight: 100,
+              textAlignVertical: 'top',
+            }}
+          />
+
+          {aiVisible && (
+            <>
+              <Button
+                title={describeSections ? 'Regenerar estructura' : 'Ayudame a describir'}
+                onPress={handleDescribeHelp}
+                variant="secondary"
+                disabled={describing || suggesting}
+                icon={
+                  describing ? (
+                    <ActivityIndicator size="small" color={colors['on-surface-variant']} />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name="auto-fix"
+                      size={18}
+                      color={colors['on-surface-variant']}
+                    />
+                  )
+                }
+              />
+
+              {describeSections && (
+                <View
+                  style={{
+                    backgroundColor: colors['surface-container-low'],
+                    borderRadius: borderRadius.lg,
+                    borderWidth: 1,
+                    borderColor: colors['outline-variant'],
+                    padding: spacing['stack-gap'],
+                    gap: spacing['stack-gap'] - 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Text style={[typography['label-md'], { color: colors.secondary }]}>
+                      Estructura sugerida
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setDescribeSections(null)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Cerrar estructura sugerida"
+                      hitSlop={8}
+                      style={{
+                        minWidth: 48,
+                        minHeight: 48,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name="close"
+                        size={20}
+                        color={colors['on-surface-variant']}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  {describeSections.map((section, index) => (
+                    <View key={index} style={{ gap: 2 }}>
+                      <Text style={[typography['label-md'], { color: colors['on-surface'] }]}>
+                        {index + 1}. {section.title}
+                      </Text>
+                      <Text
+                        style={[typography['body-md'], { color: colors['on-surface-variant'] }]}
+                      >
+                        {section.guiding_question}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {describeError && (
+                <Text style={[typography['body-md'], { color: colors.error }]}>
+                  {describeError}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+
+        {/* IA — sugerir pasos */}
+        {aiVisible && (
+          <View style={{ gap: spacing['stack-gap'] - 4 }}>
+            <Button
+              title="Sugerir pasos con IA"
+              onPress={handleSuggestSteps}
+              variant="tertiary"
+              disabled={suggesting}
+              icon={
+                <MaterialCommunityIcons
+                  name="creation-outline"
+                  size={20}
+                  color={colors['on-tertiary']}
+                />
+              }
+            />
+
+            {suggesting && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing['stack-gap'] - 4,
+                }}
+              >
+                <ActivityIndicator size="small" color={colors['primary-container']} />
+                <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
+                  Pensando una propuesta de pasos...
+                </Text>
+              </View>
+            )}
+
+            {!suggesting && aiError && (
+              <Text style={[typography['body-md'], { color: colors.error }]}>{aiError}</Text>
+            )}
+
+            {draft && (
+              <View style={{ gap: spacing['stack-gap'] }}>
+                <View style={{ gap: spacing.unit * 2 }}>
+                  <Text style={labelSmUppercase}>Borrador de pasos</Text>
+                  {draft.map((step, index) => (
+                    <View
+                      key={step.key}
+                      style={{
+                        backgroundColor: colors['surface-container-low'],
+                        borderRadius: borderRadius.lg,
+                        borderWidth: 1,
+                        borderColor: colors['outline-variant'],
+                        padding: spacing['stack-gap'] - 4,
+                        gap: spacing.unit * 2,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <View
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.unit }}
+                        >
+                          <View
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: borderRadius.full,
+                              backgroundColor: colors['primary-fixed'],
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Text
+                              style={[
+                                typography['label-sm'],
+                                { color: colors['on-primary-fixed'] },
+                              ]}
+                            >
+                              {index + 1}
+                            </Text>
+                          </View>
+                          <Text
+                            style={[
+                              typography['label-sm'],
+                              { color: colors['on-surface-variant'], textTransform: 'uppercase' },
+                            ]}
+                          >
+                            PASO {index + 1}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() => removeDraftStep(index)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Eliminar paso ${index + 1}`}
+                          hitSlop={8}
+                          style={{
+                            minWidth: 48,
+                            minHeight: 48,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <MaterialCommunityIcons
+                            name="delete-outline"
+                            size={22}
+                            color={colors['on-surface-variant']}
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TextInput
+                        value={step.name}
+                        onChangeText={(value) => updateDraftName(index, value)}
+                        placeholder="Nombre del paso..."
+                        placeholderTextColor={`${colors['surface-dim']}CC`}
+                        maxLength={200}
+                        multiline
+                        accessibilityLabel={`Nombre del paso ${index + 1}`}
+                        style={[
+                          typography['body-md'] as TextStyle,
+                          {
+                            color: colors['on-surface'],
+                            borderBottomWidth: 2,
+                            borderBottomColor: colors['outline-variant'],
+                            paddingVertical: 8,
+                          },
+                        ]}
+                      />
+
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: spacing.unit * 2,
+                        }}
+                      >
+                        <TextInput
+                          value={step.durationMin}
+                          onChangeText={(value) => updateDraftDuration(index, value)}
+                          placeholder="min"
+                          placeholderTextColor={`${colors['surface-dim']}CC`}
+                          keyboardType="number-pad"
+                          maxLength={3}
+                          accessibilityLabel={`Duración en minutos del paso ${index + 1}`}
+                          style={[
+                            typography['body-md'] as TextStyle,
+                            {
+                              color: colors['on-surface'],
+                              borderBottomWidth: 2,
+                              borderBottomColor: colors['outline-variant'],
+                              paddingVertical: 8,
+                              width: 72,
+                              textAlign: 'center',
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[typography['body-md'], { color: colors['on-surface-variant'] }]}
+                        >
+                          minutos
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+
+                <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
+                  Podés editar cada paso, borrarlo o agregar los tuyos antes de confirmar. La IA
+                  propone, vos decidís.
+                </Text>
+
+                <Button title="+ Agregar paso" onPress={addManualStep} variant="secondary" />
+                <Button
+                  title="Otra propuesta"
+                  onPress={handleSuggestSteps}
+                  variant="tertiary"
+                  disabled={suggesting}
+                />
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Due date */}
         <View style={{ gap: spacing.unit * 2 }}>
@@ -279,9 +679,7 @@ export default function TaskFormScreen({ navigation, route }: Props) {
           >
             💡 Tip
           </Text>
-          <Text
-            style={[typography['body-md'], { color: colors['on-primary-fixed'] }]}
-          >
+          <Text style={[typography['body-md'], { color: colors['on-primary-fixed'] }]}>
             Después de crear la tarea podés dividirla en pasos pequeños de 5 a 15 minutos desde la
             pantalla de detalle.
           </Text>

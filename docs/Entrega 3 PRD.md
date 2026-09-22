@@ -38,7 +38,7 @@ La app incorpora IA (Google Gemini API, tier gratis) en dos capacidades compleme
 - **Prompt engineering:** prompt fijo que codifica las reglas del dominio (verbo concreto, 5-25 min, 3-8 pasos según tamaño, derivar del contexto, orden lógico). Mejora continua de calidad queda como trabajo posterior (issue de seguimiento).
 - **Frontend nuevo:** `AIService` que consume el endpoint; el borrador vive en estado temporal de pantalla (no se persiste hasta confirmar).
 - **Modelo de datos:** se agrega columna `description` a `tasks` (SQLite local + PostgreSQL remoto + contrato de sync). La descripción es opcional y editable.
-- **Flujo de creación:** TaskForm gana campo descripción → "✨ Sugerir pasos con IA" → borrador editable → confirmar → tarea + pasos juntos. Si offline, el botón no aparece y el flujo manual queda intacto.
+- **Flujo de creación:** TaskForm gana campo descripción → "✨ Sugerir pasos con IA" → borrador editable → confirmar → tarea + pasos juntos. Si offline el botón no aparece (HU-14), y al ser un endpoint autenticado tampoco aparece sin sesión activa (la IA nunca genera un 401 que borre la sesión local); el flujo manual queda intacto siempre.
 - **Flujo en detalle:** TaskDetail gana botón "Generar pasos con IA" usando la descripción guardada.
 - **Asistente de descripción:** guía de estructura contextual (no texto automático), misma infraestructura de IA.
 - **Dashboard de consistencia:** función pura de racha (1 día de gracia fijo, no acumulable, cuenta desde hoy) + gráfico de tendencia semanal reutilizando `LineChart`.

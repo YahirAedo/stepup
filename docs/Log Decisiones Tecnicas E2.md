@@ -41,6 +41,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
 | DT-30 | Replay de migrate sin scope compartido (fix IDOR) | Septiembre 2026 | Confirmada — PR #174 (issue #123) |
 | DT-31 | Idempotencia client-side persistente (key por operación en SQLite) | Septiembre 2026 | Confirmada — PR #175 (issues #124, #198, #199) |
+| DT-32 | Frontend IA gated por sesión + conectividad (la IA nunca genera 401) | Septiembre 2026 | Confirmada — issue #155 |
 
 # Decisiones detalladas
 
@@ -365,6 +366,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | Patrón análogo al del servidor (Stripe): un reintento tras error de red (sin respuesta del server) reutiliza la misma key y habilita el replay. La key se genera por operación, no por request — es la única forma de que el servidor identifique el retry. `expo-crypto` reemplaza a `crypto.subtle` porque este no está disponible en todos los runtimes de React Native/Hermes. | |
 | **Alternativas descartadas** | Key derivada determinísticamente por entidad (hash de `taskLocalId` + `updated_at` en `push`): más frágil con varios registros dirty y sin análogo para `migrate`. `crypto.subtle.digest` (web): descartado por indisponibilidad en Hermes — se migró a `expo-crypto`. Empty `catch {}` sin documentar: queda cubierto por tests. | |
 | **Consecuencias** | Migración SQLite **V5** `pending_idempotency_keys`. Tests de retry-same-key en `SyncService.test.ts` (patrón push/migrate, #124 AC1-AC3) y en `syncLifecycle.idempotency.test.ts` vía ciclos de `onAppActive` (#124 AC4 / #199 AC1-AC2). Nueva dependencia `expo-crypto` (+ mock de test en `vitest.setup.ts`). Tensión conocida: limpiar la key en 4xx≠401 puede destruir una key sin token recibido ante un 409 a mitad de migración — registrada para revisión en la review del PR #175 (ver #201, también aplica a #174). | |
+
+---
+
+## DT-32 Frontend IA gated por sesión + conectividad (la IA nunca genera 401)
+*Septiembre 2026 — Entrega 3 (issue #155)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada en la rama de la issue #155 (TaskFormScreen) | |
+| **Contexto** | Los endpoints de IA (`POST /api/ai/suggest-steps`, `POST /api/ai/describe-help`) son autenticados (`requireAuth`, rate-limit). En la app, un 401 de la API borra la sesión local (`apiFetch` → logout y navigate a Login). Si el botón "Sugerir pasos con IA" se mostrara siempre (estilo "mostrar y fallar"), un usuario logueado con token expirado haría clic y recibiría un 401 que destruye la sesión — experiencia de error confusa para una acción opcional de IA. Además la IA sin conexión no funciona (HU-14). | |
+| **Decisión** | La sección IA del formulario de creación se muestra solo si `!isEditing && isOnline && hasSession()`. `isOnline` viene de un hook (`useIsOnline`, `@react-native-community/netinfo`) que arranca en `false` (el botón queda oculto hasta confirmar conexión real, `state.isConnected === true`) y escucha cambios de red. La creación manual sin IA sigue disponible sin sesión y offline, intacta. | |
+| **Razonamiento** | El endpoint exige JWT; gating por sesión evita el 401 destructivo y es barato de evaluar (síncrono). El gating por red evita llamadas fallidas e implementa HU-14 ("si estoy offline el botón de IA no aparece"). Default `false` de conectividad evita un flash del botón durante el chequeo inicial de NetInfo (que puede tardar hasta el primer evento). | |
+| **Alternativas descartadas** | Mostrar la IA siempre y mapear el error (descartado: el 401 de `apiFetch` no distingue "token expirado" en esta feature y borra la sesión; requeriría refactor de `apiFetch`). NetInfo con default `true` y ocultar ante evento offline (descartado: flash erróneo al abrir el form sin conexión). | |
+| **Consecuencias** | Nueva dependencia `@react-native-community/netinfo@11.4.1` (instalada con `npx expo install -- --legacy-peer-deps`) y `src/hooks/useIsOnline.ts`. El asistente de descripción respeta el mismo gate. UX: sin sesión activa el usuario retoma el flujo manual; la sesión se restaura al tocar el botón "Crear tarea" igual que siempre. | |
 
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
 
