@@ -40,5 +40,13 @@ export const GEMINI_API_KEY = resolveGeminiApiKey(process.env.GEMINI_API_KEY, pr
 
 export const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash';
 
-export const AI_CACHE_TTL_SECONDS = Number(process.env.AI_CACHE_TTL_SECONDS) || 3600;
-export const AI_CACHE_MAX_SIZE = Number(process.env.AI_CACHE_MAX_SIZE) || 100;
+function readEnvInt(value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === '') {
+    return fallback;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+export const AI_CACHE_TTL_SECONDS = readEnvInt(process.env.AI_CACHE_TTL_SECONDS, 3600);
+export const AI_CACHE_MAX_SIZE = readEnvInt(process.env.AI_CACHE_MAX_SIZE, 100);
