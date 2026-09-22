@@ -71,3 +71,11 @@ export interface DescriptionSection {
   title: string;
   guiding_question: string;
 }
+
+// IA — paso del borrador editable (issues #155/#157). Temporal: vive en estado de
+// pantalla hasta confirmar y no se persiste.
+export interface DraftStep {
+  key: string;
+  name: string;
+  durationMin: string;
+}

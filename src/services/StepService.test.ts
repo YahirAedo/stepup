@@ -82,6 +82,47 @@ describe('StepService', () => {
     expect(steps.map((s) => s.name)).toEqual(['A', 'B']);
   });
 
+  describe('addMany', () => {
+    it('agrega pasos al final de la secuencia existente sin tocarla', async () => {
+      const taskId = await insertTask();
+      await insertStep(taskId, 'Uno', 0);
+      await insertStep(taskId, 'Dos', 1);
+
+      const created = await StepService.addMany(taskId, [
+        { name: 'Tres', duration_min: 10 },
+        { name: 'Cuatro', duration_min: null },
+      ]);
+
+      expect(created).toHaveLength(2);
+      expect(created.map((s) => s.order_index)).toEqual([2, 3]);
+      expect(created.map((s) => s.dirty)).toEqual([1, 1]);
+      expect(created.every((s) => s.status === 'pending')).toBe(true);
+
+      const all = await StepService.getByTask(taskId);
+      expect(all.map((s) => s.name)).toEqual(['Uno', 'Dos', 'Tres', 'Cuatro']);
+      expect(mocks.syncNow).toHaveBeenCalledTimes(1);
+    });
+
+    it('sin pasos existentes arranca desde order_index 0', async () => {
+      const taskId = await insertTask();
+
+      const created = await StepService.addMany(taskId, [{ name: 'Uno', duration_min: 5 }]);
+
+      expect(created).toHaveLength(1);
+      expect(created[0]).toMatchObject({ task_id: taskId, name: 'Uno', order_index: 0, dirty: 1 });
+      expect(mocks.syncNow).toHaveBeenCalledTimes(1);
+    });
+
+    it('con lista vacía no inserta ni sincroniza', async () => {
+      const taskId = await insertTask();
+
+      const created = await StepService.addMany(taskId, []);
+
+      expect(created).toEqual([]);
+      expect(mocks.syncNow).not.toHaveBeenCalled();
+    });
+  });
+
   it('getNextPending devuelve el primero pendiente', async () => {
     const taskId = await insertTask();
     const done = await insertStep(taskId, 'Hecho', 0);
@@ -221,10 +262,10 @@ describe('StepService', () => {
       const taskId = await insertTask();
       const stepId = await insertStep(taskId);
       const other = await insertStep(taskId, 'Pendiente', 1);
-      await db.runAsync(
-        `UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`,
-        ['2026-08-01T00:00:00.000Z', stepId],
-      );
+      await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, [
+        '2026-08-01T00:00:00.000Z',
+        stepId,
+      ]);
 
       const result = await StepService.complete(stepId);
 
@@ -236,10 +277,10 @@ describe('StepService', () => {
     it('idempotente sin pasos pendientes devuelve taskCompleted=true', async () => {
       const taskId = await insertTask();
       const stepId = await insertStep(taskId);
-      await db.runAsync(
-        `UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`,
-        ['2026-08-01T00:00:00.000Z', stepId],
-      );
+      await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, [
+        '2026-08-01T00:00:00.000Z',
+        stepId,
+      ]);
 
       const result = await StepService.complete(stepId);
 
@@ -259,10 +300,11 @@ describe('StepService', () => {
 
       const result = await StepService.uncomplete(stepId);
 
-      const [step] = await db.getAllAsync<{ status: string; completed_at: string | null; dirty: number }>(
-        `SELECT status, completed_at, dirty FROM steps WHERE id = ?`,
-        [stepId],
-      );
+      const [step] = await db.getAllAsync<{
+        status: string;
+        completed_at: string | null;
+        dirty: number;
+      }>(`SELECT status, completed_at, dirty FROM steps WHERE id = ?`, [stepId]);
       const [task] = await db.getAllAsync<{ status: string; dirty: number }>(
         `SELECT status, dirty FROM tasks WHERE id = ?`,
         [taskId],

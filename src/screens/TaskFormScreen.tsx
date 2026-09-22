@@ -1,14 +1,12 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   Alert,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Platform,
-  type TextStyle,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, {
@@ -21,19 +19,15 @@ import { TaskService } from '../services/TaskService';
 import { AIService, aiErrorMessage } from '../services/AIService';
 import { hasSession } from '../services/session';
 import { parseISODate, toISODate, formatDateForDisplay } from '../services/dateFormat';
-import { Task, DescriptionSection } from '../types';
+import { Task, DescriptionSection, DraftStep } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import { useIsOnline } from '../hooks/useIsOnline';
+import { parseDraftSteps } from '../utils/draftSteps';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
+import SuggestedStepsDraft from '../components/SuggestedStepsDraft';
 
 type Props = NativeStackScreenProps<TasksStackParamList, 'TaskForm'>;
-
-type DraftStep = {
-  key: string;
-  name: string;
-  durationMin: string;
-};
 
 export default function TaskFormScreen({ navigation, route }: Props) {
   const { contentPaddingBottom } = useBottomLayout();
@@ -55,7 +49,6 @@ export default function TaskFormScreen({ navigation, route }: Props) {
   const [describing, setDescribing] = useState(false);
   const [describeError, setDescribeError] = useState<string | null>(null);
   const [describeSections, setDescribeSections] = useState<DescriptionSection[] | null>(null);
-  const nextDraftKey = useRef(0);
 
   function openDatePicker() {
     setPickerDate(dueDate ? parseISODate(dueDate) : new Date());
@@ -133,29 +126,6 @@ export default function TaskFormScreen({ navigation, route }: Props) {
     }
   }
 
-  function updateDraftName(index: number, value: string) {
-    setDraft(
-      (prev) => prev && prev.map((step, i) => (i === index ? { ...step, name: value } : step)),
-    );
-  }
-
-  function updateDraftDuration(index: number, value: string) {
-    setDraft(
-      (prev) =>
-        prev && prev.map((step, i) => (i === index ? { ...step, durationMin: value } : step)),
-    );
-  }
-
-  function removeDraftStep(index: number) {
-    setDraft((prev) => (prev ? prev.filter((_, i) => i !== index) : prev));
-  }
-
-  function addManualStep() {
-    const key = `manual-${nextDraftKey.current}`;
-    nextDraftKey.current += 1;
-    setDraft((prev) => [...(prev ?? []), { key, name: '', durationMin: '' }]);
-  }
-
   async function handleSave() {
     if (!name.trim()) {
       Alert.alert('Campo requerido', 'El nombre de la tarea no puede estar vacío.');
@@ -164,23 +134,12 @@ export default function TaskFormScreen({ navigation, route }: Props) {
 
     const parsedSteps: Array<{ name: string; duration_min: number | null }> = [];
     if (!isEditing && draft && draft.length > 0) {
-      for (let i = 0; i < draft.length; i++) {
-        const stepName = draft[i].name.trim();
-        if (!stepName) {
-          Alert.alert('Paso vacío', `El paso ${i + 1} del borrador tiene que tener un nombre.`);
-          return;
-        }
-        const rawDuration = draft[i].durationMin.trim();
-        const duration = rawDuration ? Number(rawDuration) : null;
-        if (rawDuration && (!Number.isInteger(duration) || (duration ?? 0) <= 0)) {
-          Alert.alert(
-            'Duración inválida',
-            `La duración del paso ${i + 1} debe ser un número de minutos válido.`,
-          );
-          return;
-        }
-        parsedSteps.push({ name: stepName, duration_min: duration });
+      const result = parseDraftSteps(draft);
+      if (!result.ok) {
+        Alert.alert('Borrador inválido', result.message);
+        return;
       }
+      parsedSteps.push(...result.steps);
     }
 
     setSaving(true);
@@ -215,11 +174,6 @@ export default function TaskFormScreen({ navigation, route }: Props) {
       setSaving(false);
     }
   }
-
-  const labelSmUppercase: TextStyle[] = [
-    typography['label-sm'],
-    { color: colors.secondary, textTransform: 'uppercase' },
-  ];
 
   return (
     <ScrollView
@@ -363,168 +317,14 @@ export default function TaskFormScreen({ navigation, route }: Props) {
               }
             />
 
-            {suggesting && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing['stack-gap'] - 4,
-                }}
-              >
-                <ActivityIndicator size="small" color={colors['primary-container']} />
-                <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
-                  Pensando una propuesta de pasos...
-                </Text>
-              </View>
-            )}
-
-            {!suggesting && aiError && (
-              <Text style={[typography['body-md'], { color: colors.error }]}>{aiError}</Text>
-            )}
-
-            {draft && (
-              <View style={{ gap: spacing['stack-gap'] }}>
-                <View style={{ gap: spacing.unit * 2 }}>
-                  <Text style={labelSmUppercase}>Borrador de pasos</Text>
-                  {draft.map((step, index) => (
-                    <View
-                      key={step.key}
-                      style={{
-                        backgroundColor: colors['surface-container-low'],
-                        borderRadius: borderRadius.lg,
-                        borderWidth: 1,
-                        borderColor: colors['outline-variant'],
-                        padding: spacing['stack-gap'] - 4,
-                        gap: spacing.unit * 2,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <View
-                          style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.unit }}
-                        >
-                          <View
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: borderRadius.full,
-                              backgroundColor: colors['primary-fixed'],
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Text
-                              style={[
-                                typography['label-sm'],
-                                { color: colors['on-primary-fixed'] },
-                              ]}
-                            >
-                              {index + 1}
-                            </Text>
-                          </View>
-                          <Text
-                            style={[
-                              typography['label-sm'],
-                              { color: colors['on-surface-variant'], textTransform: 'uppercase' },
-                            ]}
-                          >
-                            PASO {index + 1}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => removeDraftStep(index)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Eliminar paso ${index + 1}`}
-                          hitSlop={8}
-                          style={{
-                            minWidth: 48,
-                            minHeight: 48,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <MaterialCommunityIcons
-                            name="delete-outline"
-                            size={22}
-                            color={colors['on-surface-variant']}
-                          />
-                        </TouchableOpacity>
-                      </View>
-
-                      <TextInput
-                        value={step.name}
-                        onChangeText={(value) => updateDraftName(index, value)}
-                        placeholder="Nombre del paso..."
-                        placeholderTextColor={`${colors['surface-dim']}CC`}
-                        maxLength={200}
-                        multiline
-                        accessibilityLabel={`Nombre del paso ${index + 1}`}
-                        style={[
-                          typography['body-md'] as TextStyle,
-                          {
-                            color: colors['on-surface'],
-                            borderBottomWidth: 2,
-                            borderBottomColor: colors['outline-variant'],
-                            paddingVertical: 8,
-                          },
-                        ]}
-                      />
-
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: spacing.unit * 2,
-                        }}
-                      >
-                        <TextInput
-                          value={step.durationMin}
-                          onChangeText={(value) => updateDraftDuration(index, value)}
-                          placeholder="min"
-                          placeholderTextColor={`${colors['surface-dim']}CC`}
-                          keyboardType="number-pad"
-                          maxLength={3}
-                          accessibilityLabel={`Duración en minutos del paso ${index + 1}`}
-                          style={[
-                            typography['body-md'] as TextStyle,
-                            {
-                              color: colors['on-surface'],
-                              borderBottomWidth: 2,
-                              borderBottomColor: colors['outline-variant'],
-                              paddingVertical: 8,
-                              width: 72,
-                              textAlign: 'center',
-                            },
-                          ]}
-                        />
-                        <Text
-                          style={[typography['body-md'], { color: colors['on-surface-variant'] }]}
-                        >
-                          minutos
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-
-                <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
-                  Podés editar cada paso, borrarlo o agregar los tuyos antes de confirmar. La IA
-                  propone, vos decidís.
-                </Text>
-
-                <Button title="+ Agregar paso" onPress={addManualStep} variant="secondary" />
-                <Button
-                  title="Otra propuesta"
-                  onPress={handleSuggestSteps}
-                  variant="tertiary"
-                  disabled={suggesting}
-                />
-              </View>
+            {(suggesting || !!aiError || !!draft) && (
+              <SuggestedStepsDraft
+                draft={draft}
+                onChangeDraft={setDraft}
+                onRegenerate={handleSuggestSteps}
+                suggesting={suggesting}
+                error={aiError}
+              />
             )}
           </View>
         )}
