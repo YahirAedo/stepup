@@ -3,7 +3,7 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   Alert,
   ActivityIndicator,
   StatusBar,
@@ -250,10 +250,11 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           />
         )}
         ListFooterComponent={() => (
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.navigate('StepForm', { taskId: task.id })}
-            activeOpacity={0.7}
-            style={{
+            accessibilityRole="button"
+            accessibilityLabel="Agregar nuevo paso"
+            style={({ pressed }) => ({
               marginTop: spacing['stack-gap'],
               padding: 14,
               borderRadius: borderRadius.lg,
@@ -261,13 +262,13 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
               borderStyle: 'dashed',
               borderColor: colors.secondary,
               alignItems: 'center',
-              opacity: 0.6,
-            }}
+              opacity: pressed ? 0.7 : 0.6,
+            })}
           >
             <Text style={[typography['label-md'], { color: colors.secondary }]}>
               + Agregar paso
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       />
 
@@ -284,10 +285,11 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           backgroundColor: colors.surface,
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.navigate('Focus')}
-          activeOpacity={0.9}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Comenzar ahora"
+          style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -296,13 +298,14 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
             borderRadius: borderRadius.full,
             backgroundColor: colors['tertiary'],
             ...shadows.fab,
-          }}
+            opacity: pressed ? 0.9 : 1,
+          })}
         >
           <Text style={{ fontSize: 20, color: colors['on-tertiary'] }}>▶</Text>
           <Text style={[typography['label-md'], { color: colors['on-tertiary'] }]}>
             Comenzar ahora
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
