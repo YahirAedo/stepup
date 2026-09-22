@@ -209,7 +209,7 @@ export default function LoginScreen({ navigation }: Props) {
             }}
           >
             <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
-              {loading ? 'Ingresando…' : 'Iniciar Sesión'}
+              {loading ? 'Ingresando…' : 'Iniciar sesión'}
             </Text>
             {loading && <MaterialIcons name="hourglass-empty" size={20} color={colors['on-primary']} />}
           </TouchableOpacity>
