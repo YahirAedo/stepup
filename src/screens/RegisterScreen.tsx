@@ -230,7 +230,7 @@ export default function RegisterScreen({ navigation }: Props) {
             }}
           >
             <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
-              {loading ? 'Creando cuenta…' : 'Crear Cuenta'}
+              {loading ? 'Creando cuenta…' : 'Crear cuenta'}
             </Text>
             {loading && (
               <MaterialIcons name="hourglass-empty" size={20} color={colors['on-primary']} />

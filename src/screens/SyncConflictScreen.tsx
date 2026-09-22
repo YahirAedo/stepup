@@ -266,7 +266,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
                   }}
                 >
                   <VersionCard
-                    title="Versión Local"
+                    title="Versión local"
                     icon="📱"
                     badge="En este dispositivo"
                     badgeBg={colors['primary-fixed-dim']}
@@ -282,7 +282,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
                     onChoose={() => resolve(conflict, 'local')}
                   />
                   <VersionCard
-                    title="Versión del Servidor"
+                    title="Versión del servidor"
                     icon="☁️"
                     badge="Guardada en la nube"
                     badgeBg={colors['secondary-fixed-dim']}

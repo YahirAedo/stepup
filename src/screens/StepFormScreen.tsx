@@ -157,7 +157,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
           style={{ flex: 1 }}
         />
         <Button
-          title={saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Guardar Tarea'}
+          title={saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Guardar tarea'}
           onPress={handleSave}
           variant="primary"
           disabled={saving}

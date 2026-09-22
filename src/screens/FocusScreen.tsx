@@ -218,7 +218,7 @@ export default function FocusScreen({ navigation }: Props) {
         <EmptyState
           headline="Mente clara, espacio libre"
           subtext="No tienes tareas pendientes para ahora. ¿Quieres planear algo nuevo?"
-          cta="Crear Tarea"
+          cta="Crear tarea"
           onCtaPress={() => navigation.navigate('Tasks', { screen: 'TaskForm', params: {} })}
         />
       </View>
@@ -392,8 +392,8 @@ export default function FocusScreen({ navigation }: Props) {
               timerFinished
                 ? '⏰ Tiempo terminado'
                 : timerRunning
-                  ? '⏸ Pausar Sesión'
-                  : '▶ Iniciar Cronómetro'
+                  ? '⏸ Pausar sesión'
+                  : '▶ Iniciar cronómetro'
             }
             onPress={handleToggleTimer}
             variant={timerRunning ? 'tertiary' : 'primary'}

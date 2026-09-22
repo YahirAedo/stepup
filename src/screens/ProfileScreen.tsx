@@ -275,7 +275,7 @@ export default function ProfileScreen({ navigation }: Props) {
           <Text style={{ fontSize: 24 }}>🏅</Text>
           <View style={{ flex: 1 }}>
             <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
-              Tus Logros
+              Tus logros
             </Text>
             <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               3 insignias desbloqueadas

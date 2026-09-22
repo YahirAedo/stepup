@@ -115,7 +115,7 @@ export default function TaskListScreen({ navigation }: Props) {
         <EmptyState
           headline="No tenés tareas todavía"
           subtext="Tocá el botón + para agregar tu primera tarea y dividirla en pasos."
-          cta="Crear Tarea"
+          cta="Crear tarea"
           onCtaPress={() => navigation.navigate('TaskForm', {})}
         />
       </View>
@@ -498,7 +498,7 @@ export default function TaskListScreen({ navigation }: Props) {
                   </Text>
                 </View>
                 <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
-                  Nueva Tarea
+                  Nueva tarea
                 </Text>
               </TouchableOpacity>
             </View>
