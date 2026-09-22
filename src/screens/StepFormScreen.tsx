@@ -93,7 +93,6 @@ export default function StepFormScreen({ navigation, route }: Props) {
               {
                 color: colors.secondary,
                 textTransform: 'uppercase',
-                letterSpacing: 1,
                 paddingLeft: 4,
               },
             ]}

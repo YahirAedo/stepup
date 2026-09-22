@@ -144,7 +144,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
                 <Text
                   style={[
                     typography['label-sm'],
-                    { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2 },
+                    { color: colors.secondary, textTransform: 'uppercase' },
                   ]}
                 >
                   Alta Prioridad

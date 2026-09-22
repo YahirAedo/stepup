@@ -116,7 +116,6 @@ export default function TimerWidget({ display, finished }: TimerWidgetProps) {
               {
                 color: colors['on-surface-variant'],
                 textTransform: 'uppercase',
-                letterSpacing: 1,
                 marginTop: 4,
               },
             ]}
