@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, type TextStyle } from 'react-native';
+import { View, Text, Pressable, ScrollView, type TextStyle } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
@@ -97,9 +97,15 @@ export default function BadgesScreen({ navigation }: Props) {
           gap: 12,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.6}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <Text style={{ fontSize: 24, color: colors['on-surface'] }}>‹</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           Tus Logros
         </Text>
