@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { taskRoutes } from './routes/task.routes';
 import { stepRoutes } from './routes/step.routes';
 import { progressRoutes } from './routes/progress.routes';
@@ -13,7 +13,7 @@ import { errorHandler } from './middleware/error-handler';
 export function createApp() {
   const app = express();
 
-  app.set('trust proxy', true);
+  app.set('trust proxy', 1);
   app.use(cors());
   app.use(express.json());
 
@@ -36,7 +36,8 @@ export function createApp() {
     max: process.env.NODE_ENV === 'test' ? 10000 : 10,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: 'Demasiadas solicitudes de IA. Intentá nuevamente en un minuto.' },
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? req.socket.remoteAddress ?? 'unknown'),
+    message: { message: 'Demasiadas solicitudes de IA. Intenta nuevamente en un minuto.' },
   });
   app.use('/api/ai', aiLimiter, requireAuth, aiRoutes);
 

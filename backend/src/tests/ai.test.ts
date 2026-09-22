@@ -316,7 +316,7 @@ describe('Rate limiter con trust proxy (#195)', () => {
 
   beforeAll(() => {
     limiterApp = express();
-    limiterApp.set('trust proxy', true);
+    limiterApp.set('trust proxy', 1);
     const limiter = rateLimit({
       windowMs: 60 * 1000,
       max: 2,
