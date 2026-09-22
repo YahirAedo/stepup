@@ -58,3 +58,16 @@ export interface UpdateStepInput {
   name?: string;
   duration_min?: number | null;
 }
+
+// IA — sugerencia de pasos (issue #154/#155). Contrato del endpoint
+// POST /api/ai/suggest-steps. La duración siempre llega entre 5 y 25 min (Pomodoro).
+export interface SuggestedStep {
+  name: string;
+  duration_min: number;
+}
+
+// IA — asistente de descripción (issue #154/#155). Contrato de POST /api/ai/describe-help.
+export interface DescriptionSection {
+  title: string;
+  guiding_question: string;
+}
