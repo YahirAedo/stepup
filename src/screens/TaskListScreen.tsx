@@ -170,7 +170,6 @@ export default function TaskListScreen({ navigation }: Props) {
               {
                 color: colors.secondary,
                 textTransform: 'uppercase',
-                letterSpacing: 2,
                 marginBottom: spacing.unit,
               },
             ]}
@@ -399,7 +398,6 @@ export default function TaskListScreen({ navigation }: Props) {
                 {
                   color: colors['on-surface-variant'],
                   textTransform: 'uppercase',
-                  letterSpacing: 2,
                   marginBottom: spacing['stack-gap'],
                 },
               ]}
@@ -526,7 +524,6 @@ export default function TaskListScreen({ navigation }: Props) {
                 {
                   color: colors['on-surface-variant'],
                   textTransform: 'uppercase',
-                  letterSpacing: 2,
                   marginBottom: 16,
                 },
               ]}

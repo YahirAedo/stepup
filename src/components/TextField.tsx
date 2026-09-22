@@ -22,7 +22,7 @@ export default function TextField({
       <Text
         style={[
           typography['label-sm'],
-          { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4 },
+          { color: colors.secondary, textTransform: 'uppercase', paddingLeft: 4 },
         ]}
       >
         {label}

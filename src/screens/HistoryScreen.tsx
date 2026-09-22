@@ -92,7 +92,6 @@ export default function HistoryScreen() {
               {
                 color: colors.primary,
                 textTransform: 'uppercase',
-                letterSpacing: 2,
                 marginBottom: spacing.unit * 2,
               },
             ]}
@@ -175,7 +174,6 @@ export default function HistoryScreen() {
               {
                 color: colors['on-surface-variant'],
                 textTransform: 'uppercase',
-                letterSpacing: 1,
                 marginBottom: spacing['stack-gap'],
               },
             ]}
