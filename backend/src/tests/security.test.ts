@@ -1,15 +1,7 @@
 import request from 'supertest';
 import express from 'express';
-import rateLimit from 'express-rate-limit';
 import { app, registerUser, authHeader, resetDb } from './helpers';
-
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+import { createLoginLimiter, createRegisterLimiter, createMigrateLimiter } from '../config/rate-limits';
 
 beforeAll(async () => {
   await resetDb();
@@ -62,23 +54,14 @@ describe('Rate limiting en auth (#245)', () => {
 
   beforeEach(() => {
     testApp = express();
-    const loginLimiter = rateLimit({
-      windowMs: 60 * 1000,
-      max: 5,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: { message: 'Demasiados intentos de login. Intentá nuevamente en un minuto.' },
-    });
-    const registerLimiter = rateLimit({
-      windowMs: 60 * 1000,
-      max: 3,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: { message: 'Demasiados registros. Intentá nuevamente en un minuto.' },
-    });
+    testApp.set('trust proxy', 1);
     testApp.use(express.json());
-    testApp.post('/login', loginLimiter, (req, res) => res.status(401).json({ message: 'Invalid credentials' }));
-    testApp.post('/register', registerLimiter, (req, res) => res.status(201).json({ message: 'Created' }));
+    testApp.post('/login', createLoginLimiter(5), (_req, res) =>
+      res.status(401).json({ message: 'Invalid credentials' }),
+    );
+    testApp.post('/register', createRegisterLimiter(3), (_req, res) =>
+      res.status(201).json({ message: 'Created' }),
+    );
   });
 
   it('login permite hasta 5 intentos por minuto', async () => {
@@ -94,6 +77,8 @@ describe('Rate limiting en auth (#245)', () => {
       .send({ email: 'test@example.com', password: 'wrong' });
     expect(res6.status).toBe(429);
     expect(res6.body.message).toMatch(/Demasiados intentos/);
+    expect(res6.headers['ratelimit-limit']).toBe('5');
+    expect(res6.headers['retry-after']).toBeDefined();
   });
 
   it('register permite hasta 3 registros por minuto', async () => {
@@ -117,15 +102,11 @@ describe('Rate limiting en migrate (#245)', () => {
 
   beforeEach(() => {
     testApp = express();
-    const migrateLimiter = rateLimit({
-      windowMs: 60 * 1000,
-      max: 2,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: { message: 'Demasiadas migraciones. Intentá nuevamente en un minuto.' },
-    });
+    testApp.set('trust proxy', 1);
     testApp.use(express.json());
-    testApp.post('/migrate', migrateLimiter, (req, res) => res.status(201).json({ message: 'Migrated' }));
+    testApp.post('/migrate', createMigrateLimiter(2), (_req, res) =>
+      res.status(201).json({ message: 'Migrated' }),
+    );
   });
 
   it('migrate permite hasta 2 migraciones por minuto', async () => {

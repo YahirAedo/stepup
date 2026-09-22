@@ -238,12 +238,12 @@ export const syncPushSchema = z.object({
   tasks: z.array(z.object(syncTaskBase), { error: 'tasks debe ser un array' }).default([]),
   steps: z.array(z.object(syncStepBase), { error: 'steps debe ser un array' }).default([]),
 }).refine((data) => {
-  return data.tasks.every((task) => !task.createdAt || new Date(task.updatedAt) >= new Date(task.createdAt));
+  return data.tasks.every((task) => isAfterCreatedAt(task.updatedAt, task.createdAt));
 }, {
   message: 'updatedAt no puede ser anterior a createdAt',
   path: ['tasks'],
 }).refine((data) => {
-  return data.steps.every((step) => !step.createdAt || new Date(step.updatedAt) >= new Date(step.createdAt));
+  return data.steps.every((step) => isAfterCreatedAt(step.updatedAt, step.createdAt));
 }, {
   message: 'updatedAt no puede ser anterior a createdAt',
   path: ['steps'],
@@ -282,12 +282,12 @@ export const syncMigrateSchema = z.object({
     )
     .default([]),
 }).refine((data) => {
-  return data.tasks.every((task) => !task.createdAt || new Date(task.updatedAt) >= new Date(task.createdAt));
+  return data.tasks.every((task) => isAfterCreatedAt(task.updatedAt, task.createdAt));
 }, {
   message: 'updatedAt no puede ser anterior a createdAt',
   path: ['tasks'],
 }).refine((data) => {
-  return data.steps.every((step) => !step.createdAt || new Date(step.updatedAt) >= new Date(step.createdAt));
+  return data.steps.every((step) => isAfterCreatedAt(step.updatedAt, step.createdAt));
 }, {
   message: 'updatedAt no puede ser anterior a createdAt',
   path: ['steps'],
