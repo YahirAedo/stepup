@@ -52,7 +52,12 @@ export interface ThemeColors {
 
 export type TypographyStyle = Pick<
   TextStyle,
-  'fontFamily' | 'fontSize' | 'fontWeight' | 'lineHeight' | 'letterSpacing'
+  | 'fontFamily'
+  | 'fontSize'
+  | 'fontWeight'
+  | 'lineHeight'
+  | 'letterSpacing'
+  | 'textTransform'
 >;
 
 export interface ThemeTypography {

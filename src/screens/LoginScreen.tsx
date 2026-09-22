@@ -162,7 +162,7 @@ export default function LoginScreen({ navigation }: Props) {
               activeOpacity={0.7}
               style={{ alignSelf: 'flex-end', paddingVertical: 4 }}
             >
-              <Text style={[typography['label-sm'] as TextStyle, { color: colors.primary }]}>
+              <Text style={[typography['label-md'] as TextStyle, { color: colors.primary }]}>
                 ¿Olvidaste tu contraseña?
               </Text>
             </TouchableOpacity>
