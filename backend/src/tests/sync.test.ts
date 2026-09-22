@@ -420,6 +420,39 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body[0].description).toBe('Contexto');
   });
 
+  it('POST /api/sync/migrate registra daily_progress para pasos completados con date', async () => {
+    const taskLocalId = 11;
+    const stepLocalId = 5;
+    const taskId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const localDate = '2026-08-26';
+
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Migra Progress',
+      email: 'migra-progress@stepup.app',
+      password: 'secret123',
+      tasks: [{ localId: taskLocalId, id: taskId, name: 'Migrada', updatedAt: now }],
+      steps: [
+        {
+          localId: stepLocalId,
+          taskLocalId,
+          name: 'Paso completo',
+          orderIndex: 0,
+          status: 'completed',
+          updatedAt: now,
+          date: localDate,
+        },
+      ],
+    });
+
+    expect(res.status).toBe(201);
+
+    const progress = await request(app).get('/api/progress').set(authHeader(res.body.token));
+    const entry = progress.body.find((p: { date: string }) => p.date === localDate);
+    expect(entry).toBeTruthy();
+    expect(entry.stepsCompleted).toBe(1);
+  });
+
   it('POST /api/sync/migrate con password corta devuelve 400', async () => {
     const res = await request(app).post('/api/sync/migrate').send({
       name: 'Nuevo',
