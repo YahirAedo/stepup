@@ -44,8 +44,8 @@ App 100% offline con ciclo completo de tareas, pasos, timer e historial.
 **Entrega 2 — Completada** ✅ (Julio – Agosto 2026)
 Migración visual al diseño Zenith Vitality + backend + auth + sync offline-first.
 
-**Entrega 3 — En curso** 🚧 (Septiembre – Noviembre 2026)
-IA de sugerencia de pasos, endurecimiento del backend y, hacia fin de entrega, dashboard + demo final.
+**Entrega 3 — Completada** ✅ (Septiembre 2026 — cierre el 24/9)
+IA de sugerencia de pasos (creación + detalle), seguridad/higiene del backend, a11y y design system. Entrega cerrada el 24/9 con el alcance implementado a esa fecha.
 
 | Módulo | Estado |
 |---|---|
@@ -61,10 +61,10 @@ IA de sugerencia de pasos, endurecimiento del backend y, hacia fin de entrega, d
 | Onboarding + notificaciones | ✅ Completado (E2 — v1; notif. v2 priorizada a E3) |
 | Date picker + responsive web | ✅ Completado (E2) |
 | Insignias y perfil | ✅ Completado (E2) |
-| Sugerencia de pasos con IA | 🚧 En curso (E3 — borrador y endpoint) |
+| Sugerencia de pasos con IA | ✅ Completado (E3 — creación y detalle) |
 | Rate limiting + cache + seguridad backend | ✅ Completado (E3) |
-| Dashboard + demo final | ⏳ Planificado (E3) |
-| XP/Level backend + notificaciones v2 | ⏳ Planificado (E3) |
+| Dashboard de consistencia (racha + tendencia) | ⏳ No alcanzado (cierre E3 24/9) |
+| XP/Level backend + notificaciones push v2 | ⏳ No alcanzado (cierre E3 24/9) |
 
 ---
 
@@ -286,7 +286,7 @@ Resumen rápido:
 |---|---|---|---|
 | E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | ✅ Completada |
 | E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Render/Neon | ✅ Completada |
-| E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | 🚧 En curso |
+| E3 | Septiembre 2026 (cierre 24/9) | + IA (sugerencia de pasos) + seguridad | ✅ Completada |
 
 Cada entrega publicada se conserva como historial en su rama y su release:
 
@@ -294,6 +294,7 @@ Cada entrega publicada se conserva como historial en su rama y su release:
 |---|---|---|
 | E1 | `entrega-1` | [entrega-1](https://github.com/YahirAedo/stepup/releases/tag/entrega-1) |
 | E2 | `entrega-2` | [v2.0.0-entrega2](https://github.com/YahirAedo/stepup/releases/tag/v2.0.0-entrega2) |
+| E3 (final) | `main` | [v3.0.0-entrega3](https://github.com/YahirAedo/stepup/releases/tag/v3.0.0-entrega3) |
 
 ---
 

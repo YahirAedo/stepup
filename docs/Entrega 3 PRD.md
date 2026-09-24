@@ -2,6 +2,10 @@
 
 *Versión 1.0 — Agosto 2026*
 
+> **Estado (24/09/2026):** la entrega se **cerró el 24/09** con el alcance implementado a esa fecha.
+> **Entregado:** descripción persistente (slice 1), IA backend + frontend (slices 2–4), seguridad/higiene del backend, a11y y design system.
+> **No alcanzado:** dashboard de consistencia (#156, slice 5) y el epic responsive #205; quedan documentados como trabajo futuro.
+
 ## Problem Statement
 
 Cuando un usuario crea una tarea grande, la fricción más grande está en *dividirla*: el cerebro entra en evitación (*task paralysis*) y la tarea queda sin pasos o con pasos genéricos. Hoy la app resuelve la división después de crear la tarea y a mano, paso por paso. El usuario necesita que el momento de la división sea guiado y rápido.
