@@ -39,6 +39,35 @@ export const TaskService = {
     return toTask(row);
   },
 
+  async createWithSteps(
+    input: CreateTaskInput,
+    steps: Array<{ name: string; duration_min: number | null }>,
+  ): Promise<Task> {
+    // Flujo de creación con borrador de IA (issue #155): la tarea y sus pasos
+    // nacen juntos en una sola acción (HU-12), sin un segundo trámite.
+    const db = await getDb();
+    const now = nowIso();
+    const res = await db.runAsync(
+      `INSERT INTO tasks (name, description, due_date, status, created_at, completed_at, dirty, updated_at)
+       VALUES (?, ?, ?, 'active', ?, NULL, 1, ?)`,
+      [input.name, input.description ?? null, input.due_date ?? null, now, now],
+    );
+    const taskId = res.lastInsertRowId;
+    for (let i = 0; i < steps.length; i++) {
+      await db.runAsync(
+        `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, dirty, updated_at)
+         VALUES (?, ?, ?, ?, 'pending', NULL, 1, ?)`,
+        [taskId, steps[i].name, steps[i].duration_min ?? null, i, now],
+      );
+    }
+    const [row] = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM tasks WHERE id = ?`,
+      [taskId],
+    );
+    void syncNow();
+    return toTask(row);
+  },
+
   async getAll(): Promise<Task[]> {
     const db = await getDb();
     const rows = await db.getAllAsync<Record<string, unknown>>(
@@ -50,10 +79,9 @@ export const TaskService = {
 
   async getById(id: number): Promise<Task | null> {
     const db = await getDb();
-    const rows = await db.getAllAsync<Record<string, unknown>>(
-      `SELECT * FROM tasks WHERE id = ?`,
-      [id],
-    );
+    const rows = await db.getAllAsync<Record<string, unknown>>(`SELECT * FROM tasks WHERE id = ?`, [
+      id,
+    ]);
     if (rows.length === 0) return null;
     return toTask(rows[0]);
   },

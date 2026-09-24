@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   type ViewStyle,
   type TextStyle,
@@ -48,11 +48,13 @@ export default function Button({
   const v = variantStyles[variant];
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.85}
-      style={[
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => [
         {
           flexDirection: 'row',
           alignItems: 'center',
@@ -64,7 +66,7 @@ export default function Button({
           borderWidth: v.border ? 1 : 0,
           borderColor: v.border,
           paddingHorizontal: 24,
-          opacity: disabled ? 0.5 : 1,
+          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
         },
         style,
       ]}
@@ -73,6 +75,6 @@ export default function Button({
       <Text style={[typography['label-md'] as TextStyle, { color: v.text }, textStyle]}>
         {title}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }

@@ -18,7 +18,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 
 | ID | Decisión | Fecha | Estado |
 | --- | --- | --- | --- |
-| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Julio 2026 | Confirmada |
+| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Julio 2026 | Reemplazada por DT-33 (Render + Neon) |
 | DT-10 | Autenticación JWT con registro/login | Julio 2026 | Confirmada |
 | DT-11 | Sync offline-first híbrido: sin cuenta→local, con cuenta→backend | Julio 2026 | Confirmada |
 | DT-12 | Conflictos de sync: last-write-wins | Julio 2026 | Confirmada |
@@ -41,6 +41,8 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
 | DT-30 | Replay de migrate sin scope compartido (fix IDOR) | Septiembre 2026 | Confirmada — PR #174 (issue #123) |
 | DT-31 | Idempotencia client-side persistente (key por operación en SQLite) | Septiembre 2026 | Confirmada — PR #175 (issues #124, #198, #199) |
+| DT-32 | Frontend IA gated por sesión + conectividad (la IA nunca genera 401) | Septiembre 2026 | Confirmada — issue #155 |
+| DT-33 | Hosting backend migrado a Render.com + Neon (reemplaza Railway) | Septiembre 2026 | Confirmada — issue #273 |
 
 # Decisiones detalladas
 
@@ -265,7 +267,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | --- | --- | --- |
 | **Estado** | **Implementada (E3, issue #154)** | |
 | **Contexto** | E3 necesita una IA que sugiera pasos al crear una tarea. El equipo no tiene experiencia previa en integración de IA. Investigación: la alternativa con mejor relación costo/esfuerzo es Google Gemini API (AI Studio) con tier gratis permanente (~10 RPM / 250K TPM en el tier gratuito). El modelo planificado (`gemini-2.5-flash`) fue deprecado por Google para keys nuevas durante la implementación; el default efectivo pasó a ser `gemini-3.5-flash` (configurable vía `GEMINI_MODEL`). | |
-| **Decisión** | La IA se consume **vía un endpoint propio del backend** (`POST /api/ai/suggest-steps` + `POST /api/ai/describe-help`), que a su vez llama a Gemini. La API key vive **solo en el servidor** (Railway env), nunca en el bundle de la app. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json`. | |
+| **Decisión** | La IA se consume **vía un endpoint propio del backend** (`POST /api/ai/suggest-steps` + `POST /api/ai/describe-help`), que a su vez llama a Gemini. La API key vive **solo en el servidor** (env de Render, ex-Railway — issue #273), nunca en el bundle de la app. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json`. | |
 | **Razonamiento** | No exponer el secreto en un bundle público (la app se distribuye a cualquier dispositivo). Coherente con la arquitectura existente (JWT auth, env.ts fail-closed, error-handler, tests con supertest). Permite centralizar rate limiting, retry con backoff y sanitización de la respuesta. | |
 | **Alternativas descartadas** | Llamada directa desde la app a Gemini (descartado: la key queda expuesta en el bundle). Claude Haiku / GPT-4o mini (descartado: costos o cuotas del tier gratis menos favorables para esta escala). IA on-device (descartado: requiere modelos locales pesados, fuera de alcance académico). Refino conversacional de la sugerencia (descartado en E3: se usa re-generar). | |
 | **Consecuencias** | La app offline no puede usar la IA (requiere red) pero nunca queda bloqueada: sin conexión, el botón de IA no aparece y el flujo manual de creación queda intacto. En el tier gratis Google entrena con los prompts (aceptable para uso académico; no enviar datos sensibles). La mejora continua del prompt queda como trabajo posterior. Implementación: `AIService` con timeout (90 s default), retry con backoff exponencial en 429/5xx (3 intentos), sanitizado de la respuesta (nombres no vacíos, duración clamp 5-25, 3-8 pasos) y errores mapeados a 502 (proveedor caído) / 429 (saturado). `GEMINI_API_KEY` fail-closed en `config/env.ts`. | |
@@ -366,6 +368,32 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Alternativas descartadas** | Key derivada determinísticamente por entidad (hash de `taskLocalId` + `updated_at` en `push`): más frágil con varios registros dirty y sin análogo para `migrate`. `crypto.subtle.digest` (web): descartado por indisponibilidad en Hermes — se migró a `expo-crypto`. Empty `catch {}` sin documentar: queda cubierto por tests. | |
 | **Consecuencias** | Migración SQLite **V5** `pending_idempotency_keys`. Tests de retry-same-key en `SyncService.test.ts` (patrón push/migrate, #124 AC1-AC3) y en `syncLifecycle.idempotency.test.ts` vía ciclos de `onAppActive` (#124 AC4 / #199 AC1-AC2). Nueva dependencia `expo-crypto` (+ mock de test en `vitest.setup.ts`). Tensión conocida: limpiar la key en 4xx≠401 puede destruir una key sin token recibido ante un 409 a mitad de migración — registrada para revisión en la review del PR #175 (ver #201, también aplica a #174). | |
 
+---
+
+## DT-32 Frontend IA gated por sesión + conectividad (la IA nunca genera 401)
+*Septiembre 2026 — Entrega 3 (issue #155)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada en la rama de la issue #155 (TaskFormScreen) | |
+| **Contexto** | Los endpoints de IA (`POST /api/ai/suggest-steps`, `POST /api/ai/describe-help`) son autenticados (`requireAuth`, rate-limit). En la app, un 401 de la API borra la sesión local (`apiFetch` → logout y navigate a Login). Si el botón "Sugerir pasos con IA" se mostrara siempre (estilo "mostrar y fallar"), un usuario logueado con token expirado haría clic y recibiría un 401 que destruye la sesión — experiencia de error confusa para una acción opcional de IA. Además la IA sin conexión no funciona (HU-14). | |
+| **Decisión** | La sección IA del formulario de creación se muestra solo si `!isEditing && isOnline && hasSession()`. `isOnline` viene de un hook (`useIsOnline`, `@react-native-community/netinfo`) que arranca en `false` (el botón queda oculto hasta confirmar conexión real, `state.isConnected === true`) y escucha cambios de red. La creación manual sin IA sigue disponible sin sesión y offline, intacta. | |
+| **Razonamiento** | El endpoint exige JWT; gating por sesión evita el 401 destructivo y es barato de evaluar (síncrono). El gating por red evita llamadas fallidas e implementa HU-14 ("si estoy offline el botón de IA no aparece"). Default `false` de conectividad evita un flash del botón durante el chequeo inicial de NetInfo (que puede tardar hasta el primer evento). | |
+| **Alternativas descartadas** | Mostrar la IA siempre y mapear el error (descartado: el 401 de `apiFetch` no distingue "token expirado" en esta feature y borra la sesión; requeriría refactor de `apiFetch`). NetInfo con default `true` y ocultar ante evento offline (descartado: flash erróneo al abrir el form sin conexión). | |
+| **Consecuencias** | Nueva dependencia `@react-native-community/netinfo@11.4.1` (instalada con `npx expo install -- --legacy-peer-deps`) y `src/hooks/useIsOnline.ts`. El asistente de descripción respeta el mismo gate. UX: sin sesión activa el usuario retoma el flujo manual; la sesión se restaura al tocar el botón "Crear tarea" igual que siempre. | |
+
 *StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
+
+## DT-33 Hosting backend migrado a Render.com + Neon (reemplaza Railway)
+*Septiembre 2026 — Demo final (issue #273)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada y verificada en producción (2026-09-24) | |
+| **Contexto** | El plan gratuito de Railway (de un tercero) venció: `https://stepup-backend-api-production.up.railway.app` devuelve 404 ("Application not found") con `x-railway-fallback: true`. La demo académica necesita un backend público estable que no dependa del plan vencido. Además, el Postgres free de Render **expira a los 30 días** — no sirve como única BD. | |
+| **Decisión** | Backend en **Render.com** (Web Service free, región Oregon us-west-2, se duerme tras 15 min de inactividad con spin-up ~1 min) y base de datos en **Neon** (Postgres tier free **permanente**, proyecto `stepup_prod`, misma región). Config: Root Directory `backend/`, Build `npm ci --include=dev && npm run build`, Start `npx prisma migrate deploy && node dist/server.js`, env `DATABASE_URL` (Neon directa), `JWT_SECRET`, `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`. URL: `https://stepup-940v.onrender.com`. | |
+| **Razonamiento** | Neon no expira (a diferencia del Postgres gratis de Render y del plan vencido de Railway). La connection string **directa** de Neon (hostname sin `-pooler`) se usa como `DATABASE_URL` porque `schema.prisma` define `url = env("DATABASE_URL")` sin `directUrl` → cero cambios de código. Verificado en prod: `/api/health` 200, register 201, login 200, `/api/ai/suggest-steps` 200 (6 pasos). | |
+| **Alternativas descartadas** | Railway (plan vencido, no recuperable). Postgres de Render (caduca a 30 días). Connection string con pooling de Neon como `DATABASE_URL` sin `directUrl` (Prisma migraría con el pooler — no soportado para migraciones). | |
+| **Consecuencias** | El APK se reconstruye con `EXPO_PUBLIC_API_URL=https://stepup-940v.onrender.com` vía perfil `apk` de `eas.json` (issue #273). Docs actualizadas: `.env.example`, `README`, `docs/Contexto.md`, `docs/Arquitectura E2.md`, `docs/Backend E2 PRD.md`, `docs/Gestión documental E2.md`, B1/B2 (con nota de deprecación), `AGENTS.md`, `pptx-e2.js`. La checklist B1 se conserva como registro histórico. **Gotcha:** el tier free de Render duerme el servicio (primera request tras inactividad tarda ~1 min, y la primera llamada de IA puede tardar ~45 s con cold start de Render + Neon scale-to-zero + Gemini). | |
 
 *Ingeniería en Sistemas de Información*

@@ -52,7 +52,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 
 **Track B — Backend + Auth + Sync (Opción A)**
 - API REST: Node.js + Express + Prisma + PostgreSQL
-- Hosting: Railway (tier gratuito)
+- Hosting: Render.com (tier gratuito) + PostgreSQL en Neon (free permanente; migrado desde Railway — issue #273)
 - Autenticación JWT: registro + login
 - Endpoints: CRUD de tareas y pasos en el servidor
 - Sync offline-first híbrido:
@@ -86,7 +86,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 | Framework mobile | React Native + Expo SDK 54 | El equipo conoce JS/React. Expo simplifica el build y permite probar con Expo Go escaneando un QR. SDK 54 porque SDK 55 no corre en Expo Go todavía. |
 | Lenguaje | TypeScript | Tipado estático, menos bugs, mejor autocompletado |
 | Base de datos local | expo-sqlite (SQLite local) | Sin servidor, sin internet, sin costos. App 100% funcional offline |
-| Base de datos remota (E2) | PostgreSQL en Railway | ORM: Prisma. Tier gratuito del hosting. |
+| Base de datos remota (E2) | PostgreSQL en Neon | ORM: Prisma. Tier free permanente (Postgres free de Render caduca a los 30 días). |
 | Backend (E2) | Node.js + Express + Prisma | API REST con autenticación JWT y sync pull/push |
 | Navegación | React Navigation — GlassTabBar | Bottom tabs flotantes estilo glassmorph |
 | Testing | Jest + React Native Testing Library | Estándar del ecosistema |
@@ -237,7 +237,7 @@ stepup/
 - Autenticación JWT (registro + login) ✅
 - Sync offline-first híbrido (push/pull/migrate) ✅
 - CRUD de tasks y steps ✅
-- Hosting en Railway ✅
+- Hosting: Render.com + Neon (migrado desde Railway, issue #273) ✅
 - **Estado:** fixes del epic #64 (issues #65-#77) mergeados a `develop2`. **Unificación:** `develop2` integrada a `develop` vía PR #121 (issue #120) y eliminada. Las issues de backend ahora van a `develop`.
 - **Pendiente para E3:** bugs #122–#126 detectados en el review final (borde de día UTC, IDOR en migrate, idempotencia client-side anulada, docs PRD, `as any` restantes)
 
@@ -263,7 +263,7 @@ stepup/
 | 4 | #157 | Frontend: generar pasos con IA desde el detalle de tarea | #153, #154 |
 | 5 | #156 | Dashboard de consistencia: racha (1 día de gracia fijo) + tendencia semanal | #122 |
 
-**Estado (septiembre 2026):** slice 2 (#154) implementado y con PR a `develop` (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test contra Gemini real). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
+**Estado (septiembre 2026):** slices 1-4 implementados y mergeados a `develop`. #153 (descripción persistente), #154 (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test), #155 (integración en TaskFormScreen: sugerir pasos con IA, borrador editable, "Otra propuesta", asistente de descripción; la sección IA solo aparece con sesión activa y conexión — ver DT-32) y #157 (generar pasos con IA desde el detalle de tarea: botón "Generar pasos con IA" con la descripción guardada, borrador editable compartido `src/components/SuggestedStepsDraft.tsx` + validación común `parseDraftSteps`, e invitación a escribir una descripción primero cuando la tarea no la tiene; al confirmar se agregan los pasos a la tarea existente con `StepService.addMany` sin recrearla ni borrar los que ya tiene; mismo gate offline/sesión que DT-32). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
 
 ### Deuda de E2 priorizada (no eliminada)
 - **Alta:** #122 (borde de día UTC — alimenta las rachas). **#123 (IDOR en migrate) resuelto en el PR #174:** se eliminó el scope fijo `MIGRATE_IDEMPOTENCY_SCOPE` y el usuario fake de `users`; el replay de migrate ahora se autoriza por `email + password + hash del payload` (los maps se guardan en el propio user, no en `idempotency_keys`).
@@ -277,7 +277,7 @@ stepup/
 - **Descripción:** opcional para crear, necesaria para una buena sugerencia. Se guarda con la tarea.
 - **Racha:** días consecutivos con al menos 1 paso completado, contando desde hoy; 1 día de gracia fijo por racha (no acumulable).
 - **IA offline:** no funciona sin conexión, pero nunca bloquea — el flujo manual queda intacto.
-- **Key de Gemini:** SOLO en el backend (Railway env), nunca en el bundle de la app.
+- **Key de Gemini:** SOLO en el backend (env de Render), nunca en el bundle de la app.
 
 ---
 
@@ -318,7 +318,7 @@ Todo el código de la sección anterior. Ya está hecho, listo para copiar al re
 | DT-06 | Timer opcional (no bloquea completar el paso) | Confirmada |
 | DT-07 | Fecha límite incluida en E1 | Confirmada |
 | DT-08 | Android como plataforma demo principal | Confirmada |
-| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Confirmada (E2) |
+| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Reemplazada por DT-33 (Render + Neon) |
 | DT-10 | Autenticación JWT con registro/login | Confirmada (E2) |
 | DT-11 | Sync offline-first híbrido: Sin cuenta→local, Con cuenta→backend + migración | Confirmada (E2) |
 | DT-12 | Conflictos de sync: last-write-wins | Confirmada (E2) |
@@ -507,12 +507,12 @@ El plan de migración está desglosado en 12 issues en GitHub (labels por tipo: 
 
 ### Track B — Backend
 - [x] Setup del proyecto Node.js + Express + TypeScript
-- [x] Configurar Prisma + PostgreSQL en Railway
+- [x] Configurar Prisma + PostgreSQL en Neon (migrado desde Railway, issue #273)
 - [x] Endpoints de autenticación (register + login + JWT)
 - [x] Endpoints de tareas (CRUD)
 - [x] Endpoints de pasos (CRUD)
 - [x] Endpoints de sync (push + pull + migrate)
-- [x] Hosting funcionando en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
+- [x] Hosting funcionando en Render + Neon (URL: `https://stepup-940v.onrender.com`; Railway deprecado — issue #273)
 - [x] B1 (issue #17) cerrado — ver `docs/B1 - Railway deploy checklist.md`
 - [x] B2 (issue #18) + Slice 9 (issue #13) cerrados — ver `docs/B2 - Auth flow checklist.md`
 - [x] PRs #78-#82 de endurecimiento reviewados y mergeados a `develop2` (epic #64, issues #65-#77)
@@ -555,7 +555,7 @@ El modelo puede retomar cualquier parte del proyecto con este documento como bas
 - Plataforma de demo: **Android**. iOS es secundario.
 - Expo Go requiere SDK 54. No usar SDK 55.
 - Repositorio GitHub: https://github.com/YahirAedo/stepup
-- Hosting backend: Railway (tier gratuito)
+- Hosting backend: Render.com (tier free) + PostgreSQL en Neon (free permanente; migrado desde Railway — issue #273)
 - Los issues de E2 están en GitHub con labels por tipo (frontend, backend, auth, database).
 - Este documento se actualiza cada vez que cambia el contexto del proyecto.
 - Para retomar el proyecto en un nuevo chat, pegar este documento como contexto inicial.

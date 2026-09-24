@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -158,11 +158,11 @@ export default function LoginScreen({ navigation }: Props) {
             />
 
             <TouchableOpacity
-              onPress={() => {}}
+              onPress={() => Alert.alert('Próximamente', 'Función de recuperación de contraseña no disponible aún')}
               activeOpacity={0.7}
               style={{ alignSelf: 'flex-end', paddingVertical: 4 }}
             >
-              <Text style={[typography['label-sm'] as TextStyle, { color: colors.primary }]}>
+              <Text style={[typography['label-md'] as TextStyle, { color: colors.primary }]}>
                 ¿Olvidaste tu contraseña?
               </Text>
             </TouchableOpacity>
@@ -209,7 +209,7 @@ export default function LoginScreen({ navigation }: Props) {
             }}
           >
             <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
-              {loading ? 'Ingresando…' : 'Iniciar Sesión'}
+              {loading ? 'Ingresando…' : 'Iniciar sesión'}
             </Text>
             {loading && <MaterialIcons name="hourglass-empty" size={20} color={colors['on-primary']} />}
           </TouchableOpacity>

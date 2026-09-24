@@ -168,7 +168,7 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
           }}
         >
           <Text style={[typography['label-md'] as TextStyle, { color: colors['on-tertiary'] }]}>
-            Activar Notificaciones
+            Activar notificaciones
           </Text>
         </TouchableOpacity>
 

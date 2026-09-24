@@ -73,7 +73,7 @@ Migración visual al diseño Zenith Vitality + backend + auth + sync offline-fir
 | Diseño visual | Sistema Zenith Vitality |
 | Testing | Vitest (app, 111 tests) + Jest/Supertest (backend, 94 tests) |
 | Control de versiones | Git + GitHub + Conventional Commits |
-| Backend (E2) | Node.js + Express + Prisma + PostgreSQL + Railway |
+| Backend (E2) | Node.js + Express + Prisma + PostgreSQL (Render.com + Neon) |
 
 ---
 
@@ -143,7 +143,7 @@ Esto abre el **Metro Bundler** en la terminal y muestra un código QR.
 > **Nota:** La base de datos SQLite se inicializa automáticamente al primer arranque. No requiere ninguna configuración manual.
 
 > **Nota E2:** Para probar registro y sincronización apuntá la app al backend
-> (producción en Railway por defecto). Si querés correrlo local:
+> (producción en Render.com + Neon por defecto: `https://stepup-940v.onrender.com`). Si querés correrlo local:
 >
 > ```bash
 > cd backend
@@ -260,7 +260,7 @@ Resumen rápido:
 | Entrega | Período | Stack | Estado |
 |---|---|---|---|
 | E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | ✅ Completada |
-| E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Railway | ✅ Completada |
+| E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Render/Neon | ✅ Completada |
 | E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | ⏳ Planificado |
 
 ---
