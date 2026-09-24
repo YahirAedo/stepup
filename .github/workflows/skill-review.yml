@@ -28,7 +28,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out pull request merge commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Review PR (modelo primario)
         id: review-primary
