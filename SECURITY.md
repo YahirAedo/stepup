@@ -4,7 +4,8 @@
 
 | Version | Support |
 |---------|---------|
-| `main` (entrega en curso) | Activa |
+| `main` (Entrega 3 en curso) | Activa |
+| `v2.0.0-entrega2` / rama `entrega-2` (E2) | Histórica (bugs críticos) |
 | `entrega-1` (tag E1) | Histórica (bugs críticos) |
 
 ## Reporting a Vulnerability
@@ -21,7 +22,9 @@ una vulnerabilidad:
 
 ## Notas de seguridad del stack
 
-- **Backend (E2):** contraseñas con hash, JWT con secret obligatorio en prod
-  (fail-closed). Ver issues del epic #64.
+- **Backend (E2–E3):** contraseñas con hash, JWT con secret obligatorio en prod
+  (fail-closed) y rate limiting (ver `backend/src/config/rate-limits.ts`).
+  Ver issues del epic #64.
 - **App (Expo SDK 54):** dependencias auditadas con `npm audit`; Dependabot
-  abre PRs de actualización semanales.
+  abre PRs mensuales contra `develop`, agrupados y sin majors de `@expo/*` /
+  `@react-native-community/*` (ver `.github/dependabot.yml`).
