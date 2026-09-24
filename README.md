@@ -44,6 +44,9 @@ App 100% offline con ciclo completo de tareas, pasos, timer e historial.
 **Entrega 2 — Completada** ✅ (Julio – Agosto 2026)
 Migración visual al diseño Zenith Vitality + backend + auth + sync offline-first.
 
+**Entrega 3 — En curso** 🚧 (Septiembre – Noviembre 2026)
+IA de sugerencia de pasos, endurecimiento del backend y, hacia fin de entrega, dashboard + demo final.
+
 | Módulo | Estado |
 |---|---|
 | Gestión de tareas (CRUD) | ✅ Completado |
@@ -58,7 +61,10 @@ Migración visual al diseño Zenith Vitality + backend + auth + sync offline-fir
 | Onboarding + notificaciones | ✅ Completado (E2 — v1; notif. v2 priorizada a E3) |
 | Date picker + responsive web | ✅ Completado (E2) |
 | Insignias y perfil | ✅ Completado (E2) |
-| Sugerencia de pasos con IA | ⏳ Planificado para E3 |
+| Sugerencia de pasos con IA | 🚧 En curso (E3 — borrador y endpoint) |
+| Rate limiting + cache + seguridad backend | ✅ Completado (E3) |
+| Dashboard + demo final | ⏳ Planificado (E3) |
+| XP/Level backend + notificaciones v2 | ⏳ Planificado (E3) |
 
 ---
 
@@ -73,7 +79,8 @@ Migración visual al diseño Zenith Vitality + backend + auth + sync offline-fir
 | Diseño visual | Sistema Zenith Vitality |
 | Testing | Vitest (app, 111 tests) + Jest/Supertest (backend, 94 tests) |
 | Control de versiones | Git + GitHub + Conventional Commits |
-| Backend (E2) | Node.js + Express + Prisma + PostgreSQL (Render.com + Neon) |
+| Backend (E2–E3) | Node.js + Express + Prisma + PostgreSQL (Render.com + Neon) |
+| IA (E3) | Sugerencia de pasos (AIService + módulo `ai` en backend) |
 
 ---
 
@@ -174,9 +181,9 @@ stepup/
 │   │   ├── HistoryScreen.tsx      # Historial + gráfico semanal
 │   │   ├── BadgesScreen.tsx       # Galería de insignias
 │   │   ├── ProfileScreen.tsx      # Perfil y configuración
-│   │   ├── BadgesScreen.tsx       # Galería de insignias
-│   │   ├── OnboardingScreen.tsx    # Onboarding inicial
-│   │   ├── WelcomeScreen.tsx      # Entrar con cuenta o explorar sin cuenta
+│   │   ├── OnboardingScreen1.tsx  # Onboarding — bienvenida
+│   │   ├── OnboardingScreen2.tsx  # Onboarding — cómo usar la app
+│   │   ├── NotificationPermissionScreen.tsx  # Permisos de notificación
 │   │   ├── LoginScreen.tsx        # Inicio de sesión
 │   │   ├── RegisterScreen.tsx     # Registro + migración de datos
 │   │   └── SyncConflictScreen.tsx # Resolución de conflictos de sync
@@ -189,9 +196,18 @@ stepup/
 │   │   ├── AuthService.ts         # Registro, login, sesión
 │   │   ├── SyncService.ts         # Push / pull / migrate / conflictos
 │   │   ├── syncLifecycle.ts       # Sync automático al abrir/cerrar
+│   │   ├── AIService.ts           # Sugerencia de pasos con IA (E3)
 │   │   ├── session.ts             # Persistencia de sesión
 │   │   ├── idempotency.ts         # Claves idempotentes
+│   │   ├── storage.ts             # Persistencia en SQLite/AsyncStorage
+│   │   ├── localOwner.ts          # Propietario local pre-registro
 │   │   └── dateFormat.ts          # Helpers ISO + display
+│   ├── hooks/
+│   │   └── useIsOnline.ts         # Estado de conectividad
+│   ├── utils/
+│   │   ├── date.ts                # Helpers de fecha
+│   │   ├── draftSteps.ts          # Borrador de pasos sugeridos (E3)
+│   │   └── syncConflict.ts        # Reglas de merge de conflictos
 │   ├── database/
 │   │   ├── db.ts                  # Conexión + inicialización SQLite
 │   │   └── migrations.ts          # 4 migraciones (schema + sync + conflictos + owner)
@@ -205,33 +221,42 @@ stepup/
 │   │   ├── StepItem.tsx           # Item de paso con checkbox
 │   │   ├── TimerWidget.tsx        # Display del timer
 │   │   ├── GlassTabBar.tsx        # Barra inferior flotante
+│   │   ├── FloatingActionButton.tsx  # Acción flotante secundaria
 │   │   ├── EmptyState.tsx         # Estado vacío con CTA
 │   │   ├── LineChart.tsx          # Gráfico de líneas simple
+│   │   ├── SuggestedStepsDraft.tsx  # Borrador de pasos sugeridos por IA (E3)
 │   │   └── ConfettiOverlay.tsx    # Confetti animado
-│   └── theme/
+│   └── theme/                     # Sistema Zenith Vitality (tokens)
+│       ├── index.ts               # Tokens agrupados
 │       ├── colors.ts              # Paleta de colores
 │       ├── typography.ts          # Estilos de texto
 │       ├── spacing.ts             # Sistema de espaciado
+│       ├── layout.ts              # Layout y medidas
+│       ├── responsive.ts          # Escalado responsive
 │       ├── borderRadius.ts        # Radios de borde
 │       └── shadows.ts             # Sombras ambientales
 ├── .claude/skills/zenith-vitality-ds/  # Design System skill para IA
-├── backend/                     # API REST (E2) — Express + Prisma + PostgreSQL
+├── backend/                     # API REST (E2–E3) — Express + Prisma + PostgreSQL
 │   ├── src/
 │   │   ├── server.ts            # Entry point (env fail-closed)
 │   │   ├── app.ts               # Express app + rutas
-│   │   ├── routes/              # auth, task, step, sync, progress
+│   │   ├── routes/              # auth, sync, tasks, ai, progress
 │   │   ├── controllers/         # Capa HTTP
-│   │   ├── services/            # Lógica de negocio
+│   │   ├── services/            # Lógica de negocio (sync, ai, cache)
 │   │   ├── repositories/        # Acceso a datos (Prisma)
+│   │   ├── config/              # env + rate limits
 │   │   ├── middleware/          # auth, idempotency, error-handler
-│   │   └── tests/               # 9 suites (94 casos)
+│   │   └── tests/               # Suites de integración + security (E3)
 │   ├── prisma/
 │   │   ├── schema.prisma        # User, Task, Step, DailyProgress, IdempotencyKey
-│   │   └── migrations/          # 4 migraciones
+│   │   └── migrations/          # 6 migraciones
 │   └── docker-compose.yml       # Postgres local de desarrollo
 ├── docs/
 │   ├── CONVENCIONES.md            # Reglas del equipo
-│   ├── Contexto.md                 # Contexto completo del proyecto
+│   ├── Contexto.md                 # Contexto completo del proyecto (entregas)
+│   ├── GUIA-DISENO-MOVIL.md        # Guía móvil canónica (design system)
+│   ├── GUIA-DOCKER-POSTGRES.md     # Setup del backend local con Docker
+│   ├── Entrega 3 PRD.md            # PRD de la entrega en curso
 │   └── practicas-recomendadas.md  # Prácticas de ingeniería
 ├── App.tsx                        # Entry point + navegación bottom tabs
 ├── AGENTS.md                      # Guía para agentes de IA
@@ -261,7 +286,14 @@ Resumen rápido:
 |---|---|---|---|
 | E1 | Marzo – Junio 2026 | React Native + Expo + SQLite local | ✅ Completada |
 | E2 | Julio – Agosto 2026 | + Node.js + PostgreSQL + Render/Neon | ✅ Completada |
-| E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | ⏳ Planificado |
+| E3 | Septiembre – Noviembre 2026 | + IA + Dashboard + Demo final | 🚧 En curso |
+
+Cada entrega publicada se conserva como historial en su rama y su release:
+
+| Entrega | Rama | Release |
+|---|---|---|
+| E1 | `entrega-1` | [entrega-1](https://github.com/YahirAedo/stepup/releases/tag/entrega-1) |
+| E2 | `entrega-2` | [v2.0.0-entrega2](https://github.com/YahirAedo/stepup/releases/tag/v2.0.0-entrega2) |
 
 ---
 
