@@ -9,6 +9,8 @@
 > Rama base de código: `feature/backend-express-prisma-postgres` (commit `ca0912d`)
 > Última actualización: 2026-08-11 (B1 terminado; deploy verificado en producción)
 > URL de producción: https://stepup-backend-api-production.up.railway.app
+>
+> ⚠️ **DEPRECADO (2026-09-24):** El plan de Railway venció y la URL ya no responde. La producción actual corre en **Render + Neon** (web service `stepup`, DB `stepup_prod` en Neon): `https://stepup-940v.onrender.com`. Migración documentada en la issue #273 y en DT-33 (`docs/Log Decisiones Tecnicas E2.md`). Este checklist se conserva como registro histórico de B1.
 
 ## Qué pide el issue (acceptance criteria)
 

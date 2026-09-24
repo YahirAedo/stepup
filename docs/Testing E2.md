@@ -119,8 +119,8 @@ Se priorizan tres niveles:
 | ID | Caso | Pasos | Resultado esperado | Tipo |
 | --- | --- | --- | --- | --- |
 | TC-MAN-01 | Uso offline sin cuenta | Abrir app, crear tarea, agregar pasos, completar paso | Todo funciona sin conexión | Manual |
-| TC-MAN-02 | Registro con migración | Estando offline con datos, registrarse | Datos aparecen en Railway | Manual |
-| TC-MAN-03 | Sync automático | Con cuenta, crear tarea offline → reconectar | Tarea aparece en Railway | Manual |
+| TC-MAN-02 | Registro con migración | Estando offline con datos, registrarse | Datos aparecen en el backend | Manual |
+| TC-MAN-03 | Sync automático | Con cuenta, crear tarea offline → reconectar | Tarea aparece en el backend | Manual |
 | TC-MAN-04 | Pull al abrir app | Desde otro dispositivo, crear tarea → abrir app en primer dispositivo | Tarea aparece | Manual |
 | TC-MAN-05 | Persistencia de sesión | Cerrar y reabrir app | Sesión activa, mismo usuario | Manual |
 

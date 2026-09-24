@@ -5,7 +5,7 @@
 - React Native + Expo SDK 54 (no usar SDK 55)
 - TypeScript
 - SQLite local (expo-sqlite)
-- Backend E2: Node.js + Express + Prisma + PostgreSQL + Railway
+- Backend E2: Node.js + Express + Prisma + PostgreSQL — Render.com (web service) + Neon (free permanente), migrado desde Railway (issue #273)
 - Diseño: Sistema Zenith Vitality (stitch_stepup_design_system/)
 
 ## Documentos obligatorios (leer antes de tocar código)

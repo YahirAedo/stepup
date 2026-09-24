@@ -28,7 +28,7 @@ StepUp es una app de productividad que aplica la técnica de **fragmentación de
 ## 2.1 Requisitos
 
 - **App:** dispositivo Android (Expo Go) o navegador web (versión de desarrollo)
-- **Backend:** desplegado en Railway (URL de producción incluida en la build de demo)
+- **Backend:** desplegado en Render.com + Neon (URL de producción incluida en la build de demo)
 
 ## 2.2 Correr la app
 
@@ -121,7 +121,7 @@ En la pantalla de bienvenida tocá **"Crear cuenta"** e ingresá nombre, email y
 
 | Problema | Solución |
 | --- | --- |
-| "Crear cuenta" se cuelga al guardar | Asegurate de tener conexión (la migración llama al backend). Si el servidor de Railway estaba dormido, esperá ~1 min y reintentá |
+| "Crear cuenta" se cuelga al guardar | Asegurate de tener conexión (la migración llama al backend). Si el servidor de Render estaba dormido (free tier), esperá ~1 min y reintentá |
 | La fecha límite no abre un calendario | En web el date picker está disponible en el campo de fecha (versión reciente) |
 | Datos que no sincronizan | Revisá conexión y cerrá/reabrí la app para forzar el sync |
 | Querés empezar de cero | Desde Perfil podés cerrar sesión; sin cuenta, tus datos quedan solo en el dispositivo |
