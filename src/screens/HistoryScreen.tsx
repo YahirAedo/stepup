@@ -1,13 +1,19 @@
 import React, { useCallback } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StatusBar, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { HistoryStackParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { ProgressService } from '../services/ProgressService';
 import { Task } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
 import LineChart from '../components/LineChart';
 
-export default function HistoryScreen() {
+type Props = {
+  navigation: NativeStackNavigationProp<HistoryStackParamList>;
+};
+
+export default function HistoryScreen({ navigation }: Props) {
   const { contentPaddingBottom } = useBottomLayout();
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const [weekData, setWeekData] = React.useState<{ date: string; count: number }[]>([]);
@@ -284,19 +290,25 @@ export default function HistoryScreen() {
                 >
                   Has mantenido tu actividad durante una semana completa. ¡Mantén el ritmo!
                 </Text>
-                <View
-                  style={{
+                <Pressable
+                  onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'Badges' })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver insignias"
+                  accessibilityHint="Navega a la pantalla de logros"
+                  hitSlop={12}
+                  style={({ pressed }) => ({
                     backgroundColor: colors['primary-fixed'],
                     alignSelf: 'flex-start',
                     paddingHorizontal: 24,
                     paddingVertical: 8,
                     borderRadius: borderRadius.full,
-                  }}
+                    opacity: pressed ? 0.7 : 1,
+                  })}
                 >
                   <Text style={[typography['label-md'], { color: colors.primary }]}>
                     Ver Insignias
                   </Text>
-                </View>
+                </Pressable>
                 <Text
                   style={{
                     position: 'absolute',

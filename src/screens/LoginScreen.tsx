@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -158,7 +158,7 @@ export default function LoginScreen({ navigation }: Props) {
             />
 
             <TouchableOpacity
-              onPress={() => {}}
+              onPress={() => Alert.alert('Próximamente', 'Función de recuperación de contraseña no disponible aún')}
               activeOpacity={0.7}
               style={{ alignSelf: 'flex-end', paddingVertical: 4 }}
             >
