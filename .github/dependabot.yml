@@ -18,7 +18,15 @@ updates:
           - minor
           - patch
     ignore:
-      # Compatibilidad con Expo SDK 54: no subir majors de paquetes expo/react-native (ej. @expo/metro-runtime 57.x, datetimepicker 9.x)
+      # Compatibilidad con Expo SDK 54: no subir majors de paquetes expo.
+      # `@expo/*` cubre paquetes scoped (p. ej. @expo/metro-runtime); `expo` y
+      # `expo-splash-screen` son unscoped y deben listarse explícitamente.
+      - dependency-name: 'expo'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: 'expo-splash-screen'
+        update-types:
+          - version-update:semver-major
       - dependency-name: '@expo/*'
         update-types:
           - version-update:semver-major

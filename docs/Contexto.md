@@ -21,11 +21,11 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 ## Contexto académico
 
 - Materia: Ingeniería en Sistemas de Información
-- Duración total: 9 meses (marzo a fines de noviembre 2026), 3 entregas
+- Duración total: marzo a septiembre 2026 (3 entregas; E3 cerrada el 24/09)
 - Equipo: 3 integrantes (sin roles fijos, todos hacen de todo)
 - **E1 entregada:** Mayo 2026 — app funcional offline con ciclo completo de tareas y pasos
-- **E2 en curso:** Julio-Agosto 2026 — entrega **18 de Agosto**. Migración visual + backend + auth + sync
-- **E3:** Septiembre-Noviembre 2026 — IA, dashboard, estadísticas
+- **E2 entregada:** Julio-Agosto 2026 — entrega **18 de Agosto**. Migración visual + backend + auth + sync
+- **E3 entregada:** Septiembre 2026 (24/09) — IA de sugerencia de pasos, seguridad/higiene del backend
 - El profesor aclaró que ellos definen qué entregan, y que lo importante es que cada entrega sea algo funcional y demostrable
 
 ---
@@ -61,7 +61,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
   - Sincronización pull/push con last-write-wins
 - Modelo de datos replicado entre SQLite local y PostgreSQL remoto
 
-### Entrega 3 — Septiembre a Noviembre 2026 (entrega final)
+### Entrega 3 — Septiembre 2026 (entrega final, cerrada el 24/09)
 
 **Foco principal: IA.** Plan detallado en `docs/Entrega 3 PRD.md` (epic #152).
 
@@ -75,7 +75,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 - **Dashboard de consistencia:** racha de días con actividad (1 día de gracia fijo por racha, no acumulable) + tendencia semanal con LineChart
 - Notificaciones push (FCM), slices de polish 8/10/11 y refino conversacional de la IA quedan FUERA del alcance obligatorio de E3
 
-> **Nota:** originalmente se planificaron 4 entregas (la cuarta en diciembre con widget Android y estadísticas avanzadas), pero la cursada termina a fines de noviembre. Todo lo que entre en el tiempo disponible se agrupa en E3. La E4 queda descartada o como trabajo futuro.
+> **Nota:** originalmente se planificaron 4 entregas (la cuarta en diciembre con widget Android y estadísticas avanzadas), pero la cursada termina a fines de noviembre. Todo lo que entre en el tiempo disponible se agrupó en E3, que se **cerró el 24/09/2026** con el alcance implementado a esa fecha. La E4 queda descartada; lo no alcanzado (dashboard #156, epic responsive #205, XP/FCM) queda como trabajo futuro.
 
 ---
 
