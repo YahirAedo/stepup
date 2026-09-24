@@ -4,7 +4,7 @@
 
 | Version | Support |
 |---------|---------|
-| `main` (Entrega 3 en curso) | Activa |
+| `main` (Entrega 3 — cerrada 24/09/2026) | Activa (última entrega) |
 | `v2.0.0-entrega2` / rama `entrega-2` (E2) | Histórica (bugs críticos) |
 | `entrega-1` (tag E1) | Histórica (bugs críticos) |
 
