@@ -6,7 +6,7 @@ export interface MigrationDb {
   runAsync: (sql: string, params: SqlParam[]) => Promise<{ lastInsertRowId: number }>;
 }
 
-type Migration = {
+export type Migration = {
   version: number;
   statements: string[];
 };
@@ -64,8 +64,27 @@ const CONFLICTS_V3: string[] = [
 ];
 
 // V4: aislar la DB local por usuario — sync_meta guarda el owner_user_id actual.
-const OWNER_USER_V4: string[] = [
-  `ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`,
+const OWNER_USER_V4: string[] = [`ALTER TABLE sync_meta ADD COLUMN owner_user_id TEXT;`];
+
+// V5: keys de idempotencia pendientes — se reusan en retries hasta confirmar éxito
+// en el servidor (issue #124). Una fila por operación (scope).
+const PENDING_IDEMPOTENCY_KEYS_V5: string[] = [
+  `CREATE TABLE IF NOT EXISTS pending_idempotency_keys (
+     scope        TEXT PRIMARY KEY,
+     key          TEXT NOT NULL,
+     payload_hash TEXT NOT NULL,
+     created_at   TEXT NOT NULL
+   );`,
+];
+
+// V6: descripción de tarea (contexto para IA) — issue #153
+const TASK_DESCRIPTION_V6: string[] = [
+  `ALTER TABLE tasks ADD COLUMN description TEXT;`,
+];
+
+// V7: guardar fecha local de completado para sincronización correcta de zonas horarias.
+const LOCAL_DATE_V7: string[] = [
+  `ALTER TABLE steps ADD COLUMN completed_date TEXT;`,
 ];
 
 const MIGRATIONS: Migration[] = [
@@ -73,17 +92,29 @@ const MIGRATIONS: Migration[] = [
   { version: 2, statements: OFFLINE_SYNC_V2 },
   { version: 3, statements: CONFLICTS_V3 },
   { version: 4, statements: OWNER_USER_V4 },
+  { version: 5, statements: PENDING_IDEMPOTENCY_KEYS_V5 },
+  { version: 6, statements: TASK_DESCRIPTION_V6 },
+  { version: 7, statements: LOCAL_DATE_V7 },
 ];
 
-export async function runMigrations(db: MigrationDb): Promise<void> {
+export async function runMigrations(
+  db: MigrationDb,
+  migrations: Migration[] = MIGRATIONS,
+): Promise<void> {
   const rows = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-  const current = rows[0]?.user_version ?? 0;
+  let current = rows[0]?.user_version ?? 0;
 
-  for (const migration of MIGRATIONS) {
+  for (const migration of migrations) {
     if (migration.version <= current) continue;
+    if (migration.version !== current + 1) {
+      throw new Error(
+        `Gap en migraciones: falta la versión ${current + 1} (siguiente encontrada: ${migration.version})`,
+      );
+    }
     for (const statement of migration.statements) {
       await db.execAsync(statement);
     }
     await db.execAsync(`PRAGMA user_version = ${migration.version}`);
+    current = migration.version;
   }
 }

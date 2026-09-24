@@ -3,11 +3,12 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   Alert,
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,10 +16,16 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { TasksStackParamList, MainTabParamList } from '../types/navigation';
 import { TaskService } from '../services/TaskService';
 import { StepService } from '../services/StepService';
-import { Task, Step } from '../types';
+import { AIService, aiErrorMessage } from '../services/AIService';
+import { hasSession } from '../services/session';
+import { Task, Step, DraftStep } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, useBottomLayout } from '../theme';
+import { useIsOnline } from '../hooks/useIsOnline';
+import { parseDraftSteps } from '../utils/draftSteps';
 import ProgressBar from '../components/ProgressBar';
 import StepItem from '../components/StepItem';
+import Button from '../components/Button';
+import SuggestedStepsDraft from '../components/SuggestedStepsDraft';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<TasksStackParamList, 'TaskDetail'>,
@@ -31,6 +38,13 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
   const [task, setTask] = useState<Task | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isOnline = useIsOnline();
+  const aiVisible = isOnline && hasSession();
+  const [suggesting, setSuggesting] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<DraftStep[] | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,6 +92,48 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
     loadData();
   }
 
+  // IA — generar pasos con la descripción guardada (issue #157). "Otra propuesta"
+  // re-usa esta misma función reemplazando el borrador completo.
+  async function handleGenerateSteps() {
+    if (!task || !task.description) return;
+    setSuggesting(true);
+    setAiError(null);
+    setDraft(null);
+    try {
+      const steps = await AIService.suggestSteps(task.name, task.description);
+      setDraft(
+        steps.map((step, index) => ({
+          key: `ai-${index}`,
+          name: step.name,
+          durationMin: String(step.duration_min),
+        })),
+      );
+    } catch (err) {
+      setAiError(aiErrorMessage(err));
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  async function handleConfirmSteps() {
+    if (!task || !draft || draft.length === 0) return;
+    const result = parseDraftSteps(draft);
+    if (!result.ok) {
+      Alert.alert('Borrador inválido', result.message);
+      return;
+    }
+    setConfirming(true);
+    try {
+      await StepService.addMany(task.id, result.steps);
+      setDraft(null);
+      await loadData();
+    } catch {
+      Alert.alert('Error', 'No se pudieron agregar los pasos. Intentá de nuevo.');
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   const completedCount = steps.filter((s) => s.status === 'completed').length;
   const totalCount = steps.length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
@@ -110,7 +166,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           backgroundColor: colors.surface,
         }}
       >
-        <Text style={{ color: colors['on-surface-variant'], fontSize: 14 }}>
+        <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
           No se encontró la tarea.
         </Text>
       </View>
@@ -144,7 +200,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
                 <Text
                   style={[
                     typography['label-sm'],
-                    { color: colors.secondary, textTransform: 'uppercase', letterSpacing: 2 },
+                    { color: colors.secondary, textTransform: 'uppercase' },
                   ]}
                 >
                   Alta Prioridad
@@ -154,6 +210,73 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
               <Text style={[typography['headline-lg-mobile'], { color: colors['on-surface'] }]}>
                 {task.name}
               </Text>
+
+              {task.description ? (
+                <Text style={[typography['body-md'], { color: colors['on-surface-variant'] }]}>
+                  {task.description}
+                </Text>
+              ) : null}
+
+              {/*
+                IA — generar pasos con la descripción guardada (issue #157). El gate
+                es el mismo de DT-32 (sesión activa + conexión): offline o sin sesión
+                no aparece nada y el flujo manual de "+ Agregar paso" queda intacto.
+              */}
+              {aiVisible && task.description && (
+                <View style={{ gap: spacing['stack-gap'] - 4 }}>
+                  <Button
+                    title="Generar pasos con IA"
+                    onPress={handleGenerateSteps}
+                    variant="tertiary"
+                    disabled={suggesting || confirming}
+                    icon={
+                      <MaterialCommunityIcons
+                        name="creation-outline"
+                        size={20}
+                        color={colors['on-tertiary']}
+                      />
+                    }
+                  />
+
+                  {(suggesting || !!aiError || !!draft) && (
+                    <SuggestedStepsDraft
+                      draft={draft}
+                      onChangeDraft={setDraft}
+                      onRegenerate={handleGenerateSteps}
+                      suggesting={suggesting}
+                      error={aiError}
+                    />
+                  )}
+
+                  {draft && draft.length > 0 && (
+                    <Button
+                      title={
+                        confirming
+                          ? 'Agregando pasos...'
+                          : `Agregar ${draft.length} paso${draft.length === 1 ? '' : 's'} a la tarea`
+                      }
+                      onPress={handleConfirmSteps}
+                      variant="primary"
+                      disabled={suggesting || confirming}
+                    />
+                  )}
+                </View>
+              )}
+
+              {aiVisible && !task.description && (
+                <Button
+                  title="Escribí una descripción para usar la IA"
+                  onPress={() => navigation.navigate('TaskForm', { task })}
+                  variant="secondary"
+                  icon={
+                    <MaterialCommunityIcons
+                      name="pencil-outline"
+                      size={18}
+                      color={colors['on-surface-variant']}
+                    />
+                  }
+                />
+              )}
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -239,10 +362,11 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           />
         )}
         ListFooterComponent={() => (
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.navigate('StepForm', { taskId: task.id })}
-            activeOpacity={0.7}
-            style={{
+            accessibilityRole="button"
+            accessibilityLabel="Agregar nuevo paso"
+            style={({ pressed }) => ({
               marginTop: spacing['stack-gap'],
               padding: 14,
               borderRadius: borderRadius.lg,
@@ -250,13 +374,13 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
               borderStyle: 'dashed',
               borderColor: colors.secondary,
               alignItems: 'center',
-              opacity: 0.6,
-            }}
+              opacity: pressed ? 0.7 : 0.6,
+            })}
           >
             <Text style={[typography['label-md'], { color: colors.secondary }]}>
               + Agregar paso
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       />
 
@@ -273,10 +397,11 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           backgroundColor: colors.surface,
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.navigate('Focus')}
-          activeOpacity={0.9}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Comenzar ahora"
+          style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -285,13 +410,14 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
             borderRadius: borderRadius.full,
             backgroundColor: colors['tertiary'],
             ...shadows.fab,
-          }}
+            opacity: pressed ? 0.9 : 1,
+          })}
         >
           <Text style={{ fontSize: 20, color: colors['on-tertiary'] }}>▶</Text>
-          <Text style={[typography['label-md'], { color: colors['on-tertiary'], fontSize: 16 }]}>
+          <Text style={[typography['label-md'], { color: colors['on-tertiary'] }]}>
             Comenzar ahora
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

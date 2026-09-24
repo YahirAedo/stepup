@@ -61,6 +61,110 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body[0].name).toBe('Tarea offline');
   });
 
+  it('POST /api/sync/push persiste description no nula (AC4 sync)', async () => {
+    const id = crypto.randomUUID();
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea con descripción', description: 'Contexto para IA', updatedAt: new Date().toISOString() }],
+        steps: [],
+      });
+
+    expect(res.status).toBe(200);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].description).toBe('Contexto para IA');
+  });
+
+  it('push preserva description existente cuando el cliente no la envía (AC4)', async () => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const create = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea', description: 'Original', updatedAt: now }],
+        steps: [],
+      });
+    expect(create.status).toBe(200);
+
+    const update = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Renombrada', updatedAt: new Date(Date.now() + 10_000).toISOString() }],
+        steps: [],
+      });
+    expect(update.status).toBe(200);
+    expect(update.body.tasks[0].applied).toBe(true);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].name).toBe('Renombrada');
+    expect(list.body[0].description).toBe('Original');
+  });
+
+  it('push actualiza description cuando el cliente la envía en un update (AC4)', async () => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const create = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id, name: 'Tarea', updatedAt: now }], steps: [] });
+    expect(create.status).toBe(200);
+
+    const update = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [
+          { id, name: 'Tarea', description: 'Ahora sí', updatedAt: new Date(Date.now() + 10_000).toISOString() },
+        ],
+        steps: [],
+      });
+    expect(update.status).toBe(200);
+    expect(update.body.tasks[0].applied).toBe(true);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].description).toBe('Ahora sí');
+  });
+
+  it('push con description vacía la normaliza a null (AC4)', async () => {
+    const id = crypto.randomUUID();
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea', description: '   ', updatedAt: new Date().toISOString() }],
+        steps: [],
+      });
+    expect(res.status).toBe(200);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(token));
+    expect(list.body[0].description).toBeNull();
+  });
+
+  it('GET /api/sync/pull retorna description de la tarea (AC4)', async () => {
+    const id = crypto.randomUUID();
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [{ id, name: 'Tarea', description: 'Contexto IA', updatedAt: new Date().toISOString() }],
+        steps: [],
+      });
+
+    const past = await request(app)
+      .get('/api/sync/pull?since=2020-01-01T00:00:00.000Z')
+      .set(authHeader(token));
+    expect(past.body.tasks).toHaveLength(1);
+    expect(past.body.tasks[0].description).toBe('Contexto IA');
+  });
+
   it('push aplica last-write-wins: la versión más nueva gana y la vieja se ignora', async () => {
     const id = crypto.randomUUID();
     const older = new Date(Date.now() - 60_000).toISOString();
@@ -298,6 +402,57 @@ describe('API de sincronización — push, pull y migrate', () => {
     expect(list.body[0].name).toBe('Migrada');
   });
 
+  it('POST /api/sync/migrate persiste description de tareas migradas (AC4)', async () => {
+    const taskLocalId = 9;
+    const taskId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Migra Desc',
+      email: 'migra-desc@stepup.app',
+      password: 'secret123',
+      tasks: [{ localId: taskLocalId, id: taskId, name: 'Migrada', description: 'Contexto', updatedAt: now }],
+      steps: [],
+    });
+    expect(res.status).toBe(201);
+
+    const list = await request(app).get('/api/tasks').set(authHeader(res.body.token));
+    expect(list.body[0].description).toBe('Contexto');
+  });
+
+  it('POST /api/sync/migrate registra daily_progress para pasos completados con date', async () => {
+    const taskLocalId = 11;
+    const stepLocalId = 5;
+    const taskId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const localDate = '2026-08-26';
+
+    const res = await request(app).post('/api/sync/migrate').send({
+      name: 'Migra Progress',
+      email: 'migra-progress@stepup.app',
+      password: 'secret123',
+      tasks: [{ localId: taskLocalId, id: taskId, name: 'Migrada', updatedAt: now }],
+      steps: [
+        {
+          localId: stepLocalId,
+          taskLocalId,
+          name: 'Paso completo',
+          orderIndex: 0,
+          status: 'completed',
+          updatedAt: now,
+          date: localDate,
+        },
+      ],
+    });
+
+    expect(res.status).toBe(201);
+
+    const progress = await request(app).get('/api/progress').set(authHeader(res.body.token));
+    const entry = progress.body.find((p: { date: string }) => p.date === localDate);
+    expect(entry).toBeTruthy();
+    expect(entry.stepsCompleted).toBe(1);
+  });
+
   it('POST /api/sync/migrate con password corta devuelve 400', async () => {
     const res = await request(app).post('/api/sync/migrate').send({
       name: 'Nuevo',
@@ -340,9 +495,157 @@ describe('API de sincronización — push, pull y migrate', () => {
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);
-    expect(second.body.token).toBe(first.body.token);
+    expect(second.body.user.id).toBe(first.body.user.id);
     expect(second.body.taskMap).toEqual(first.body.taskMap);
     expect(second.body.user.email).toBe('retry@stepup.app');
+
+    const list = await request(app).get('/api/tasks').set(authHeader(second.body.token));
+    expect(list.status).toBe(200);
+    expect(list.body).toHaveLength(1);
+  });
+
+  it('POST /api/sync/migrate retry replaya aunque el cliente serialice el body en otro orden o con espacios', async () => {
+    const key = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Retry Order',
+        email: 'retry-order@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Migrada', updatedAt: now }],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        password: 'secret123',
+        steps: [],
+        tasks: [{ updatedAt: now, name: '  Migrada  ', localId: 1 }],
+        email: 'retry-order@stepup.app',
+        name: 'Retry Order',
+      });
+
+    expect(second.status).toBe(201);
+    expect(second.body.user.id).toBe(first.body.user.id);
+    expect(second.body.taskMap).toEqual(first.body.taskMap);
+  });
+
+  it('POST /api/sync/migrate no crea usuario interno de scope ni deja claves de idempotencia', async () => {
+    const res = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', crypto.randomUUID())
+      .send({
+        name: 'Sin Scope',
+        email: 'sinscope@stepup.app',
+        password: 'secret123',
+        tasks: [],
+        steps: [],
+      });
+
+    expect(res.status).toBe(201);
+
+    const scopeUsers = await prisma.user.count({
+      where: { email: 'idempotency-migrate@internal.stepup' },
+    });
+    expect(scopeUsers).toBe(0);
+    expect(await prisma.idempotencyKey.count()).toBe(0);
+  });
+
+  it('POST /api/sync/migrate con email existente y password incorrecta devuelve 409', async () => {
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', crypto.randomUUID())
+      .send({
+        name: 'Original',
+        email: 'duenio@stepup.app',
+        password: 'secret123',
+        tasks: [],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', crypto.randomUUID())
+      .send({
+        name: 'Intruso',
+        email: 'duenio@stepup.app',
+        password: 'otra-clave-123',
+        tasks: [],
+        steps: [],
+      });
+    expect(second.status).toBe(409);
+  });
+
+  it('POST /api/sync/migrate la misma key usada por otro cliente no fuga datos ajenos', async () => {
+    const key = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente A',
+        email: 'cliente-a@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Tarea privada', updatedAt: now }],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente B',
+        email: 'cliente-b@stepup.app',
+        password: 'secret123',
+        tasks: [],
+        steps: [],
+      });
+
+    expect(second.status).toBe(201);
+    expect(second.body.user.email).toBe('cliente-b@stepup.app');
+    expect(second.body.token).not.toBe(first.body.token);
+    expect(second.body.taskMap).toEqual({});
+
+    const tasksB = await request(app).get('/api/tasks').set(authHeader(second.body.token));
+    expect(tasksB.body).toEqual([]);
+  });
+
+  it('POST /api/sync/migrate mismo email con payload distinto devuelve 409 aunque repita la key', async () => {
+    const key = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const first = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente A',
+        email: 'replay-distinto@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Original', updatedAt: now }],
+        steps: [],
+      });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/sync/migrate')
+      .set('Idempotency-Key', key)
+      .send({
+        name: 'Cliente A',
+        email: 'replay-distinto@stepup.app',
+        password: 'secret123',
+        tasks: [{ localId: 1, name: 'Otra tarea', updatedAt: now }],
+        steps: [],
+      });
+    expect(second.status).toBe(409);
   });
 
   it('POST /api/sync/migrate con email existente devuelve 409', async () => {
@@ -468,5 +771,126 @@ describe('API de sincronización — push, pull y migrate', () => {
 
     const afterGood = await request(app).get(`/api/tasks/${taskId}`).set(authHeader(token));
     expect(afterGood.body.status).toBe('completed');
+  });
+
+  it('push de step completado con date incrementa daily_progress una sola vez', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const localDate = '2026-08-26';
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: now,
+            date: localDate,
+          },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+
+    const progress = await request(app).get('/api/progress').set(authHeader(token));
+    const entry = progress.body.find((p: { date: string }) => p.date === localDate);
+    expect(entry).toBeTruthy();
+    expect(entry.stepsCompleted).toBe(1);
+  });
+
+  it('re-push del mismo step completado no duplica daily_progress', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const later = new Date(Date.now() + 10_000).toISOString();
+    const localDate = '2026-08-26';
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: now,
+            date: localDate,
+          },
+        ],
+      });
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: later,
+            date: localDate,
+          },
+        ],
+      });
+
+    const progress = await request(app).get('/api/progress').set(authHeader(token));
+    const entry = progress.body.find((p: { date: string }) => p.date === localDate);
+    expect(entry.stepsCompleted).toBe(1);
+  });
+
+  it('push con date inválida (2026-99-99) devuelve 400', async () => {
+    const taskId = crypto.randomUUID();
+    const stepId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({ tasks: [{ id: taskId, name: 'Tarea', updatedAt: now }], steps: [] });
+
+    const res = await request(app)
+      .post('/api/sync/push')
+      .set(authHeader(token))
+      .send({
+        tasks: [],
+        steps: [
+          {
+            id: stepId,
+            taskId,
+            name: 'Paso',
+            orderIndex: 0,
+            status: 'completed',
+            updatedAt: now,
+            date: '2026-99-99',
+          },
+        ],
+      });
+
+    expect(res.status).toBe(400);
   });
 });

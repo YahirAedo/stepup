@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, type TextStyle } from 'react-native';
+import { View, Text, Pressable, Animated, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
@@ -171,10 +171,11 @@ export default function OnboardingScreen2({ navigation }: Props) {
           alignItems: 'center',
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.navigate('NotificationPermission')}
-          activeOpacity={0.85}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Empezar"
+          style={({ pressed }) => ({
             width: '100%',
             height: 64,
             borderRadius: borderRadius.full,
@@ -183,13 +184,14 @@ export default function OnboardingScreen2({ navigation }: Props) {
             alignItems: 'center',
             flexDirection: 'row',
             gap: 8,
-          }}
+            opacity: pressed ? 0.85 : 1,
+          })}
         >
           <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
             Empezar
           </Text>
           <Text style={{ fontSize: s(20), color: colors['on-primary'] }}>→</Text>
-        </TouchableOpacity>
+        </Pressable>
 
         <ProgressDots total={3} active={2} />
       </Animated.View>

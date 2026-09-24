@@ -1,7 +1,9 @@
 import type { Task } from '../types';
 import { getDb } from '../database/db';
+import type { MigrationDb } from '../database/migrations';
 import {
   applyServerIds,
+  clearPendingIdempotencyKey,
   getAllSteps,
   getAllTasks,
   getConflicts as getStoredConflicts,
@@ -22,14 +24,18 @@ import {
   type ServerTask,
   type SyncConflict,
 } from '../database/sync';
-import { apiFetch, ENDPOINTS } from './api';
-import { generateIdempotencyKey } from './idempotency';
+import { apiFetch, ApiError, ENDPOINTS } from './api';
+import { resolvePersistedIdempotencyKey } from './idempotency';
 import { hasSession, saveSession, type SessionUser } from './session';
+
+const PUSH_SCOPE = 'sync-push';
+const MIGRATE_SCOPE = 'sync-migrate';
 
 type PushTask = {
   id?: string;
   localId: number;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -48,6 +54,7 @@ type PushStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type PushResult = {
@@ -62,10 +69,33 @@ function normalizeIso(value: string | null | undefined, fallback?: string): stri
   return fallback ?? nowIso();
 }
 
+async function withIdempotencyKey<T>(
+  db: MigrationDb,
+  scope: string,
+  payload: unknown,
+  idempotencyKey: string | undefined,
+  run: (key: string) => Promise<T>,
+): Promise<T> {
+  const managesKey = idempotencyKey === undefined;
+  const key = idempotencyKey ?? (await resolvePersistedIdempotencyKey(db, scope, payload));
+
+  try {
+    const result = await run(key);
+    if (managesKey) await clearPendingIdempotencyKey(db, scope);
+    return result;
+  } catch (error) {
+    if (managesKey && error instanceof ApiError && error.status >= 400 && error.status !== 401) {
+      await clearPendingIdempotencyKey(db, scope);
+    }
+    throw error;
+  }
+}
+
 type MigrateTask = {
   id?: string;
   localId: number;
   name: string;
+  description: string | null;
   dueDate: string | null;
   status: 'active' | 'completed';
   createdAt: string;
@@ -83,6 +113,7 @@ type MigrateStep = {
   status: 'pending' | 'completed';
   updatedAt: string;
   completedAt: string | null;
+  date?: string;
 };
 
 type MigrateResponse = {
@@ -102,7 +133,7 @@ export async function syncNow(): Promise<void> {
 }
 
 export const SyncService = {
-  async push(idempotencyKey: string = generateIdempotencyKey()): Promise<PushSummary> {
+  async push(idempotencyKey?: string): Promise<PushSummary> {
     if (!hasSession()) {
       return { tasks: 0, steps: 0 };
     }
@@ -121,51 +152,57 @@ export const SyncService = {
     const taskByLocal = new Map<number, Task>();
     for (const task of allTasks) taskByLocal.set(task.id, task);
 
-    const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
-      method: 'POST',
-      idempotencyKey,
-      body: JSON.stringify({
-        tasks: tasks.map((task): PushTask => ({
-          ...(task.server_id ? { id: task.server_id } : {}),
-          localId: task.id,
-          name: task.name,
-          dueDate: task.due_date,
-          status: task.status,
-          createdAt: normalizeIso(task.created_at),
-          updatedAt: normalizeIso(task.updated_at, task.created_at),
-          completedAt: task.completed_at,
-        })),
-        steps: steps.map((step): PushStep => {
-          const parent = taskByLocal.get(step.task_id);
-          const taskServerId = parent?.server_id ?? null;
-          return {
-            ...(step.server_id ? { id: step.server_id } : {}),
-            localId: step.id,
-            ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
-            name: step.name,
-            durationMin: step.duration_min,
-            orderIndex: step.order_index,
-            status: step.status,
-            updatedAt: normalizeIso(step.updated_at),
-            completedAt: step.completed_at,
-          };
-        }),
+    const payload = {
+      tasks: tasks.map((task): PushTask => ({
+        ...(task.server_id ? { id: task.server_id } : {}),
+        localId: task.id,
+        name: task.name,
+        description: task.description,
+        dueDate: task.due_date,
+        status: task.status,
+        createdAt: normalizeIso(task.created_at),
+        updatedAt: normalizeIso(task.updated_at, task.created_at),
+        completedAt: task.completed_at,
+      })),
+      steps: steps.map((step): PushStep => {
+        const parent = taskByLocal.get(step.task_id);
+        const taskServerId = parent?.server_id ?? null;
+        return {
+          ...(step.server_id ? { id: step.server_id } : {}),
+          localId: step.id,
+          ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
+          name: step.name,
+          durationMin: step.duration_min,
+          orderIndex: step.order_index,
+          status: step.status,
+          updatedAt: normalizeIso(step.updated_at),
+          completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
+        };
       }),
+    };
+
+    return withIdempotencyKey(db, PUSH_SCOPE, payload, idempotencyKey, async (key) => {
+      const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
+        method: 'POST',
+        idempotencyKey: key,
+        body: JSON.stringify(payload),
+      });
+
+      const taskMap: Record<string, string> = {};
+      for (const item of result.tasks) {
+        if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
+      }
+      const stepMap: Record<string, string> = {};
+      for (const item of result.steps) {
+        if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
+      }
+
+      await applyServerIds(db, 'tasks', taskMap);
+      await applyServerIds(db, 'steps', stepMap);
+
+      return { tasks: result.tasks.length, steps: result.steps.length };
     });
-
-    const taskMap: Record<string, string> = {};
-    for (const item of result.tasks) {
-      if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
-    }
-    const stepMap: Record<string, string> = {};
-    for (const item of result.steps) {
-      if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
-    }
-
-    await applyServerIds(db, 'tasks', taskMap);
-    await applyServerIds(db, 'steps', stepMap);
-
-    return { tasks: result.tasks.length, steps: result.steps.length };
   },
 
   async pull(): Promise<PushSummary> {
@@ -218,7 +255,7 @@ export const SyncService = {
     name: string,
     email: string,
     password: string,
-    idempotencyKey: string = generateIdempotencyKey(),
+    idempotencyKey?: string,
   ): Promise<PushSummary> {
     const db = await getDb();
     const owner = await getLocalOwner(db);
@@ -233,46 +270,52 @@ export const SyncService = {
     const taskByLocal = new Map<number, Task>();
     for (const task of tasks) taskByLocal.set(task.id, task);
 
-    const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
-      method: 'POST',
-      idempotencyKey,
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        tasks: tasks.map((task): MigrateTask => ({
-          ...(task.server_id ? { id: task.server_id } : {}),
-          localId: task.id,
-          name: task.name,
-          dueDate: task.due_date,
-          status: task.status,
-          createdAt: normalizeIso(task.created_at),
-          updatedAt: normalizeIso(task.updated_at, task.created_at),
-          completedAt: task.completed_at,
-        })),
-        steps: steps.map((step): MigrateStep => {
-          const parent = taskByLocal.get(step.task_id);
-          const taskServerId = parent?.server_id ?? null;
-          return {
-            localId: step.id,
-            ...(taskServerId ? { taskId: taskServerId } : {}),
-            taskLocalId: step.task_id,
-            name: step.name,
-            durationMin: step.duration_min,
-            orderIndex: step.order_index,
-            status: step.status,
-            updatedAt: normalizeIso(step.updated_at),
-            completedAt: step.completed_at,
-          };
-        }),
+    const payload = {
+      name,
+      email,
+      password,
+      tasks: tasks.map((task): MigrateTask => ({
+        ...(task.server_id ? { id: task.server_id } : {}),
+        localId: task.id,
+        name: task.name,
+        description: task.description,
+        dueDate: task.due_date,
+        status: task.status,
+        createdAt: normalizeIso(task.created_at),
+        updatedAt: normalizeIso(task.updated_at, task.created_at),
+        completedAt: task.completed_at,
+      })),
+      steps: steps.map((step): MigrateStep => {
+        const parent = taskByLocal.get(step.task_id);
+        const taskServerId = parent?.server_id ?? null;
+        return {
+          localId: step.id,
+          ...(taskServerId ? { taskId: taskServerId } : {}),
+          taskLocalId: step.task_id,
+          name: step.name,
+          durationMin: step.duration_min,
+          orderIndex: step.order_index,
+          status: step.status,
+          updatedAt: normalizeIso(step.updated_at),
+          completedAt: step.completed_at,
+          ...(step.completed_date ? { date: step.completed_date } : {}),
+        };
       }),
+    };
+
+    return withIdempotencyKey(db, MIGRATE_SCOPE, payload, idempotencyKey, async (key) => {
+      const result = await apiFetch<MigrateResponse>(ENDPOINTS.sync.migrate, {
+        method: 'POST',
+        idempotencyKey: key,
+        body: JSON.stringify(payload),
+      });
+
+      await saveSession(result.token, result.user);
+      await setLocalOwner(db, result.user.id);
+      await applyServerIds(db, 'tasks', result.taskMap);
+      await applyServerIds(db, 'steps', result.stepMap);
+
+      return { tasks: tasks.length, steps: steps.length };
     });
-
-    await saveSession(result.token, result.user);
-    await setLocalOwner(db, result.user.id);
-    await applyServerIds(db, 'tasks', result.taskMap);
-    await applyServerIds(db, 'steps', result.stepMap);
-
-    return { tasks: tasks.length, steps: steps.length };
   },
 };

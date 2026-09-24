@@ -204,12 +204,14 @@ export default function FocusScreen({ navigation }: Props) {
               {stepsToday}
             </Text>
             <Text
-              style={{
-                fontSize: 11,
-                color: colors['on-primary-container'],
-                opacity: 0.7,
-                marginTop: 2,
-              }}
+              style={[
+                typography['label-sm'],
+                {
+                  color: colors['on-primary-container'],
+                  opacity: 0.7,
+                  marginTop: 2,
+                },
+              ]}
             >
               pasos hoy
             </Text>
@@ -218,7 +220,7 @@ export default function FocusScreen({ navigation }: Props) {
         <EmptyState
           headline="Mente clara, espacio libre"
           subtext="No tienes tareas pendientes para ahora. ¿Quieres planear algo nuevo?"
-          cta="Crear Tarea"
+          cta="Crear tarea"
           onCtaPress={() => navigation.navigate('Tasks', { screen: 'TaskForm', params: {} })}
         />
       </View>
@@ -286,12 +288,14 @@ export default function FocusScreen({ navigation }: Props) {
               {stepsToday}
             </Text>
             <Text
-              style={{
-                fontSize: 11,
-                color: colors['on-primary-container'],
-                opacity: 0.7,
-                marginTop: 2,
-              }}
+              style={[
+                typography['label-sm'],
+                {
+                  color: colors['on-primary-container'],
+                  opacity: 0.7,
+                  marginTop: 2,
+                },
+              ]}
             >
               pasos hoy
             </Text>
@@ -316,12 +320,14 @@ export default function FocusScreen({ navigation }: Props) {
               {activeTask.name}
             </Text>
             <Text
-              style={{
-                fontSize: 11,
-                color: colors['on-secondary-container'],
-                opacity: 0.7,
-                marginTop: 2,
-              }}
+              style={[
+                typography['label-sm'],
+                {
+                  color: colors['on-secondary-container'],
+                  opacity: 0.7,
+                  marginTop: 2,
+                },
+              ]}
             >
               tarea activa
             </Text>
@@ -392,8 +398,8 @@ export default function FocusScreen({ navigation }: Props) {
               timerFinished
                 ? '⏰ Tiempo terminado'
                 : timerRunning
-                  ? '⏸ Pausar Sesión'
-                  : '▶ Iniciar Cronómetro'
+                  ? '⏸ Pausar sesión'
+                  : '▶ Iniciar cronómetro'
             }
             onPress={handleToggleTimer}
             variant={timerRunning ? 'tertiary' : 'primary'}
@@ -409,7 +415,7 @@ export default function FocusScreen({ navigation }: Props) {
 
           <Text
             style={[
-              typography['label-sm'],
+              typography['label-md'],
               { color: colors['on-surface-variant'], textAlign: 'center', opacity: 0.6 },
             ]}
           >

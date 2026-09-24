@@ -5,6 +5,7 @@ import type { SqlParam } from '../database/migrations';
 import { ApiError, apiFetch } from './api';
 import { hasSession } from './session';
 import { syncNow } from './SyncService';
+import { getLocalDate } from '../utils/date';
 
 function toStep(row: Record<string, unknown>): Step {
   return {
@@ -15,6 +16,7 @@ function toStep(row: Record<string, unknown>): Step {
     order_index: row.order_index as number,
     status: row.status as Step['status'],
     completed_at: (row.completed_at as string | null) ?? null,
+    completed_date: (row.completed_date as string | null) ?? null,
     server_id: (row.server_id as string | null) ?? null,
     dirty: (row.dirty as number) ?? 0,
     updated_at: row.updated_at as string,
@@ -22,7 +24,7 @@ function toStep(row: Record<string, unknown>): Step {
 }
 
 function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return getLocalDate();
 }
 
 export const StepService = {
@@ -46,6 +48,37 @@ export const StepService = {
     );
     void syncNow();
     return toStep(step);
+  },
+
+  async addMany(
+    task_id: number,
+    steps: Array<{ name: string; duration_min: number | null }>,
+  ): Promise<Step[]> {
+    if (steps.length === 0) return [];
+    const db = await getDb();
+    const rows = await db.getAllAsync<{ max: number | null }>(
+      `SELECT MAX(order_index) AS max FROM steps WHERE task_id = ?`,
+      [task_id],
+    );
+    let orderIndex = (rows[0]?.max ?? -1) + 1;
+    const now = nowIso();
+    const created: Step[] = [];
+    for (const step of steps) {
+      const res = await db.runAsync(
+        `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, dirty, updated_at)
+         VALUES (?, ?, ?, ?, 'pending', NULL, 1, ?)`,
+        [task_id, step.name, step.duration_min ?? null, orderIndex, now],
+      );
+      const [row] = await db.getAllAsync<Record<string, unknown>>(
+        `SELECT * FROM steps WHERE id = ?`,
+        [res.lastInsertRowId],
+      );
+      created.push(toStep(row));
+      orderIndex += 1;
+    }
+    // Un solo sync para el lote (issue #157): pasos agregados a una tarea existente.
+    void syncNow();
+    return created;
   },
 
   async getByTask(task_id: number): Promise<Step[]> {
@@ -95,11 +128,10 @@ export const StepService = {
       [step.task_id],
     );
     for (let i = 0; i < remaining.length; i++) {
-      await db.runAsync(`UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`, [
-        i,
-        nowIso(),
-        remaining[i].id,
-      ]);
+      await db.runAsync(
+        `UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`,
+        [i, nowIso(), remaining[i].id],
+      );
     }
     if (hasSession() && step.server_id) {
       try {
@@ -131,10 +163,9 @@ export const StepService = {
 
   async complete(id: number): Promise<{ nextStep: Step | null; taskCompleted: boolean }> {
     const db = await getDb();
-    const rows = await db.getAllAsync<Record<string, unknown>>(
-      `SELECT * FROM steps WHERE id = ?`,
-      [id],
-    );
+    const rows = await db.getAllAsync<Record<string, unknown>>(`SELECT * FROM steps WHERE id = ?`, [
+      id,
+    ]);
     const step = rows[0] ? toStep(rows[0]) : null;
     if (!step) throw new ApiError(404, 'STEP_NOT_FOUND');
 
@@ -152,17 +183,18 @@ export const StepService = {
     }
 
     const now = nowIso();
+    const localDate = todayStr();
 
     await db.runAsync(
-      `UPDATE steps SET status = 'completed', completed_at = ?, dirty = 1, updated_at = ?
+      `UPDATE steps SET status = 'completed', completed_at = ?, completed_date = ?, dirty = 1, updated_at = ?
        WHERE id = ?`,
-      [now, now, id],
+      [now, localDate, now, id],
     );
 
     await db.runAsync(
       `INSERT INTO daily_progress (date, steps_completed) VALUES (?, 1)
        ON CONFLICT(date) DO UPDATE SET steps_completed = steps_completed + 1`,
-      [todayStr()],
+      [localDate],
     );
 
     const pending = await db.getAllAsync<Record<string, unknown>>(
@@ -187,10 +219,9 @@ export const StepService = {
 
   async uncomplete(id: number): Promise<{ nextStep: Step | null; taskCompleted: boolean }> {
     const db = await getDb();
-    const rows = await db.getAllAsync<Record<string, unknown>>(
-      `SELECT * FROM steps WHERE id = ?`,
-      [id],
-    );
+    const rows = await db.getAllAsync<Record<string, unknown>>(`SELECT * FROM steps WHERE id = ?`, [
+      id,
+    ]);
     const step = rows[0] ? toStep(rows[0]) : null;
     if (!step) throw new ApiError(404, 'STEP_NOT_FOUND');
 
@@ -202,7 +233,7 @@ export const StepService = {
     const now = nowIso();
 
     await db.runAsync(
-      `UPDATE steps SET status = 'pending', completed_at = NULL, dirty = 1, updated_at = ?
+      `UPDATE steps SET status = 'pending', completed_at = NULL, completed_date = NULL, dirty = 1, updated_at = ?
        WHERE id = ?`,
       [now, id],
     );

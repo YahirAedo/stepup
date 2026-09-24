@@ -1,17 +1,39 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { taskRoutes } from './routes/task.routes';
 import { stepRoutes } from './routes/step.routes';
 import { progressRoutes } from './routes/progress.routes';
 import { authRoutes } from './routes/auth.routes';
 import { syncRoutes } from './routes/sync.routes';
+import { aiRoutes } from './routes/ai.routes';
 import { requireAuth } from './middleware/auth';
 import { errorHandler } from './middleware/error-handler';
+
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:8081,http://localhost:19006,exp://localhost:8081')
+  .split(',')
+  .map((origin) => origin.trim());
 
 export function createApp() {
   const app = express();
 
-  app.use(cors());
+  app.set('trust proxy', 1);
+  app.disable('x-powered-by');
+  app.use(helmet());
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || CORS_ORIGINS.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(null, false);
+        }
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json());
 
   app.get('/health', (_req, res) => {
@@ -27,6 +49,16 @@ export function createApp() {
   app.use('/api/steps', requireAuth, stepRoutes);
   app.use('/api/progress', requireAuth, progressRoutes);
   app.use('/api/sync', syncRoutes);
+
+  const aiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: process.env.NODE_ENV === 'test' ? 10000 : 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? req.socket.remoteAddress ?? 'unknown'),
+    message: { message: 'Demasiadas solicitudes de IA. Intenta nuevamente en un minuto.' },
+  });
+  app.use('/api/ai', aiLimiter, requireAuth, aiRoutes);
 
   app.use(errorHandler);
 

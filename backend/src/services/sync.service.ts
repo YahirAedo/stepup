@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma';
 import { signToken } from '../utils/jwt';
 import { syncPushSchema, syncMigrateSchema } from '../validations/schemas';
+import { createHash } from 'crypto';
 
 function parseOptionalDate(value?: string | null): Date | null | undefined {
   if (value === undefined) return undefined;
@@ -10,9 +11,39 @@ function parseOptionalDate(value?: string | null): Date | null | undefined {
   return new Date(value);
 }
 
+function normalizeSyncDescription(value?: string | null): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  return value;
+}
+
+function normalizeSyncName(value?: string | null): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+function canonicalizeSyncPayload(value: unknown): unknown {
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map((item) => canonicalizeSyncPayload(item));
+  return Object.keys(value as Record<string, unknown>)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, key) => {
+      const raw = (value as Record<string, unknown>)[key];
+      if (typeof raw === 'string') {
+        acc[key] = key === 'description' ? normalizeSyncDescription(raw) : normalizeSyncName(raw);
+      } else {
+        acc[key] = canonicalizeSyncPayload(raw);
+      }
+      return acc;
+    }, {});
+}
+
 function serializeTask(task: {
   id: string;
   name: string;
+  description: string | null;
   dueDate: Date | null;
   status: string;
   createdAt: Date;
@@ -22,6 +53,7 @@ function serializeTask(task: {
   return {
     id: task.id,
     name: task.name,
+    description: task.description,
     dueDate: task.dueDate?.toISOString() ?? null,
     status: task.status,
     createdAt: task.createdAt.toISOString(),
@@ -122,6 +154,7 @@ export class SyncService {
     }
 
     const password = await bcrypt.hash(data.password, 10);
+    const requestHash = this.hashRequest(data);
 
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({ data: { name: data.name, email, password } });
@@ -135,6 +168,7 @@ export class SyncService {
             id: task.id ?? undefined,
             userId: user.id,
             name: task.name,
+            description: normalizeSyncDescription(task.description),
             dueDate: parseOptionalDate(task.dueDate),
             status: task.status ?? 'active',
             createdAt: task.createdAt ? new Date(task.createdAt) : undefined,
@@ -168,7 +202,18 @@ export class SyncService {
           },
         });
         stepMap[step.localId] = created.id;
+        if (created.status === 'completed' && step.date) {
+          await this.upsertDailyProgress(tx, user.id, step.date);
+        }
       }
+
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          migrateRequestHash: requestHash,
+          migrateMaps: JSON.stringify({ taskMap, stepMap }),
+        },
+      });
 
       return {
         user: { id: user.id, name: user.name, email: user.email },
@@ -177,6 +222,42 @@ export class SyncService {
         stepMap,
       };
     });
+  }
+
+  async getMigrateReplay(email: string, password: string, requestHash: string) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (!existing) {
+      return null;
+    }
+
+    const passwordOk = await bcrypt.compare(password, existing.password);
+    if (!passwordOk || existing.migrateRequestHash !== requestHash || !existing.migrateMaps) {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    let maps: { taskMap: Record<string, string>; stepMap: Record<string, string> };
+    try {
+      maps = JSON.parse(existing.migrateMaps);
+    } catch {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    if (!maps.taskMap || !maps.stepMap) {
+      throw new Error('EMAIL_ALREADY_REGISTERED');
+    }
+
+    return {
+      user: { id: existing.id, name: existing.name, email: existing.email },
+      token: signToken(existing.id),
+      taskMap: maps.taskMap,
+      stepMap: maps.stepMap,
+    };
+  }
+
+  hashRequest(data: unknown): string {
+    return createHash('sha256')
+      .update(JSON.stringify(canonicalizeSyncPayload(data)))
+      .digest('hex');
   }
 
   private async ownsTask(tx: Prisma.TransactionClient, taskId: string, userId: string) {
@@ -207,6 +288,7 @@ export class SyncService {
       id?: string;
       localId?: number;
       name: string;
+      description?: string | null;
       dueDate?: string | null;
       status?: 'active' | 'completed';
       createdAt?: string;
@@ -225,6 +307,7 @@ export class SyncService {
             where: { id: task.id },
             data: {
               name: task.name,
+              description: normalizeSyncDescription(task.description),
               dueDate: parseOptionalDate(task.dueDate),
               status: task.status,
               completedAt: parseOptionalDate(task.completedAt),
@@ -241,6 +324,7 @@ export class SyncService {
         id: task.id ?? undefined,
         userId,
         name: task.name,
+        description: normalizeSyncDescription(task.description),
         dueDate: parseOptionalDate(task.dueDate),
         status: task.status ?? 'active',
         createdAt: task.createdAt ? new Date(task.createdAt) : undefined,
@@ -265,6 +349,7 @@ export class SyncService {
       createdAt?: string;
       updatedAt: string;
       completedAt?: string | null;
+      date?: string;
     },
   ) {
     if (step.id) {
@@ -277,6 +362,15 @@ export class SyncService {
           throw new Error('RECORD_BELONGS_TO_OTHER_USER');
         }
         if (new Date(step.updatedAt).getTime() > existing.updatedAt.getTime()) {
+          if (step.status === 'completed' && step.date) {
+            const claim = await tx.step.updateMany({
+              where: { id: step.id, status: 'pending' },
+              data: { status: 'completed' },
+            });
+            if (claim.count > 0) {
+              await this.upsertDailyProgress(tx, userId, step.date);
+            }
+          }
           const updated = await tx.step.update({
             where: { id: step.id },
             data: {
@@ -307,6 +401,32 @@ export class SyncService {
         completedAt: parseOptionalDate(step.completedAt),
       },
     });
+    if (step.status === 'completed' && step.date) {
+      await this.upsertDailyProgress(tx, userId, step.date);
+    }
     return { id: created.id, applied: true, localId: step.localId };
+  }
+
+  private async upsertDailyProgress(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    date: string,
+  ) {
+    await tx.dailyProgress.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date,
+        },
+      },
+      update: {
+        stepsCompleted: { increment: 1 },
+      },
+      create: {
+        userId,
+        date,
+        stepsCompleted: 1,
+      },
+    });
   }
 }

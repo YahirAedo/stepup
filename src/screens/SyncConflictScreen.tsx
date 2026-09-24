@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   ActivityIndicator,
   Alert,
+  type TextStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,34 +15,12 @@ import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import { SyncService } from '../services/SyncService';
 import type { SyncConflict } from '../database/sync';
+import type { ProfileStackParamList } from '../types/navigation';
+import { formatModifiedAt, statusLabel } from '../utils/syncConflict';
 
 type Props = {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: NativeStackNavigationProp<ProfileStackParamList, 'SyncConflict'>;
 };
-
-function formatModifiedAt(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (date.toDateString() === now.toDateString()) return `Hoy, ${time}`;
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return `Ayer, ${time}`;
-  return `${date.toLocaleDateString([], { day: '2-digit', month: '2-digit' })}, ${time}`;
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case 'completed':
-      return 'Completada';
-    case 'active':
-      return 'Activa';
-    case 'pending':
-      return 'Pendiente';
-    default:
-      return status;
-  }
-}
 
 function VersionCard({
   title,
@@ -75,10 +54,12 @@ function VersionCard({
   const modifiedAt = formatModifiedAt(snapshot.updatedAt);
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onSelect}
-      activeOpacity={0.85}
-      style={{
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`Seleccionar ${title}`}
+      style={({ pressed }) => ({
         flex: 1,
         backgroundColor: colors['surface-container-low'],
         borderRadius: borderRadius.xl,
@@ -87,7 +68,8 @@ function VersionCard({
         padding: spacing['stack-gap'],
         gap: spacing['stack-gap'],
         ...(selected ? shadows.card : {}),
-      }}
+        opacity: pressed ? 0.85 : 1,
+      })}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View
@@ -102,7 +84,7 @@ function VersionCard({
         >
           <Text style={{ fontSize: s(18) }}>{icon}</Text>
         </View>
-        <Text style={[typography['headline-md'] as any, { color: colors['on-surface'] }]}>
+        <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           {title}
         </Text>
       </View>
@@ -116,17 +98,17 @@ function VersionCard({
           backgroundColor: badgeBg,
         }}
       >
-        <Text style={[typography['label-sm'] as any, { color: badgeTextColor }]}>{badge}</Text>
+        <Text style={[typography['label-sm'] as TextStyle, { color: badgeTextColor }]}>{badge}</Text>
       </View>
 
       <View style={{ gap: spacing.unit }}>
-        <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+        <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
           Última modificación: {modifiedAt}
         </Text>
-        <Text style={[typography['body-md'] as any, { color: colors['on-surface'] }]}>
+        <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
           {snapshot.name}
         </Text>
-        <Text style={[typography['label-md'] as any, { color: colors.secondary }]}>
+        <Text style={[typography['label-md'] as TextStyle, { color: colors.secondary }]}>
           {statusLabel(snapshot.status)}
         </Text>
       </View>
@@ -141,7 +123,7 @@ function VersionCard({
         }}
         textStyle={{ color: selected ? activeText : colors['on-surface'] }}
       />
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -203,10 +185,16 @@ export default function SyncConflictScreen({ navigation }: Props) {
           gap: 12,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.6}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <Text style={{ fontSize: 24, color: colors['on-surface'] }}>‹</Text>
-        </TouchableOpacity>
-        <Text style={[typography['headline-md'] as any, { color: colors['on-surface'] }]}>
+        </Pressable>
+        <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           Conflicto de Sincronización
         </Text>
       </View>
@@ -245,7 +233,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
               </View>
               <Text
                 style={[
-                  typography['body-md'] as any,
+                  typography['body-md'] as TextStyle,
                   { color: colors['on-surface-variant'], textAlign: 'center' },
                 ]}
               >
@@ -256,7 +244,12 @@ export default function SyncConflictScreen({ navigation }: Props) {
 
             {conflicts.map((conflict) => (
               <View key={conflict.id} style={{ gap: spacing['stack-gap'] }}>
-                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+<Text
+                  style={[
+                    typography['label-sm'] as TextStyle,
+                    { color: colors['on-surface-variant'] },
+                  ]}
+                >
                   {conflict.tableName === 'tasks' ? 'Tarea' : 'Paso'} modificada en ambos lugares
                 </Text>
                 <View
@@ -266,7 +259,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
                   }}
                 >
                   <VersionCard
-                    title="Versión Local"
+                    title="Versión local"
                     icon="📱"
                     badge="En este dispositivo"
                     badgeBg={colors['primary-fixed-dim']}
@@ -282,7 +275,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
                     onChoose={() => resolve(conflict, 'local')}
                   />
                   <VersionCard
-                    title="Versión del Servidor"
+                    title="Versión del servidor"
                     icon="☁️"
                     badge="Guardada en la nube"
                     badgeBg={colors['secondary-fixed-dim']}
@@ -301,25 +294,30 @@ export default function SyncConflictScreen({ navigation }: Props) {
               </View>
             ))}
 
-            <TouchableOpacity
+            <Pressable
               onPress={() =>
                 Alert.alert(
                   'Ayuda',
                   'Compará la fecha de última modificación y el estado de cada versión. Elegí la que refleje mejor tu progreso actual; el cambio quedará guardado tanto en este dispositivo como en la nube.',
                 )
               }
-              activeOpacity={0.6}
-              style={{ alignItems: 'center', paddingVertical: spacing.unit * 2 }}
+              accessibilityRole="button"
+              accessibilityLabel="¿Necesitas ayuda para decidir?"
+              style={({ pressed }) => ({
+                alignItems: 'center',
+                paddingVertical: spacing.unit * 2,
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
               <Text
                 style={[
-                  typography['label-md'] as any,
+                  typography['label-md'] as TextStyle,
                   { color: colors.primary, textDecorationLine: 'underline' },
                 ]}
               >
                 ¿Necesitas ayuda para decidir?
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </>
         )}
       </ScrollView>

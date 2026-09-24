@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, type TextStyle } from 'react-native';
+import { View, Text, Pressable, ScrollView, type TextStyle } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
@@ -130,16 +130,19 @@ export default function ProfileScreen({ navigation }: Props) {
               }}
             >
               {durations.map((d) => (
-                <TouchableOpacity
+                <Pressable
                   key={d.value}
                   onPress={() => setDefaultDuration(d.value)}
-                  activeOpacity={0.7}
-                  style={{
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: defaultDuration === d.value }}
+                  accessibilityLabel={`Duración default: ${d.label}${defaultDuration === d.value ? ', seleccionado' : ''}`}
+                  style={({ pressed }) => ({
                     paddingHorizontal: 16,
                     paddingVertical: 6,
                     borderRadius: borderRadius.full,
                     backgroundColor: defaultDuration === d.value ? colors.primary : 'transparent',
-                  }}
+                    opacity: pressed ? 0.7 : 1,
+                  })}
                 >
                   <Text
                     style={[
@@ -154,7 +157,7 @@ export default function ProfileScreen({ navigation }: Props) {
                   >
                     {d.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>
@@ -169,17 +172,20 @@ export default function ProfileScreen({ navigation }: Props) {
             <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               🔔 Notificaciones
             </Text>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setNotifications(!notifications)}
-              activeOpacity={0.7}
-              style={{
+              accessibilityRole="switch"
+              accessibilityState={{ checked: notifications }}
+              accessibilityLabel="Notificaciones"
+              style={({ pressed }) => ({
                 width: 48,
                 height: 28,
                 borderRadius: 14,
                 backgroundColor: notifications ? colors.primary : colors['outline-variant'],
                 justifyContent: 'center',
                 paddingHorizontal: 3,
-              }}
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
               <View
                 style={{
@@ -190,12 +196,17 @@ export default function ProfileScreen({ navigation }: Props) {
                   alignSelf: notifications ? 'flex-end' : 'flex-start',
                 }}
               />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
+          <Text
+            style={[
+              typography['label-sm'] as TextStyle,
+              { color: colors['on-surface-variant'], textTransform: 'uppercase' },
+            ]}
+          >
             Ajustes
           </Text>
 
@@ -206,15 +217,16 @@ export default function ProfileScreen({ navigation }: Props) {
             }}
           >
             {settingsRows.map((row, i) => (
-              <TouchableOpacity
+              <Pressable
                 key={row.label}
-                activeOpacity={0.6}
                 onPress={() => {
                   if (row.label === 'Cerrar sesión') {
                     void handleLogout();
                   }
                 }}
-                style={{
+                accessibilityRole="button"
+                accessibilityLabel={row.label}
+                style={({ pressed }) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 12,
@@ -222,7 +234,8 @@ export default function ProfileScreen({ navigation }: Props) {
                   paddingVertical: 14,
                   borderBottomWidth: i < settingsRows.length - 1 ? 1 : 0,
                   borderBottomColor: colors['outline-variant'],
-                }}
+                  opacity: pressed ? 0.6 : 1,
+                })}
               >
                 <Text style={{ fontSize: 20 }}>{row.icon}</Text>
                 <Text
@@ -231,58 +244,62 @@ export default function ProfileScreen({ navigation }: Props) {
                   {row.label}
                 </Text>
                 <Text style={{ fontSize: 16, color: colors['outline'] }}>›</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.navigate('SyncConflict')}
-          activeOpacity={0.7}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Ir a sincronización"
+          style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
             padding: spacing['stack-gap'],
             backgroundColor: colors['surface-container-low'],
             borderRadius: borderRadius.xl,
-          }}
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
           <Text style={{ fontSize: 24 }}>🔄</Text>
           <View style={{ flex: 1 }}>
-            <Text style={[typography['body-md'] as any, { color: colors['on-surface'] }]}>
+            <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
               Sincronización
             </Text>
-            <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+            <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               Resolver conflictos de datos
             </Text>
           </View>
           <Text style={{ fontSize: 20, color: colors['outline'] }}>›</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.navigate('Badges')}
-          activeOpacity={0.7}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Ir a tus logros"
+          style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
             padding: spacing['stack-gap'],
             backgroundColor: colors['surface-container-low'],
             borderRadius: borderRadius.xl,
-          }}
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
           <Text style={{ fontSize: 24 }}>🏅</Text>
           <View style={{ flex: 1 }}>
             <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
-              Tus Logros
+              Tus logros
             </Text>
             <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               3 insignias desbloqueadas
             </Text>
           </View>
           <Text style={{ fontSize: 20, color: colors['outline'] }}>›</Text>
-        </TouchableOpacity>
+        </Pressable>
       </ScrollView>
     </View>
   );

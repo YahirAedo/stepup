@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, type TextStyle } from 'react-native';
+import { View, Text, Pressable, Animated, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive, moderateScale } from '../theme';
@@ -155,36 +155,40 @@ export default function NotificationPermissionScreen({ navigation }: Props) {
           alignItems: 'center',
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={completeOnboarding}
-          activeOpacity={0.85}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Activar Notificaciones"
+          style={({ pressed }) => ({
             width: '100%',
             height: 56,
             borderRadius: borderRadius.full,
             backgroundColor: colors.tertiary,
             justifyContent: 'center',
             alignItems: 'center',
-          }}
+            opacity: pressed ? 0.85 : 1,
+          })}
         >
           <Text style={[typography['label-md'] as TextStyle, { color: colors['on-tertiary'] }]}>
-            Activar Notificaciones
+            Activar notificaciones
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           onPress={completeOnboarding}
-          activeOpacity={0.7}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Ahora no"
+          style={({ pressed }) => ({
             height: 44,
             justifyContent: 'center',
             alignItems: 'center',
-          }}
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
           <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
             Ahora no
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

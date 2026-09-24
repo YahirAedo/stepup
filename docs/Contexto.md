@@ -52,7 +52,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 
 **Track B — Backend + Auth + Sync (Opción A)**
 - API REST: Node.js + Express + Prisma + PostgreSQL
-- Hosting: Railway (tier gratuito)
+- Hosting: Render.com (tier gratuito) + PostgreSQL en Neon (free permanente; migrado desde Railway — issue #273)
 - Autenticación JWT: registro + login
 - Endpoints: CRUD de tareas y pasos en el servidor
 - Sync offline-first híbrido:
@@ -62,13 +62,18 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 - Modelo de datos replicado entre SQLite local y PostgreSQL remoto
 
 ### Entrega 3 — Septiembre a Noviembre 2026 (entrega final)
-- Integración con API de IA (Claude Haiku o GPT-4o mini)
-- El usuario escribe el nombre de la tarea y la app sugiere los pasos automáticamente
-- El usuario edita y confirma los pasos sugeridos
-- Estimación automática del tiempo total
-- Dashboard de estadísticas personales, rachas de productividad
-- Notificaciones push (Firebase Cloud Messaging)
-- Pulido general y demo final
+
+**Foco principal: IA.** Plan detallado en `docs/Entrega 3 PRD.md` (epic #152).
+
+- Integración con **Google Gemini API** (AI Studio, tier gratis, modelo `gemini-3.5-flash` configurable vía backend)
+- **Sugeridor de pasos:** el usuario escribe nombre + descripción y la app sugiere pasos accionables de 5-25 min (alineados al método Pomodoro), 3-8 según el tamaño de la tarea
+- **Asistente de descripción:** guía de estructura contextual para escribir mejores descripciones
+- La IA propone, el usuario decide: borrador editable → confirmar → la tarea y sus pasos nacen juntos
+- La IA también está disponible en el detalle de tarea (re-generar pasos con la descripción guardada)
+- La descripción pasa a ser atributo persistente de la tarea (SQLite + PostgreSQL + sync)
+- Offline: la IA nunca bloquea — sin conexión, el flujo manual de creación queda intacto
+- **Dashboard de consistencia:** racha de días con actividad (1 día de gracia fijo por racha, no acumulable) + tendencia semanal con LineChart
+- Notificaciones push (FCM), slices de polish 8/10/11 y refino conversacional de la IA quedan FUERA del alcance obligatorio de E3
 
 > **Nota:** originalmente se planificaron 4 entregas (la cuarta en diciembre con widget Android y estadísticas avanzadas), pero la cursada termina a fines de noviembre. Todo lo que entre en el tiempo disponible se agrupa en E3. La E4 queda descartada o como trabajo futuro.
 
@@ -81,7 +86,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 | Framework mobile | React Native + Expo SDK 54 | El equipo conoce JS/React. Expo simplifica el build y permite probar con Expo Go escaneando un QR. SDK 54 porque SDK 55 no corre en Expo Go todavía. |
 | Lenguaje | TypeScript | Tipado estático, menos bugs, mejor autocompletado |
 | Base de datos local | expo-sqlite (SQLite local) | Sin servidor, sin internet, sin costos. App 100% funcional offline |
-| Base de datos remota (E2) | PostgreSQL en Railway | ORM: Prisma. Tier gratuito del hosting. |
+| Base de datos remota (E2) | PostgreSQL en Neon | ORM: Prisma. Tier free permanente (Postgres free de Render caduca a los 30 días). |
 | Backend (E2) | Node.js + Express + Prisma | API REST con autenticación JWT y sync pull/push |
 | Navegación | React Navigation — GlassTabBar | Bottom tabs flotantes estilo glassmorph |
 | Testing | Jest + React Native Testing Library | Estándar del ecosistema |
@@ -89,7 +94,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 | Auth (E2) | JWT (jsonwebtoken + bcrypt) | Registro y login de usuarios |
 | Diseño visual (E2) | Sistema Zenith Vitality | Colores, tipografía, componentes desde `stitch_stepup_design_system/` |
 | Notificaciones (E3) | Firebase Cloud Messaging | Se agrega en E3 |
-| IA (E3) | Claude Haiku API o GPT-4o mini | Una llamada con buen prompt, sin fine-tuning |
+| IA (E3) | Google Gemini API (AI Studio) | Una llamada con buen prompt, sin fine-tuning. Se accede vía el backend (la key nunca va en el bundle de la app) |
 
 ---
 
@@ -99,11 +104,14 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 ```
 id           INTEGER PRIMARY KEY AUTOINCREMENT
 name         TEXT NOT NULL
+description  TEXT (nullable) — contexto de la tarea (agregado en E3, issue #153)
 due_date     TEXT (ISO 8601, nullable)
 status       TEXT — 'active' | 'completed'
 created_at   TEXT (ISO 8601)
 completed_at TEXT (ISO 8601, nullable)
 ```
+
+**Nota E3 (issue #153):** La columna `description` se agregó en la migración V6. Es opcional y persiste a través del sync (push/pull/migrate). El frontend la muestra en TaskDetailScreen y permite editarla en TaskFormScreen (multiline, max 1000 chars).
 
 ### Tabla `steps`
 ```
@@ -229,12 +237,47 @@ stepup/
 - Autenticación JWT (registro + login) ✅
 - Sync offline-first híbrido (push/pull/migrate) ✅
 - CRUD de tasks y steps ✅
-- Hosting en Railway ✅
+- Hosting: Render.com + Neon (migrado desde Railway, issue #273) ✅
 - **Estado:** fixes del epic #64 (issues #65-#77) mergeados a `develop2`. **Unificación:** `develop2` integrada a `develop` vía PR #121 (issue #120) y eliminada. Las issues de backend ahora van a `develop`.
 - **Pendiente para E3:** bugs #122–#126 detectados en el review final (borde de día UTC, IDOR en migrate, idempotencia client-side anulada, docs PRD, `as any` restantes)
 
 ### Sistema operativo de desarrollo
 **Windows**
+
+---
+
+## Plan de la Entrega 3 (definido en agosto 2026)
+
+> Detalle completo en `docs/Entrega 3 PRD.md` (epic GitHub **#152**).
+
+### Alcance
+- **Foco:** IA para sugerir pasos al crear una tarea + dashboard de consistencia.
+- **Fuera de alcance:** notificaciones push (FCM), slices de polish 8/10/11, refino conversacional de la IA.
+
+### Slices (issues del milestone Entrega 3)
+| Slice | Issue | Qué es | Bloqueado por |
+|-------|-------|--------|---------------|
+| 1 | #153 | Descripción como atributo persistente de la tarea (SQLite + Prisma + sync) | — |
+| 2 | #154 | Endpoint backend de IA: `POST /api/ai/suggest-steps` + asistente de descripción (Gemini vía proxy) | — |
+| 3 | #155 | Frontend: sugerir pasos con IA al crear tarea (borrador editable + regenerar) | #153, #154 |
+| 4 | #157 | Frontend: generar pasos con IA desde el detalle de tarea | #153, #154 |
+| 5 | #156 | Dashboard de consistencia: racha (1 día de gracia fijo) + tendencia semanal | #122 |
+
+**Estado (septiembre 2026):** slices 1-4 implementados y mergeados a `develop`. #153 (descripción persistente), #154 (endpoint de IA con Gemini vía proxy, tests mockeando el cliente HTTP y smoke test), #155 (integración en TaskFormScreen: sugerir pasos con IA, borrador editable, "Otra propuesta", asistente de descripción; la sección IA solo aparece con sesión activa y conexión — ver DT-32) y #157 (generar pasos con IA desde el detalle de tarea: botón "Generar pasos con IA" con la descripción guardada, borrador editable compartido `src/components/SuggestedStepsDraft.tsx` + validación común `parseDraftSteps`, e invitación a escribir una descripción primero cuando la tarea no la tiene; al confirmar se agregan los pasos a la tarea existente con `StepService.addMany` sin recrearla ni borrar los que ya tiene; mismo gate offline/sesión que DT-32). El modelo planificado `gemini-2.5-flash` fue deprecado por Google para keys nuevas; el default implementado es `gemini-3.5-flash`.
+
+### Deuda de E2 priorizada (no eliminada)
+- **Alta:** #122 (borde de día UTC — alimenta las rachas). **#123 (IDOR en migrate) resuelto en el PR #174:** se eliminó el scope fijo `MIGRATE_IDEMPOTENCY_SCOPE` y el usuario fake de `users`; el replay de migrate ahora se autoriza por `email + password + hash del payload` (los maps se guardan en el propio user, no en `idempotency_keys`).
+- **Media (resuelta en el PR #175):** #124 (idempotencia client-side anulada) — key persistente por operación (migración V5 `pending_idempotency_keys`), hash de payload con `expo-crypto` (#198), y tests de retry con misma key en `syncLifecycle` (#199).
+- **Baja:** #126 (`as any` restantes).
+- **Cerrada sin hacer:** #125 (docs PRD — el PRD se actualiza en E3).
+
+### Conceptos clave (del grill con domain-modeling)
+- **Sugerencia de pasos:** la IA propone, el usuario decide. El borrador es temporal, editable, descartable y no se persiste hasta confirmar.
+- **Buen paso:** accionable (verbo concreto), de 5-25 min (Pomodoro), en orden lógico, derivado del contexto dado (nunca genérico).
+- **Descripción:** opcional para crear, necesaria para una buena sugerencia. Se guarda con la tarea.
+- **Racha:** días consecutivos con al menos 1 paso completado, contando desde hoy; 1 día de gracia fijo por racha (no acumulable).
+- **IA offline:** no funciona sin conexión, pero nunca bloquea — el flujo manual queda intacto.
+- **Key de Gemini:** SOLO en el backend (env de Render), nunca en el bundle de la app.
 
 ---
 
@@ -275,7 +318,7 @@ Todo el código de la sección anterior. Ya está hecho, listo para copiar al re
 | DT-06 | Timer opcional (no bloquea completar el paso) | Confirmada |
 | DT-07 | Fecha límite incluida en E1 | Confirmada |
 | DT-08 | Android como plataforma demo principal | Confirmada |
-| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Confirmada (E2) |
+| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Reemplazada por DT-33 (Render + Neon) |
 | DT-10 | Autenticación JWT con registro/login | Confirmada (E2) |
 | DT-11 | Sync offline-first híbrido: Sin cuenta→local, Con cuenta→backend + migración | Confirmada (E2) |
 | DT-12 | Conflictos de sync: last-write-wins | Confirmada (E2) |
@@ -338,6 +381,14 @@ feature/*   ← Una rama por cambio. Formato: feature/<tipo>/<numero>-<descripci
 
 **Regla de oro:** nunca commitear directo a `main` ni a `develop`. Todo cambio entra por `feature/*` → rama destino (según área) → (integración) → `main`.
 
+**Review automatizado de PRs (septiembre 2026, rol informativo):** los PRs contra `develop` son
+revisados automáticamente por CodeRabbit (`.coderabbit.yaml`, PR #186) y por la skill-review
+(action `anomalyco/opencode/github` con el agente `skill-reviewer` y la skill `stepup-review`,
+DT-26 en el Log de Decisiones E2). La skill-review considera el contexto completo del PR —
+comments, reviews, threads inline y sub-issues abiertas de la issue vinculada — y emite un
+veredicto `APPROVED` | `NEEDS WORK` | `BLOCKED` | `SKIPPED` (DT-27). Ningún check automático
+reemplaza la aprobación humana (§7.6).
+
 **Formato de commits:**
 ```
 feat: agregar formulario de creacion de tarea
@@ -347,6 +398,12 @@ docs: actualizar README
 refactor: separar logica del timer en TimerService
 chore: instalar expo-sqlite y configurar
 ```
+
+**Tablero de estado (septiembre 2026):** el estado real de issues/PRs se ve en el
+proyecto **"StepUp - Seguimiento"** — https://github.com/users/YahirAedo/projects/2
+(GitHub Projects v2, vista Board por Status). Columnas: Backlog, Ready,
+In Progress, Blocked, In Review, Merged, Done. Reglas de movimiento y label
+`blocked` en `docs/CONVENCIONES.md` §7.8 (DT-28 en el Log de Decisiones E2).
 
 Al cerrar cada entrega: merge develop → main, crear tag (ej: v1.0-E1, v2.0-E2)
 y publicar el release correspondiente con notas (ver release `entrega-1`). Las
@@ -372,6 +429,8 @@ Todos los documentos están en formato .docx listos para subir a Google Drive.
 6. **README.md** — listo para pegar en el repo de GitHub. Tiene descripción, estado de funcionalidades, tech stack, requisitos, instrucciones de instalación paso a paso, estructura de carpetas, branching, testing, tabla de entregas.
 
 7. **Documentación E2 (18/08/2026)** — 8 entregables nuevos en `docs/` (md + docx): Requerimientos E2 v1.1, Arquitectura E2 v1.1, Log Decisiones Técnicas E2 v1.2, Testing E2 v1.1, Repositorio y Desarrollo E2 v1.0, Manual de Usuario E2 v1.0, Minutas y Feedback E2 v1.0, Gestión Documental E2 v1.0.
+
+8. **PRD Entrega 3 (20/08/2026)** — `docs/Entrega 3 PRD.md` (epic #152): problem statement, 17 user stories, decisiones de implementación (Gemini vía backend, descripción persistente, borrador editable, racha), decisiones de testing (seams backend + racha), out of scope y deuda priorizada.
 
 ### Lo que falta generar
 - Presentación E2 (PPTX) con capturas reales de la app
@@ -407,7 +466,7 @@ El sistema de diseño completo está en `stitch_stepup_design_system/` con proto
 
 | Carpeta | Pantalla | Estado |
 |---------|----------|--------|
-| `zenith_vitality/` | Documento maestro de diseño (DESIGN.md) | ⏳ A implementar |
+| `zenith_vitality/` | Documento maestro de diseño (DESIGN.md) | ✅ Documentado en `docs/GUIA-DISENO-MOVIL.md` |
 | `ahora_enfoque_redise_o/` | FocusScreen con timer glassmorpho | ⏳ A implementar |
 | `ahora_sin_tareas/` | Estado vacío "Mente clara, espacio libre" | ⏳ A implementar |
 | `tareas_gesti_n_redise_o/` | TaskList con bento grid | ⏳ A implementar |
@@ -448,12 +507,12 @@ El plan de migración está desglosado en 12 issues en GitHub (labels por tipo: 
 
 ### Track B — Backend
 - [x] Setup del proyecto Node.js + Express + TypeScript
-- [x] Configurar Prisma + PostgreSQL en Railway
+- [x] Configurar Prisma + PostgreSQL en Neon (migrado desde Railway, issue #273)
 - [x] Endpoints de autenticación (register + login + JWT)
 - [x] Endpoints de tareas (CRUD)
 - [x] Endpoints de pasos (CRUD)
 - [x] Endpoints de sync (push + pull + migrate)
-- [x] Hosting funcionando en Railway (URL: `https://stepup-backend-api-production.up.railway.app`)
+- [x] Hosting funcionando en Render + Neon (URL: `https://stepup-940v.onrender.com`; Railway deprecado — issue #273)
 - [x] B1 (issue #17) cerrado — ver `docs/B1 - Railway deploy checklist.md`
 - [x] B2 (issue #18) + Slice 9 (issue #13) cerrados — ver `docs/B2 - Auth flow checklist.md`
 - [x] PRs #78-#82 de endurecimiento reviewados y mergeados a `develop2` (epic #64, issues #65-#77)
@@ -496,7 +555,7 @@ El modelo puede retomar cualquier parte del proyecto con este documento como bas
 - Plataforma de demo: **Android**. iOS es secundario.
 - Expo Go requiere SDK 54. No usar SDK 55.
 - Repositorio GitHub: https://github.com/YahirAedo/stepup
-- Hosting backend: Railway (tier gratuito)
+- Hosting backend: Render.com (tier free) + PostgreSQL en Neon (free permanente; migrado desde Railway — issue #273)
 - Los issues de E2 están en GitHub con labels por tipo (frontend, backend, auth, database).
 - Este documento se actualiza cada vez que cambia el contexto del proyecto.
 - Para retomar el proyecto en un nuevo chat, pegar este documento como contexto inicial.

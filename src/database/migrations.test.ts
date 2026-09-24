@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Database } from 'sql.js';
-import { runMigrations } from './migrations';
+import { runMigrations, type Migration } from './migrations';
 import { makeSqlJsDb } from './testDb';
 
 type Column = { name: string; type: string; notnull: number; dflt_value: string | null };
@@ -17,7 +17,7 @@ async function tableColumns(raw: Database, table: string): Promise<Column[]> {
 }
 
 describe('runMigrations — schema de SQLite local', () => {
-  it('crea las tablas base con las columnas de sync y owner (v1 + v2 + v4)', async () => {
+  it('crea las tablas base con las columnas de sync y owner (v1 + v2 + v4 + v6)', async () => {
     const { db, raw } = await makeSqlJsDb();
     await runMigrations(db);
 
@@ -26,6 +26,7 @@ describe('runMigrations — schema de SQLite local', () => {
       expect.arrayContaining([
         'id',
         'name',
+        'description',
         'due_date',
         'status',
         'created_at',
@@ -43,7 +44,7 @@ describe('runMigrations — schema de SQLite local', () => {
 
     const stepCols = await tableColumns(raw, 'steps');
     expect(stepCols.map((c) => c.name)).toEqual(
-      expect.arrayContaining(['server_id', 'dirty', 'updated_at']),
+      expect.arrayContaining(['server_id', 'dirty', 'updated_at', 'completed_date']),
     );
 
     const meta = raw.exec(
@@ -67,6 +68,18 @@ describe('runMigrations — schema de SQLite local', () => {
       'server_payload',
       'created_at',
     ]);
+
+    const pendingKeys = raw.exec(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pending_idempotency_keys'`,
+    );
+    expect(pendingKeys.length).toBe(1);
+    const pendingKeyCols = await tableColumns(raw, 'pending_idempotency_keys');
+    expect(pendingKeyCols.map((c) => c.name)).toEqual([
+      'scope',
+      'key',
+      'payload_hash',
+      'created_at',
+    ]);
   });
 
   it('deja user_version en la última migración y es idempotente', async () => {
@@ -76,7 +89,17 @@ describe('runMigrations — schema de SQLite local', () => {
     await runMigrations(db);
 
     const [row] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version', []);
-    expect(row.user_version).toBe(4);
+    expect(row.user_version).toBe(7);
+  });
+
+  it('rechaza una lista de migraciones con un gap de versiones', async () => {
+    const { db } = await makeSqlJsDb();
+    const migrationsWithGap: Migration[] = [
+      { version: 1, statements: ['CREATE TABLE x (id INTEGER PRIMARY KEY);'] },
+      { version: 3, statements: ['CREATE TABLE y (id INTEGER PRIMARY KEY);'] },
+    ];
+
+    await expect(runMigrations(db, migrationsWithGap)).rejects.toThrow(/Gap en migraciones/);
   });
 
   it('actualiza una base con el schema viejo sin perder datos', async () => {
@@ -106,10 +129,10 @@ describe('runMigrations — schema de SQLite local', () => {
         steps_completed INTEGER NOT NULL DEFAULT 0
       );
     `);
-    raw.run(
-      `INSERT INTO tasks (name, created_at) VALUES (?, ?)`,
-      ['Tarea existente', '2026-01-01T00:00:00.000Z'],
-    );
+    raw.run(`INSERT INTO tasks (name, created_at) VALUES (?, ?)`, [
+      'Tarea existente',
+      '2026-01-01T00:00:00.000Z',
+    ]);
 
     await runMigrations(db);
 
@@ -125,10 +148,9 @@ describe('runMigrations — schema de SQLite local', () => {
     const { db, raw } = await makeSqlJsDb();
     await runMigrations(db);
 
-    await db.runAsync(
-      `INSERT INTO sync_meta (id, last_sync_at) VALUES (1, ?)`,
-      ['2026-08-10T00:00:00.000Z'],
-    );
+    await db.runAsync(`INSERT INTO sync_meta (id, last_sync_at) VALUES (1, ?)`, [
+      '2026-08-10T00:00:00.000Z',
+    ]);
     expect(() => {
       raw.exec(`INSERT INTO sync_meta (id, last_sync_at) VALUES (2, ?)`, [
         '2026-08-10T00:00:00.000Z',

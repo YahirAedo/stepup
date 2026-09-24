@@ -61,6 +61,77 @@ describe('TaskService', () => {
     expect(mocks.syncNow).toHaveBeenCalled();
   });
 
+  it('create persiste description no nula (AC4)', async () => {
+    const task = await TaskService.create({ name: 'Nueva', description: 'Contexto local' });
+
+    expect(task.description).toBe('Contexto local');
+
+    const [row] = await db.getAllAsync<{ description: string | null }>(
+      `SELECT description FROM tasks WHERE id = ?`,
+      [task.id],
+    );
+    expect(row.description).toBe('Contexto local');
+  });
+
+  it('createWithSteps crea la tarea y sus pasos ordenados en una sola acción', async () => {
+    const task = await TaskService.createWithSteps(
+      { name: 'Estudiar SO', description: 'Memoria virtual' },
+      [
+        { name: 'Leer capítulo 1', duration_min: 15 },
+        { name: 'Resolver ejercicio 2', duration_min: 10 },
+      ],
+    );
+
+    expect(task.id).toBeGreaterThan(0);
+    expect(task).toMatchObject({ name: 'Estudiar SO', description: 'Memoria virtual', dirty: 1 });
+
+    const steps = await db.getAllAsync<{
+      name: string;
+      duration_min: number | null;
+      order_index: number;
+      dirty: number;
+    }>(`SELECT name, duration_min, order_index, dirty FROM steps ORDER BY order_index ASC`, []);
+    expect(steps).toEqual([
+      { name: 'Leer capítulo 1', duration_min: 15, order_index: 0, dirty: 1 },
+      { name: 'Resolver ejercicio 2', duration_min: 10, order_index: 1, dirty: 1 },
+    ]);
+
+    // un solo sync para todo el lote (HU-12 confirma en una acción)
+    expect(mocks.syncNow).toHaveBeenCalledTimes(1);
+  });
+
+  it('createWithSteps sin pasos crea solo la tarea', async () => {
+    const task = await TaskService.createWithSteps({ name: 'Tarea simple' }, []);
+
+    expect(task.id).toBeGreaterThan(0);
+    const steps = await db.getAllAsync<{ id: number }>(`SELECT id FROM steps`, []);
+    expect(steps).toEqual([]);
+  });
+
+  it('update sin description preserva la existente (AC4)', async () => {
+    const task = await TaskService.create({ name: 'Tarea', description: 'Original' });
+
+    await TaskService.update(task.id, { name: 'Renombrada' });
+
+    const [row] = await db.getAllAsync<{ name: string; description: string | null; dirty: number }>(
+      `SELECT name, description, dirty FROM tasks WHERE id = ?`,
+      [task.id],
+    );
+    expect(row).toEqual({ name: 'Renombrada', description: 'Original', dirty: 1 });
+  });
+
+  it('update con description la actualiza (AC4)', async () => {
+    const task = await TaskService.create({ name: 'Tarea', description: 'Antes' });
+
+    await TaskService.update(task.id, { description: 'Después' });
+
+    const [row] = await db.getAllAsync<{ description: string | null; dirty: number }>(
+      `SELECT description, dirty FROM tasks WHERE id = ?`,
+      [task.id],
+    );
+    expect(row).toEqual({ description: 'Después', dirty: 1 });
+  });
+
   it('getAll ordena por created_at desc', async () => {
     await insertTask();
     await db.runAsync(
@@ -95,8 +166,11 @@ describe('TaskService', () => {
 
   it('delete borra la tarea y sus pasos', async () => {
     const id = await insertTask();
-    await db.runAsync(`INSERT INTO steps (task_id, name, order_index, dirty, updated_at)
-       VALUES (?, 'Paso', 0, 0, '2026-08-01T00:00:00.000Z')`, [id]);
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, order_index, dirty, updated_at)
+       VALUES (?, 'Paso', 0, 0, '2026-08-01T00:00:00.000Z')`,
+      [id],
+    );
 
     await TaskService.delete(id);
 
@@ -126,10 +200,11 @@ describe('TaskService', () => {
 
     await expect(TaskService.complete(id)).resolves.toBe(true);
 
-    const [row] = await db.getAllAsync<{ status: string; completed_at: string | null; dirty: number }>(
-      `SELECT status, completed_at, dirty FROM tasks WHERE id = ?`,
-      [id],
-    );
+    const [row] = await db.getAllAsync<{
+      status: string;
+      completed_at: string | null;
+      dirty: number;
+    }>(`SELECT status, completed_at, dirty FROM tasks WHERE id = ?`, [id]);
     expect(row.status).toBe('completed');
     expect(row.completed_at).not.toBeNull();
     expect(row.dirty).toBe(1);

@@ -18,7 +18,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 
 | ID | Decisión | Fecha | Estado |
 | --- | --- | --- | --- |
-| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Julio 2026 | Confirmada |
+| DT-09 | Backend: Node.js + Express + Prisma + PostgreSQL en Railway | Julio 2026 | Reemplazada por DT-33 (Render + Neon) |
 | DT-10 | Autenticación JWT con registro/login | Julio 2026 | Confirmada |
 | DT-11 | Sync offline-first híbrido: sin cuenta→local, con cuenta→backend | Julio 2026 | Confirmada |
 | DT-12 | Conflictos de sync: last-write-wins | Julio 2026 | Confirmada |
@@ -29,10 +29,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-17 | JWT fail-closed: rechazar arranque sin secret o con placeholder | Agosto 2026 | Confirmada |
 | DT-18 | Contrato de password unificado: min 8, max 72 bytes, email trim | Agosto 2026 | Confirmada |
 | DT-19 | Validación ISO real de fechas (400 vs 500) | Agosto 2026 | Confirmada |
-| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | Server confirmado · cliente pendiente (#123 IDOR, #124 key por llamada) |
+| DT-20 | Idempotencia por `Idempotency-Key` en writes | Agosto 2026 | Server confirmado · cliente idempotente (DT-31) · scope migrate con identidad propia (DT-30 / PR #174) |
 | DT-21 | `completeStep` debe ser transaccional (evitar doble incremento) | Agosto 2026 | Confirmada — implementada (issue #71) |
 | DT-22 | GitHub: protección de ramas y gestión de herramientas del repo | Agosto 2026 | Confirmada |
 | DT-23 | Aislamiento de la DB local por usuario (`owner_user_id`) | Agosto 2026 | Confirmada |
+| DT-24 | IA en E3: Google Gemini vía proxy por el backend (key solo en servidor) | Septiembre 2026 | Implementada (E3, issue #154) |
+| DT-25 | Descripción como atributo persistente de la tarea | Agosto 2026 | Planificada (E3) |
+| DT-26 | Review automatizado de PRs con skills (opencode + OpenRouter free) | Septiembre 2026 | En curso (issue #187) |
+| DT-27 | Skill-review considera el contexto completo del PR (comments, reviews, sub-issues) | Septiembre 2026 | Implementada (issue #202) |
+| DT-28 | Tablero "StepUp - Seguimiento" (GitHub Projects v2) como fuente de estado real de issues/PRs | Septiembre 2026 | Implementada |
+| DT-29 | Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs | Septiembre 2026 | Confirmada (guía #233, PR #234) |
+| DT-30 | Replay de migrate sin scope compartido (fix IDOR) | Septiembre 2026 | Confirmada — PR #174 (issue #123) |
+| DT-31 | Idempotencia client-side persistente (key por operación en SQLite) | Septiembre 2026 | Confirmada — PR #175 (issues #124, #198, #199) |
+| DT-32 | Frontend IA gated por sesión + conectividad (la IA nunca genera 401) | Septiembre 2026 | Confirmada — issue #155 |
+| DT-33 | Hosting backend migrado a Render.com + Neon (reemplaza Railway) | Septiembre 2026 | Confirmada — issue #273 |
 
 # Decisiones detalladas
 
@@ -246,8 +256,144 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Decisión** | Agregar `owner_user_id` en `sync_meta`. Al hacer login se verifica el owner; si no coincide, se resetea la DB local antes de migrar/operar. Al logout se limpia el owner. | |
 | **Razonamiento** | Un solo almacén local con ownership explícito evita mezclar datasets de cuentas distintas sin perder el modo offline (E1). | |
 | **Alternativas descartadas** | DB por usuario (descartado: complejidad de migración y espacio); borrar todo al logout (descartado: rompía el modo offline sin cuenta). | |
-| **Consecuencias** | El `migrate()` limpia datos ajenos antes de subir. El flujo "saltar y usar offline" sigue funcionando sin owner. | |
+| **Consecuencias** | El `migrate()` limpia datos ajenos antes de subir. El flujo "saltar y usar offline" sigue funcionando sin owner. |
 
-*StepUp — Log Decisiones Técnicas E2 — Versión 1.2 — Agosto 2026*
+---
+
+## DT-24 IA en E3: Google Gemini vía proxy por el backend
+*Agosto 2026 (plan) — Septiembre 2026 (implementación, issue #154)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Implementada (E3, issue #154)** | |
+| **Contexto** | E3 necesita una IA que sugiera pasos al crear una tarea. El equipo no tiene experiencia previa en integración de IA. Investigación: la alternativa con mejor relación costo/esfuerzo es Google Gemini API (AI Studio) con tier gratis permanente (~10 RPM / 250K TPM en el tier gratuito). El modelo planificado (`gemini-2.5-flash`) fue deprecado por Google para keys nuevas durante la implementación; el default efectivo pasó a ser `gemini-3.5-flash` (configurable vía `GEMINI_MODEL`). | |
+| **Decisión** | La IA se consume **vía un endpoint propio del backend** (`POST /api/ai/suggest-steps` + `POST /api/ai/describe-help`), que a su vez llama a Gemini. La API key vive **solo en el servidor** (env de Render, ex-Railway — issue #273), nunca en el bundle de la app. Sin SDK: fetch directo al REST endpoint con `responseMimeType: application/json`. | |
+| **Razonamiento** | No exponer el secreto en un bundle público (la app se distribuye a cualquier dispositivo). Coherente con la arquitectura existente (JWT auth, env.ts fail-closed, error-handler, tests con supertest). Permite centralizar rate limiting, retry con backoff y sanitización de la respuesta. | |
+| **Alternativas descartadas** | Llamada directa desde la app a Gemini (descartado: la key queda expuesta en el bundle). Claude Haiku / GPT-4o mini (descartado: costos o cuotas del tier gratis menos favorables para esta escala). IA on-device (descartado: requiere modelos locales pesados, fuera de alcance académico). Refino conversacional de la sugerencia (descartado en E3: se usa re-generar). | |
+| **Consecuencias** | La app offline no puede usar la IA (requiere red) pero nunca queda bloqueada: sin conexión, el botón de IA no aparece y el flujo manual de creación queda intacto. En el tier gratis Google entrena con los prompts (aceptable para uso académico; no enviar datos sensibles). La mejora continua del prompt queda como trabajo posterior. Implementación: `AIService` con timeout (90 s default), retry con backoff exponencial en 429/5xx (3 intentos), sanitizado de la respuesta (nombres no vacíos, duración clamp 5-25, 3-8 pasos) y errores mapeados a 502 (proveedor caído) / 429 (saturado). `GEMINI_API_KEY` fail-closed en `config/env.ts`. | |
+
+---
+
+## DT-25 Descripción como atributo persistente de la tarea
+*Agosto 2026 — Plan de la Entrega 3 (slice #153)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Planificada (E3)** | |
+| **Contexto** | La calidad de la sugerencia de pasos con IA depende del contexto que el usuario da. Hoy una tarea solo tiene nombre y fecha. Se necesita un campo de descripción, y decidir si se persiste. | |
+| **Decisión** | La tarea gana un atributo `description` (opcional, nullable) que se guarda en SQLite local, en PostgreSQL (Prisma) y viaja en el contrato de sync. Es editable desde el formulario y se muestra en el detalle. | |
+| **Razonamiento** | La descripción es el "por qué" de la tarea; descartarla (efímera) impediría re-generar pasos con IA más tarde con el mismo contexto y empobrecería el dashboard futuro. El costo de schema es acotado: ya existen migraciones en SQLite y Prisma, y el sync ya resuelve cambios. | |
+| **Alternativas descartadas** | Descripción efímera (solo para la llamada de IA, no persistida): más simple, pero pierde el contexto y rompe "re-generar pasos después". | |
+| **Consecuencias** | El formulario de crear/editar tarea gana un campo. El detalle muestra la descripción. El sync y las migraciones (local y remota) se actualizan. El campo es opcional: crear sin descripción sigue siendo válido y rápido (HU-2). | |
+
+---
+
+## DT-26 Review automatizado de PRs con skills (opencode + OpenRouter free)
+*Septiembre 2026 — Issue #187*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **En curso** | |
+| **Contexto** | Desde septiembre 2026 existe un review automatizado de PRs contra `develop` en modo informativo (no bloquea el merge): CodeRabbit (`.coderabbit.yaml`, PR #186) como reja, y una skill-review con el agente `skill-reviewer` de opencode que emite un comentario con veredicto sobre fidelidad a la issue, convenciones del repo y diseño. El equipo quiere medir la precisión de la IA antes de decidir si el check pasa a gate (required check). | |
+| **Decisión** | La skill-review no reemplaza la aprobación humana (§7.6). Los PRs contra `develop` corren un job `stepup-review` (workflow `.github/workflows/skill-review.yml`) que invoca la action oficial `anomalyco/opencode/github` con el agente opencode `skill-reviewer` (`.opencode/agents/skill-reviewer.md`, modo `primary`, READ-ONLY) y la skill `stepup-review` (`.claude/skills/stepup-review/SKILL.md`). El modelo es OpenRouter free (`nemotron-3-ultra-550b-a55b:free` con fallback `nemotron-3-super-120b-a12b:free` vía dos pasos en el workflow con `continue-on-error`); usa `share: false` y `use_github_token: true`. El job queda verde siempre (`continue-on-error`), con el error visible en el comentario si ambos modelos fallan. Se skipea cuando el PR no vincula issue (`Closes|Fixes|Resolves #N`), drafts, forks y dependabot. | |
+| **Razonamiento** | Un rol informativo deja medir la precisión real contra el review humano sin fricción extra en el flujo (§7.6 sigue exigiendo 1 aprobación humana). El fallback de modelos y el `continue-on-error` garantizan que un fallo del LLM nunca rompa el merge. `share: false` evita compartir el prompt fuera del repo; `use_github_token: true` evita el intercambio de tokens vía OIDC y la necesidad de una GitHub App. | |
+| **Alternativas descartadas** | Subagentes con modelos pagos (descartado: costo por repo público, no necesario para el alcance). Aprobación automática con `--approve`/`--request-changes` (descartado: el rol es informativo; la promoción futura a gate se logra haciendo el check required, sin cambios de código). | |
+| **Consecuencias** | El check `stepup-review` aparecerá en todos los PRs a `develop` (verde siempre, rol informativo). El agente es estrictamente de solo lectura (permission `edit: deny`, bash restringido a `gh`/`git` read-only, sin `task`, sin `webfetch`/`websearch`) para que nunca pushee cambios. La key de OpenRouter es un secret del repo (`OPENROUTER_API_KEY`). Si se quiere convertir en gate: habilitar el check como required en la protección de `develop`, sin tocar código. A monitorear: precisión de los veredictos vs reviews humanas. |
+
+---
+
+## DT-27 Skill-review considera el contexto completo del PR (comments, reviews, sub-issues)
+*Septiembre 2026 — Issue #202*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Implementada** | |
+| **Contexto** | La skill-review original (DT-26) evaluaba solo el diff y la issue vinculada, aislada del contexto del PR. En septiembre 2026 se detectó que varios PRs estaban bloqueados por trabajo trackeado fuera del diff: sub-issues abiertas (p. ej. #198/#199 bajo #124), reviews humanas `CHANGES_REQUESTED` sin resolver y threads de review inline. Un veredicto `NEEDS WORK` genérico no distinguía entre defectos del propio PR y pendientes ajenos al diff. | |
+| **Decisión** | Antes de emitir el veredicto, el agente recolecta el contexto asociado al PR con `gh` (solo lectura): comments y reviews (`gh pr view <n> --json reviews,comments,commits`), threads inline (`gh api repos/<owner>/<repo>/pulls/<n>/comments`) y sub-issues de la issue vinculada (`gh api repos/<owner>/<repo>/issues/<issue>/sub_issues`). Se agrega un cuarto eje de revisión **D — contexto y trayectoria** (body vs diff real, hallazgos previos resueltos, threads sin resolver, sub-issues abiertas, coherencia de commits). El veredicto pasa a cuatro estados: `APPROVED`, `NEEDS WORK` (defectos en el propio PR), `BLOCKED` (el diff está bien pero el contexto no lo deja mergear: sub-issues abiertas, reviews/threads sin resolver) y `SKIPPED`. El formato de salida agrega el bloque "Contexto del PR". | |
+| **Razonamiento** | El veredicto debe comunicar QUÉ bloquea, no solo si bloquea: distingue "este PR tiene un bug" de "este PR está bien pero su issue tiene sub-issues abiertas". `BLOCKED` le dice al autor y al revisor humano exactamente dónde está el cuello de botella. La recolección usa los mismos permisos ya granted al agente (`gh *`), sin cambios de seguridad en el workflow. | |
+| **Alternativas descartadas** | Seguir con un solo estado `NEEDS WORK` (descartado: ambigüo, no orienta al autor). Leer GraphQL para threads resueltos (descartado: el REST `pulls/<n>/comments` alcanza; la resolución de threads se infiere del diff e historial de respuestas). Persistir estado entre runs con storage externo (descartado: la trayectoria se reconstruye leyendo los propios comentarios del PR). | |
+| **Consecuencias** | Los veredictos son más descriptivos y accionables: `BLOCKED` señala pendientes trackeados en sub-issues (`#198/#199` bajo `#124` es el caso canónico). El check sigue siendo informativo: `BLOCKED` no bloquea el merge. El agente no requiere permisos nuevos (todo es `gh` read-only). Anti-patrones actualizados para no repetir hallazgos ya resueltos ni reportar sub-issues abiertas como defectos de código. |
+
+---
+
+## DT-28 Tablero "StepUp - Seguimiento" (GitHub Projects v2)
+*Septiembre 2026 — Gestión del repo*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Implementada** | |
+| **Contexto** | El estado de una issue se deducía del label, el assignee y el milestone (CONVENCIONES §7.8), pero no había una vista unificada que mostrara qué está bloqueado, listo, en progreso, en review y mergeado, ni las fases (Entregas). GitHub no expone Projects v2 por la API REST, solo por GraphQL o el CLI `gh`. | |
+| **Decisión** | Habilitar el proyecto **"StepUp - Seguimiento"** (https://github.com/users/YahirAedo/projects/2, proyecto v2 reutilizado de la cuenta `YahirAedo`), reutilizando el campo **Status** nativo con 7 opciones: `Backlog`, `Ready`, `In Progress`, `Blocked`, `In Review`, `Merged`, `Done`. Vista principal tipo **Board** agrupada por Status. Todo issue y PR se agrega al tablero; el movimiento de tarjetas es manual según las reglas documentadas en CONVENCIONES §7.8. Las issues **bloqueadas** llevan además el label `blocked` (creado: `#B60205`). | |
+| **Razonamiento** | Projects v2 es la herramienta nativa de GitHub: la tarjeta se vincula sola al issue/PR y el drag & drop es cero-fricción para el equipo. Un board por Status reemplaza la deducción implícita del §7.8 anterior con una vista visual gráfica (lo que el equipo pidió en vez de una tabla). Los blockers ya existían en los bodies de las issues (`## Blocked by`); el tablero los hace visibles de un vistazo. | |
+| **Alternativas descartadas** | Vista Table con columnas por milestone (descartada por el equipo: prefiere el board gráfico). Automatizar el movimiento por CI/action en cada evento (descartado: mandato manual, menos ruido; la población inicial se hizo con `gh project item-add` + GraphQL `updateProjectV2Field`). | |
+| **Consecuencias** | El estado real de cada issue/PR es visible en el tablero (11 In Progress, 28 Ready, 6 Blocked, 14 In Review al poblarlo). Reglas de movimiento en CONVENCIONES §7.8: tomar issue → In Progress; PR abierto → In Review; merge → PR a Merged e issue a Done; bloqueada → Blocked + label `blocked`. El label `blocked` se puede consultar/filtrar como cualquier label. A monitorear: que el equipo mantenga el tablero al día (regla manual). |
+
+---
+
+## DT-29 Diseño y documentación sujetos a evolución: lo que no cuadra se documenta y se actualizan los docs
+*Septiembre 2026 — Issue #233 (PR #234)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | La nueva guía móvil canónica (`docs/GUIA-DISENO-MOVIL.md`) codifica el diseño como fuente de verdad. Para que la norma no se congele ni se contradiga, el equipo aclara que el diseño (visual y de documentación) está sujeto a cambios: si algo no cuadra al implementar o validar, se documenta el hallazgo y se actualizan las documentaciones afectadas. | |
+| **Decisión** | El diseño no es intocable, y el flujo ante un desajuste es: (1) documentar el hallazgo, (2) actualizar la documentación afectada (guía, CONVENCIONES, DS SKILL, DESIGN.md local o tokens del theme) dentro de la misma rama del cambio (CONVENCIONES §7.9), (3) registrar la decisión en este log, y (4) despachar el cambio como issue/PR con revisión. Queda prohibido resolver el desajuste solo en código dejando los docs desactualizados, o congelar la norma por el hecho de estar escrita. | |
+| **Razonamiento** | Una guía escrita no debe convertirse en dogma: los hallazgos reales de UX, accesibilidad y performance (p. ej. una skill que contradice una regla de casing) deben poder corregir la norma. Mantener docs y código en la misma rama evita el desincronismo clásico entre "lo que dice la doc" y "lo que hace la app", y queda trackeado para review. | |
+| **Alternativas descartadas** | Considerar la guía inmutable hasta una revisión periódica (descartado: los hallazgos aparecen durante el trabajo, no en ventanas programadas). Documentar solo en comments de código (descartado: sin registro formal no hay trazabilidad para el equipo ni para los agentes). | |
+| **Consecuencias** | Cada cambio de norma va acompañado de su doc actualizada y su ADR, todo dentro del mismo PR. Los reviews (humanos y skill-review) pueden exigir la doc al día como parte del diff. La cláusula vive en la guía (#233) como fuente de referencia para todo el equipo. |
+
+## DT-30 Replay de migrate sin scope compartido (fix IDOR)
+*Septiembre 2026 — Sprint 3 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — PR #174 (issue #123) | |
+| **Contexto** | El migrate usaba `runIdempotent` con un scope fijo y público (`MIGRATE_IDEMPOTENCY_SCOPE`, UUID hardcodeado) y un usuario fake `idempotency-migrate@internal.stepup` que se hacía upsert en `users` en producción (ver DT-20). Todos los clients compartían el mismo `user_id` de idempotencia → un 2do `POST /api/sync/migrate` (misma key, otro cliente) devolvía el replay del primero (token + taskMap/stepMap del otro usuario) → **IDOR**. | |
+| **Decisión** | Eliminar `runIdempotent` del migrate y el usuario fake. Con nuevos campos `users.migrateRequestHash` y `users.migrateMaps` (almacenados en el propio user): si el email ya existe y `bcrypt.compare(password)` coincide y el hash del payload coincide, se devuelve el replay (token + maps). Si no, `EMAIL_ALREADY_REGISTERED` (409). El hash se computa con `createHash('sha256')` sobre el body **ya validado con Zod** — el mismo valor que se persiste en el primer migrate. | |
+| **Razonamiento** | El "scope" de idempotencia pasa a ser la identidad del propio email (único), sin UUID compartido ni usuario sintético en producción. Los maps viven en el user (fuente de verdad) y un reintento legítimo replays el mismo token/maps. | |
+| **Alternativas descartadas** | Mantener `runIdempotent` con scope derivado del user (imposible antes de conocer el user en el primer intento). Usuario fake por email (complejidad de cleanup). | |
+| **Consecuencias** | migrate ya no graba filas en `idempotency_keys` (test: contador 0). El replay es byte-idéntico. **Gotcha:** el hash DEBE calcularse sobre el payload post-Zod; si se hashea el body crudo, un reintento de un cliente que serializa en otro orden de keys o con espacios difiere y recibe 409 aunque el payload sea el mismo (corregido en la rama del PR; coherencia con la contraparte client-side en DT-31 / PR #175). | |
+
+---
+
+## DT-31 Idempotencia client-side persistente (key por operación en SQLite)
+*Septiembre 2026 — Sprint 3 E2*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada y testeada en el PR #175 (issues #124, #198, #199) | |
+| **Contexto** | Tras #67 la idempotencia quedó resuelta del lado servidor, pero el cliente la anulaba: `push` y `migrate` generaban una key NUEVA por llamada (`SyncService.ts` con `idempotencyKey = generateIdempotencyKey()`), y `syncLifecycle` invocaba `push()` sin key. Un retry tras timeout de red llegaba con key distinta → el backend no podía hacer replay → push duplicado o migración atascada en `409 EMAIL_ALREADY_REGISTERED` sin token ni ids nuevos (#124). | |
+| **Decisión** | Persistir la key por operación en SQLite (tabla `pending_idempotency_keys`, migración V5, scope `sync-push`/`sync-migrate`). `push`/`migrate` reutilizan la key persistida hasta confirmar 2xx; el `catch {}` de `syncLifecycle` traga el error y deja la key pegada para el próximo ciclo. El hash del payload se calcula con `expo-crypto` (SHA-256) para derivar una key nueva cuando el payload cambia (#198), y se limpia solo con 2xx o 4xx excepto 401 (evita stuck permanente ante payloads rechazados). | |
+| **Razonamiento** | Patrón análogo al del servidor (Stripe): un reintento tras error de red (sin respuesta del server) reutiliza la misma key y habilita el replay. La key se genera por operación, no por request — es la única forma de que el servidor identifique el retry. `expo-crypto` reemplaza a `crypto.subtle` porque este no está disponible en todos los runtimes de React Native/Hermes. | |
+| **Alternativas descartadas** | Key derivada determinísticamente por entidad (hash de `taskLocalId` + `updated_at` en `push`): más frágil con varios registros dirty y sin análogo para `migrate`. `crypto.subtle.digest` (web): descartado por indisponibilidad en Hermes — se migró a `expo-crypto`. Empty `catch {}` sin documentar: queda cubierto por tests. | |
+| **Consecuencias** | Migración SQLite **V5** `pending_idempotency_keys`. Tests de retry-same-key en `SyncService.test.ts` (patrón push/migrate, #124 AC1-AC3) y en `syncLifecycle.idempotency.test.ts` vía ciclos de `onAppActive` (#124 AC4 / #199 AC1-AC2). Nueva dependencia `expo-crypto` (+ mock de test en `vitest.setup.ts`). Tensión conocida: limpiar la key en 4xx≠401 puede destruir una key sin token recibido ante un 409 a mitad de migración — registrada para revisión en la review del PR #175 (ver #201, también aplica a #174). | |
+
+---
+
+## DT-32 Frontend IA gated por sesión + conectividad (la IA nunca genera 401)
+*Septiembre 2026 — Entrega 3 (issue #155)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada en la rama de la issue #155 (TaskFormScreen) | |
+| **Contexto** | Los endpoints de IA (`POST /api/ai/suggest-steps`, `POST /api/ai/describe-help`) son autenticados (`requireAuth`, rate-limit). En la app, un 401 de la API borra la sesión local (`apiFetch` → logout y navigate a Login). Si el botón "Sugerir pasos con IA" se mostrara siempre (estilo "mostrar y fallar"), un usuario logueado con token expirado haría clic y recibiría un 401 que destruye la sesión — experiencia de error confusa para una acción opcional de IA. Además la IA sin conexión no funciona (HU-14). | |
+| **Decisión** | La sección IA del formulario de creación se muestra solo si `!isEditing && isOnline && hasSession()`. `isOnline` viene de un hook (`useIsOnline`, `@react-native-community/netinfo`) que arranca en `false` (el botón queda oculto hasta confirmar conexión real, `state.isConnected === true`) y escucha cambios de red. La creación manual sin IA sigue disponible sin sesión y offline, intacta. | |
+| **Razonamiento** | El endpoint exige JWT; gating por sesión evita el 401 destructivo y es barato de evaluar (síncrono). El gating por red evita llamadas fallidas e implementa HU-14 ("si estoy offline el botón de IA no aparece"). Default `false` de conectividad evita un flash del botón durante el chequeo inicial de NetInfo (que puede tardar hasta el primer evento). | |
+| **Alternativas descartadas** | Mostrar la IA siempre y mapear el error (descartado: el 401 de `apiFetch` no distingue "token expirado" en esta feature y borra la sesión; requeriría refactor de `apiFetch`). NetInfo con default `true` y ocultar ante evento offline (descartado: flash erróneo al abrir el form sin conexión). | |
+| **Consecuencias** | Nueva dependencia `@react-native-community/netinfo@11.4.1` (instalada con `npx expo install -- --legacy-peer-deps`) y `src/hooks/useIsOnline.ts`. El asistente de descripción respeta el mismo gate. UX: sin sesión activa el usuario retoma el flujo manual; la sesión se restaura al tocar el botón "Crear tarea" igual que siempre. | |
+
+*StepUp — Log Decisiones Técnicas E2 — Versión 1.3 — Agosto 2026*
+
+## DT-33 Hosting backend migrado a Render.com + Neon (reemplaza Railway)
+*Septiembre 2026 — Demo final (issue #273)*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** — implementada y verificada en producción (2026-09-24) | |
+| **Contexto** | El plan gratuito de Railway (de un tercero) venció: `https://stepup-backend-api-production.up.railway.app` devuelve 404 ("Application not found") con `x-railway-fallback: true`. La demo académica necesita un backend público estable que no dependa del plan vencido. Además, el Postgres free de Render **expira a los 30 días** — no sirve como única BD. | |
+| **Decisión** | Backend en **Render.com** (Web Service free, región Oregon us-west-2, se duerme tras 15 min de inactividad con spin-up ~1 min) y base de datos en **Neon** (Postgres tier free **permanente**, proyecto `stepup_prod`, misma región). Config: Root Directory `backend/`, Build `npm ci --include=dev && npm run build`, Start `npx prisma migrate deploy && node dist/server.js`, env `DATABASE_URL` (Neon directa), `JWT_SECRET`, `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`. URL: `https://stepup-940v.onrender.com`. | |
+| **Razonamiento** | Neon no expira (a diferencia del Postgres gratis de Render y del plan vencido de Railway). La connection string **directa** de Neon (hostname sin `-pooler`) se usa como `DATABASE_URL` porque `schema.prisma` define `url = env("DATABASE_URL")` sin `directUrl` → cero cambios de código. Verificado en prod: `/api/health` 200, register 201, login 200, `/api/ai/suggest-steps` 200 (6 pasos). | |
+| **Alternativas descartadas** | Railway (plan vencido, no recuperable). Postgres de Render (caduca a 30 días). Connection string con pooling de Neon como `DATABASE_URL` sin `directUrl` (Prisma migraría con el pooler — no soportado para migraciones). | |
+| **Consecuencias** | El APK se reconstruye con `EXPO_PUBLIC_API_URL=https://stepup-940v.onrender.com` vía perfil `apk` de `eas.json` (issue #273). Docs actualizadas: `.env.example`, `README`, `docs/Contexto.md`, `docs/Arquitectura E2.md`, `docs/Backend E2 PRD.md`, `docs/Gestión documental E2.md`, B1/B2 (con nota de deprecación), `AGENTS.md`, `pptx-e2.js`. La checklist B1 se conserva como registro histórico. **Gotcha:** el tier free de Render duerme el servicio (primera request tras inactividad tarda ~1 min, y la primera llamada de IA puede tardar ~45 s con cold start de Render + Neon scale-to-zero + Gemini). | |
 
 *Ingeniería en Sistemas de Información*

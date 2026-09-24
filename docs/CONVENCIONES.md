@@ -7,6 +7,12 @@
 
 ## 1. Estilos y presentación
 
+> La guía móvil canónica es `docs/GUIA-DISENO-MOVIL.md` (4º documento obligatorio
+> del onboarding). Ahí viven: casing/tipografía, colores tokens-only, responsive,
+> chrome nativo Android-first, catálogo completo de componentes y anti-patterns.
+> CONVENCIONES define las reglas base; la guía las detalla para móvil sin
+> duplicarlas.
+
 ### 1.1 Siempre usar theme tokens, NUNCA colores hardcodeados
 
 ```tsx
@@ -403,6 +409,32 @@ git checkout -b feat/78-pantalla-x
 3. **Con assignee** → en trabajo (pull rule).
 4. **Cerrada** → al mergear el PR que la resuelve, o cerrada con motivo si no
    es accionable o se duplica (sin esperar a merge).
+
+#### Tablero "StepUp - Seguimiento" (GitHub Projects)
+
+El estado real se refleja en el tablero
+**https://github.com/users/YahirAedo/projects/2** (proyecto v2, vista Board
+agrupada por Status). Toda issue o PR debe estar en el tablero en la columna
+que corresponda:
+
+| Estado del item | Columna | Cuándo |
+|---|---|---|
+| Recién creada, no accionable | **Backlog** | Al abrirse, antes de especificarla |
+| Lista para tomar | **Ready** | Abierta, especificada y sin assignee |
+| En trabajo | **In Progress** | Con assignee trabajando (pull rule) |
+| Bloqueada | **Blocked** | Esperando una dependencia o sub-issue abierta. Además se le agrega el label `blocked` |
+| PR abierto contra `develop` | **In Review** | Mientras el PR está abierto (se mueve con el PR, no con la issue si la issue sigue en paralelo) |
+| PR mergeado | **Merged** | Al mergear el PR |
+| Issue cerrada | **Done** | Al cerrar la issue |
+
+Reglas:
+
+- Al **tomar** una issue (pull rule), mover la tarjeta a **In Progress**.
+- Al abrir un **PR**, el PR se mueve a **In Review** (no se desmarca la issue
+  si aún hay trabajo).
+- Al **mergear**, mover el PR a **Merged** y la issue que cierra a **Done**.
+- Si una issue queda bloqueada, marcarla **Blocked** y agregarle el label
+  `blocked`. Al destrabarse, quitar label y mover a la columna correspondiente.
 
 ### 7.9 Registro de avances (documentación del proyecto)
 

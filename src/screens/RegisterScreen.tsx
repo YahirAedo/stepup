@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -170,17 +170,19 @@ export default function RegisterScreen({ navigation }: Props) {
                 <MaterialIcons name="lock-outline" size={24} color={colors['on-surface-variant']} />
               }
               rightElement={
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setShowPassword((prev) => !prev)}
-                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
                 >
                   <MaterialIcons
                     name={showPassword ? 'visibility' : 'visibility-off'}
                     size={24}
                     color={colors['on-surface-variant']}
                   />
-                </TouchableOpacity>
+                </Pressable>
               }
             />
 
@@ -213,11 +215,12 @@ export default function RegisterScreen({ navigation }: Props) {
             alignItems: 'center',
           }}
         >
-          <TouchableOpacity
+          <Pressable
             onPress={handleRegister}
             disabled={loading}
-            activeOpacity={0.85}
-            style={{
+            accessibilityRole="button"
+            accessibilityLabel={loading ? 'Creando cuenta' : 'Crear cuenta'}
+            style={({ pressed }) => ({
               width: '100%',
               height: 56,
               borderRadius: borderRadius.full,
@@ -226,21 +229,27 @@ export default function RegisterScreen({ navigation }: Props) {
               alignItems: 'center',
               flexDirection: 'row',
               gap: 8,
-              opacity: loading ? 0.5 : 1,
-            }}
+              opacity: loading ? 0.5 : pressed ? 0.85 : 1,
+            })}
           >
             <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
-              {loading ? 'Creando cuenta…' : 'Crear Cuenta'}
+              {loading ? 'Creando cuenta…' : 'Crear cuenta'}
             </Text>
             {loading && (
               <MaterialIcons name="hourglass-empty" size={20} color={colors['on-primary']} />
             )}
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.navigate('Login')}
-            activeOpacity={0.7}
-            style={{ height: 44, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityRole="button"
+            accessibilityLabel="Iniciar sesión"
+            style={({ pressed }) => ({
+              height: 44,
+              justifyContent: 'center',
+              alignItems: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
             <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               ¿Ya tienes una cuenta?{' '}
@@ -248,7 +257,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 Inicia sesión
               </Text>
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -20,7 +20,8 @@ Este documento describe dónde vive cada artefacto del proyecto StepUp (reposito
 | --- | --- | --- |
 | GitHub | Código, issues, PRs, CI, releases | https://github.com/YahirAedo/stepup |
 | Google Drive | Documentación, capturas, feedback, manuales | Carpeta del proyecto (7 carpetas) |
-| Railway | Backend de producción | stepup-backend-api-production.up.railway.app |
+| Railway | Backend de producción (histórico, plan vencido) | stepup-backend-api-production.up.railway.app (deprecado) |
+| Render + Neon | Backend de producción (actual, issue #273) | https://stepup-940v.onrender.com · proyecto Neon `stepup_prod` |
 | Sistema de diseño | Prototipos HTML y tokens Zenith Vitality | `stitch_stepup_design_system/` en el repo |
 
 # 3. Estructura de Google Drive

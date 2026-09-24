@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { colors, typography, borderRadius } from '../theme';
 import { Step } from '../types';
 
@@ -13,13 +13,17 @@ interface StepItemProps {
 
 export default function StepItem({ step, isNext, onToggle, onPress, onLongPress }: StepItemProps) {
   const completed = step.status === 'completed';
+  const checkboxLabel = `${step.name}, ${completed ? 'completado' : 'pendiente'}`;
+  const itemLabel = `Paso: ${step.name}${completed ? ', completado' : ''}${isNext && !completed ? ', en progreso' : ''}`;
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
-      activeOpacity={0.7}
-      style={{
+      accessibilityRole="button"
+      accessibilityLabel={itemLabel}
+      accessibilityHint="Mantener para eliminar el paso"
+      style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'flex-start',
         gap: 16,
@@ -32,12 +36,16 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
             : colors['surface-container-low'],
         borderWidth: 1,
         borderColor: isNext ? `${colors.secondary}33` : 'transparent',
-      }}
+        opacity: pressed ? 0.7 : 1,
+      })}
     >
       {/* Checkbox */}
-      <TouchableOpacity
+      <Pressable
         onPress={onToggle}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: completed }}
+        accessibilityLabel={checkboxLabel}
         style={{
           width: 24,
           height: 24,
@@ -51,7 +59,7 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
         }}
       >
         {completed && <Text style={{ fontSize: 14, color: colors['on-secondary-fixed'] }}>✓</Text>}
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Content */}
       <View style={{ flex: 1, gap: 4 }}>
@@ -100,6 +108,6 @@ export default function StepItem({ step, isNext, onToggle, onPress, onLongPress 
           {step.duration_min}m
         </Text>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
