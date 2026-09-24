@@ -136,7 +136,12 @@ export default function HistoryScreen({ navigation }: Props) {
             }}
           >
             <View>
-              <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
+              <Text
+                style={[
+                  typography['label-sm'],
+                  { color: colors['on-surface-variant'], textTransform: 'uppercase' },
+                ]}
+              >
                 Rendimiento
               </Text>
               <Text style={[typography['headline-md'], { color: colors.secondary }]}>
@@ -176,7 +181,7 @@ export default function HistoryScreen({ navigation }: Props) {
         <View style={{ marginBottom: spacing['section-gap'] }}>
           <Text
             style={[
-              typography['label-md'],
+              typography['label-sm'],
               {
                 color: colors['on-surface-variant'],
                 textTransform: 'uppercase',

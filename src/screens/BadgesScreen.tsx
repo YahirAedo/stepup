@@ -138,7 +138,12 @@ export default function BadgesScreen({ navigation }: Props) {
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
+          <Text
+            style={[
+              typography['label-sm'] as TextStyle,
+              { color: colors['on-surface-variant'], textTransform: 'uppercase' },
+            ]}
+          >
             Desbloqueadas
           </Text>
           <View
@@ -156,7 +161,12 @@ export default function BadgesScreen({ navigation }: Props) {
         </View>
 
         <View style={{ gap: spacing['stack-gap'] }}>
-          <Text style={[typography['label-md'] as TextStyle, { color: colors['outline'] }]}>
+          <Text
+            style={[
+              typography['label-sm'] as TextStyle,
+              { color: colors['outline'], textTransform: 'uppercase' },
+            ]}
+          >
             Bloqueadas
           </Text>
           <View
