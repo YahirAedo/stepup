@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -54,10 +54,12 @@ function VersionCard({
   const modifiedAt = formatModifiedAt(snapshot.updatedAt);
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onSelect}
-      activeOpacity={0.85}
-      style={{
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`Seleccionar ${title}`}
+      style={({ pressed }) => ({
         flex: 1,
         backgroundColor: colors['surface-container-low'],
         borderRadius: borderRadius.xl,
@@ -66,7 +68,8 @@ function VersionCard({
         padding: spacing['stack-gap'],
         gap: spacing['stack-gap'],
         ...(selected ? shadows.card : {}),
-      }}
+        opacity: pressed ? 0.85 : 1,
+      })}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View
@@ -120,7 +123,7 @@ function VersionCard({
         }}
         textStyle={{ color: selected ? activeText : colors['on-surface'] }}
       />
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -182,9 +185,15 @@ export default function SyncConflictScreen({ navigation }: Props) {
           gap: 12,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.6}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <Text style={{ fontSize: 24, color: colors['on-surface'] }}>‹</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           Conflicto de Sincronización
         </Text>
@@ -285,15 +294,20 @@ export default function SyncConflictScreen({ navigation }: Props) {
               </View>
             ))}
 
-            <TouchableOpacity
+            <Pressable
               onPress={() =>
                 Alert.alert(
                   'Ayuda',
                   'Compará la fecha de última modificación y el estado de cada versión. Elegí la que refleje mejor tu progreso actual; el cambio quedará guardado tanto en este dispositivo como en la nube.',
                 )
               }
-              activeOpacity={0.6}
-              style={{ alignItems: 'center', paddingVertical: spacing.unit * 2 }}
+              accessibilityRole="button"
+              accessibilityLabel="¿Necesitas ayuda para decidir?"
+              style={({ pressed }) => ({
+                alignItems: 'center',
+                paddingVertical: spacing.unit * 2,
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
               <Text
                 style={[
@@ -303,7 +317,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
               >
                 ¿Necesitas ayuda para decidir?
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </>
         )}
       </ScrollView>

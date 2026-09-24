@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, StatusBar } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TasksStackParamList } from '../types/navigation';
 import { StepService } from '../services/StepService';
@@ -103,18 +103,21 @@ export default function StepFormScreen({ navigation, route }: Props) {
             {DURATION_PILLS.map((d) => {
               const active = duration === String(d);
               return (
-                <TouchableOpacity
+                <Pressable
                   key={d}
                   onPress={() => setDuration(active ? '' : String(d))}
-                  activeOpacity={0.7}
-                  style={{
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${d} minutos${active ? ', seleccionado' : ''}`}
+                  style={({ pressed }) => ({
                     paddingHorizontal: 16,
                     paddingVertical: 8,
                     borderRadius: borderRadius.full,
                     backgroundColor: active ? colors.secondary : colors['surface-container-low'],
                     borderWidth: 1,
                     borderColor: active ? colors.secondary : colors['outline-variant'],
-                  }}
+                    opacity: pressed ? 0.7 : 1,
+                  })}
                 >
                   <Text
                     style={[
@@ -124,7 +127,7 @@ export default function StepFormScreen({ navigation, route }: Props) {
                   >
                     {d} min
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>

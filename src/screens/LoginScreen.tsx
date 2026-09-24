@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -143,29 +143,32 @@ export default function LoginScreen({ navigation }: Props) {
                 <MaterialIcons name="lock-outline" size={24} color={colors['on-surface-variant']} />
               }
               rightElement={
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setShowPassword((prev) => !prev)}
-                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
                 >
                   <MaterialIcons
                     name={showPassword ? 'visibility' : 'visibility-off'}
                     size={24}
                     color={colors['on-surface-variant']}
                   />
-                </TouchableOpacity>
+                </Pressable>
               }
             />
 
-            <TouchableOpacity
-              onPress={() => Alert.alert('Próximamente', 'Función de recuperación de contraseña no disponible aún')}
-              activeOpacity={0.7}
+<Pressable
+              onPress={() => Alert.alert('Próximamente', 'Recuperación de contraseña no disponible aún')}
+              accessibilityRole="button"
+              accessibilityLabel="¿Olvidaste tu contraseña?"
               style={{ alignSelf: 'flex-end', paddingVertical: 4 }}
             >
               <Text style={[typography['label-md'] as TextStyle, { color: colors.primary }]}>
                 ¿Olvidaste tu contraseña?
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {error && (
@@ -192,11 +195,12 @@ export default function LoginScreen({ navigation }: Props) {
             alignItems: 'center',
           }}
         >
-          <TouchableOpacity
+          <Pressable
             onPress={handleLogin}
             disabled={loading}
-            activeOpacity={0.85}
-            style={{
+            accessibilityRole="button"
+            accessibilityLabel={loading ? 'Ingresando' : 'Iniciar sesión'}
+            style={({ pressed }) => ({
               width: '100%',
               height: 56,
               borderRadius: borderRadius.full,
@@ -205,29 +209,41 @@ export default function LoginScreen({ navigation }: Props) {
               alignItems: 'center',
               flexDirection: 'row',
               gap: 8,
-              opacity: loading ? 0.5 : 1,
-            }}
+              opacity: loading ? 0.5 : pressed ? 0.85 : 1,
+            })}
           >
             <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
               {loading ? 'Ingresando…' : 'Iniciar sesión'}
             </Text>
             {loading && <MaterialIcons name="hourglass-empty" size={20} color={colors['on-primary']} />}
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
+          <Pressable
             onPress={goOffline}
-            activeOpacity={0.7}
-            style={{ height: 44, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityRole="button"
+            accessibilityLabel="Saltar y usar offline"
+            style={({ pressed }) => ({
+              height: 44,
+              justifyContent: 'center',
+              alignItems: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
             <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               Saltar y usar offline
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.navigate('Register')}
-            activeOpacity={0.7}
-            style={{ height: 44, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityRole="button"
+            accessibilityLabel="Crear una cuenta"
+            style={({ pressed }) => ({
+              height: 44,
+              justifyContent: 'center',
+              alignItems: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
             <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
               ¿No tienes una cuenta?{' '}
@@ -235,7 +251,7 @@ export default function LoginScreen({ navigation }: Props) {
                 Crear una cuenta
               </Text>
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

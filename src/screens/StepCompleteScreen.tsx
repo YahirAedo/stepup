@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, Animated, Pressable, StatusBar } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TasksStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, shadows, scale } from '../theme';
@@ -98,10 +98,11 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
         </Text>
 
         {nextStepName && (
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.goBack()}
-            activeOpacity={0.85}
-            style={{
+            accessibilityRole="button"
+            accessibilityLabel={`Ir al siguiente paso: ${nextStepName}`}
+            style={({ pressed }) => ({
               flexDirection: 'row',
               alignItems: 'center',
               gap: 12,
@@ -110,23 +111,30 @@ export default function StepCompleteScreen({ navigation, route }: Props) {
               borderRadius: borderRadius.full,
               backgroundColor: colors['tertiary'],
               ...shadows.fab,
-            }}
+              opacity: pressed ? 0.85 : 1,
+            })}
           >
             <Text style={[typography['label-md'], { color: colors['on-tertiary'], fontSize: 15 }]}>
               Siguiente paso: {nextStepName}
             </Text>
             <Text style={{ color: colors['on-tertiary'], fontSize: 20 }}>→</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.popToTop()}
-          style={{ marginTop: spacing['stack-gap'], padding: spacing['stack-gap'] }}
+          accessibilityRole="button"
+          accessibilityLabel="Volver al inicio"
+          style={({ pressed }) => ({
+            marginTop: spacing['stack-gap'],
+            padding: spacing['stack-gap'],
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
           <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
             Volver al inicio
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </Animated.View>
     </View>
   );

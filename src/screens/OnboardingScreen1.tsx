@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, type TextStyle } from 'react-native';
+import { View, Text, Pressable, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, useResponsive } from '../theme';
@@ -16,8 +16,11 @@ export default function OnboardingScreen1({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.replace('Onboarding2')}
+        accessibilityRole="button"
+        accessibilityLabel="Saltar onboarding"
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         style={{
           position: 'absolute',
           top: insets.top + 8,
@@ -28,7 +31,7 @@ export default function OnboardingScreen1({ navigation }: Props) {
         <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
           Saltar
         </Text>
-      </TouchableOpacity>
+      </Pressable>
 
       <View
         style={{
@@ -185,22 +188,24 @@ export default function OnboardingScreen1({ navigation }: Props) {
           alignItems: 'center',
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.navigate('Onboarding2')}
-          activeOpacity={0.85}
-          style={{
+          accessibilityRole="button"
+          accessibilityLabel="Siguiente"
+          style={({ pressed }) => ({
             width: '100%',
             height: 56,
             borderRadius: borderRadius.full,
             backgroundColor: colors['primary-container'],
             justifyContent: 'center',
             alignItems: 'center',
-          }}
+            opacity: pressed ? 0.85 : 1,
+          })}
         >
           <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
             Siguiente
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
         <ProgressDots total={3} active={0} />
       </View>
