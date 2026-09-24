@@ -2,7 +2,7 @@ import { apiFetch, ENDPOINTS, ApiError } from './api';
 import type { DescriptionSection, SuggestedStep } from '../types';
 
 // IA — cliente del backend (issue #155). La key de Gemini vive SOLO en el backend
-// (Railway env); acá solo se consume el endpoint autenticado con la sesión local.
+// (env de Render); acá solo se consume el endpoint autenticado con la sesión local.
 export const AIService = {
   async suggestSteps(taskName: string, description?: string): Promise<SuggestedStep[]> {
     const data = await apiFetch<{ steps: SuggestedStep[] }>(ENDPOINTS.ai.suggestSteps, {

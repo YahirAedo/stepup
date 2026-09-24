@@ -138,7 +138,7 @@ Arquitectura híbrida:
 
 | Requerimiento | Descripción |
 | --- | --- |
-| RFN-07 — Persistencia remota | Los datos del usuario autenticado se almacenan en PostgreSQL en Railway. |
+| RFN-07 — Persistencia remota | Los datos del usuario autenticado se almacenan en PostgreSQL remoto (backend). |
 | RFN-08 — Sync automática | La sincronización ocurre al abrir la app y al cerrarla, sin intervención del usuario. |
 | RFN-09 — Offline-first | La app debe funcionar al 100% sin conexión, incluso con cuenta creada. |
 | RFN-10 — Tiempo de sync | La sincronización no debe tardar más de 5 segundos en condiciones normales de red. |
