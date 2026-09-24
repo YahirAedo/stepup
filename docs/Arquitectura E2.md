@@ -63,7 +63,7 @@ StepUp E2 extiende la arquitectura en 3 capas de E1 a 4 capas, agregando la capa
 1. **Presentación:** pantallas y componentes React Native con diseño Zenith Vitality. Gestiona la interacción del usuario.
 2. **Lógica de negocio (app):** servicios TypeScript con reglas del dominio. Se agregan SyncService, AuthService y ApiClient para operaciones online.
 3. **Datos locales:** SQLite mediante expo-sqlite. Se agregan columnas server_id, dirty y updated_at para sync.
-4. **Capa remota (nueva):** API REST en Node.js + Express + Prisma + PostgreSQL hosteada en Railway. URL de producción: `https://stepup-backend-api-production.up.railway.app`.
+4. **Capa remota (nueva):** API REST en Node.js + Express + Prisma + PostgreSQL hosteada en Render.com (web service) con base de datos en Neon. URL de producción: `https://stepup-940v.onrender.com`.
 
 # 3. Stack Tecnológico
 
@@ -75,8 +75,9 @@ StepUp E2 extiende la arquitectura en 3 capas de E1 a 4 capas, agregando la capa
 | React Navigation | Navegación | GlassTabBar + stacks anidados. |
 | Node.js + Express | Backend runtime | Entorno conocido por el equipo (JavaScript/TypeScript). |
 | Prisma | ORM | Genera tipos automáticos, migraciones simples, type-safe. |
-| PostgreSQL | Base de datos remota | Relacional, bien soportada por Prisma y Railway. |
-| Railway | Hosting | Tier gratuito, deploy desde GitHub, PostgreSQL integrado. |
+| PostgreSQL | Base de datos remota | Relacional, bien soportada por Prisma y Neon (free permanente). |
+| Render.com | Hosting backend | Tier gratuito, deploy desde GitHub, se duerme tras 15 min de inactividad (spin-up ~1 min). |
+| Neon | Base de datos PostgreSQL | Tier free permanente (no expira a diferencia del Postgres gratis de Render). |
 | JWT (jsonwebtoken + bcrypt) | Autenticación | Sin estado, 30 días de expiración. |
 | GitHub | Control de versiones | Branching: main / develop / feature/*. |
 

@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  type TextStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,34 +15,12 @@ import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import { SyncService } from '../services/SyncService';
 import type { SyncConflict } from '../database/sync';
+import type { ProfileStackParamList } from '../types/navigation';
+import { formatModifiedAt, statusLabel } from '../utils/syncConflict';
 
 type Props = {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: NativeStackNavigationProp<ProfileStackParamList, 'SyncConflict'>;
 };
-
-function formatModifiedAt(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (date.toDateString() === now.toDateString()) return `Hoy, ${time}`;
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return `Ayer, ${time}`;
-  return `${date.toLocaleDateString([], { day: '2-digit', month: '2-digit' })}, ${time}`;
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case 'completed':
-      return 'Completada';
-    case 'active':
-      return 'Activa';
-    case 'pending':
-      return 'Pendiente';
-    default:
-      return status;
-  }
-}
 
 function VersionCard({
   title,
@@ -105,7 +84,7 @@ function VersionCard({
         >
           <Text style={{ fontSize: s(18) }}>{icon}</Text>
         </View>
-        <Text style={[typography['headline-md'] as any, { color: colors['on-surface'] }]}>
+        <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           {title}
         </Text>
       </View>
@@ -119,17 +98,17 @@ function VersionCard({
           backgroundColor: badgeBg,
         }}
       >
-        <Text style={[typography['label-sm'] as any, { color: badgeTextColor }]}>{badge}</Text>
+        <Text style={[typography['label-sm'] as TextStyle, { color: badgeTextColor }]}>{badge}</Text>
       </View>
 
       <View style={{ gap: spacing.unit }}>
-        <Text style={[typography['label-sm'] as any, { color: colors['on-surface-variant'] }]}>
+        <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
           Última modificación: {modifiedAt}
         </Text>
-        <Text style={[typography['body-md'] as any, { color: colors['on-surface'] }]}>
+        <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
           {snapshot.name}
         </Text>
-        <Text style={[typography['label-md'] as any, { color: colors.secondary }]}>
+        <Text style={[typography['label-md'] as TextStyle, { color: colors.secondary }]}>
           {statusLabel(snapshot.status)}
         </Text>
       </View>
@@ -215,7 +194,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
         >
           <Text style={{ fontSize: 24, color: colors['on-surface'] }}>‹</Text>
         </Pressable>
-        <Text style={[typography['headline-md'] as any, { color: colors['on-surface'] }]}>
+        <Text style={[typography['headline-md'] as TextStyle, { color: colors['on-surface'] }]}>
           Conflicto de Sincronización
         </Text>
       </View>
@@ -254,7 +233,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
               </View>
               <Text
                 style={[
-                  typography['body-md'] as any,
+                  typography['body-md'] as TextStyle,
                   { color: colors['on-surface-variant'], textAlign: 'center' },
                 ]}
               >
@@ -265,7 +244,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
 
             {conflicts.map((conflict) => (
               <View key={conflict.id} style={{ gap: spacing['stack-gap'] }}>
-                <Text style={[typography['label-md'] as any, { color: colors['on-surface-variant'] }]}>
+                <Text style={[typography['label-md'] as TextStyle, { color: colors['on-surface-variant'] }]}>
                   {conflict.tableName === 'tasks' ? 'Tarea' : 'Paso'} modificada en ambos lugares
                 </Text>
                 <View
@@ -275,7 +254,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
                   }}
                 >
                   <VersionCard
-                    title="Versión Local"
+                    title="Versión local"
                     icon="📱"
                     badge="En este dispositivo"
                     badgeBg={colors['primary-fixed-dim']}
@@ -291,7 +270,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
                     onChoose={() => resolve(conflict, 'local')}
                   />
                   <VersionCard
-                    title="Versión del Servidor"
+                    title="Versión del servidor"
                     icon="☁️"
                     badge="Guardada en la nube"
                     badgeBg={colors['secondary-fixed-dim']}
@@ -327,7 +306,7 @@ export default function SyncConflictScreen({ navigation }: Props) {
             >
               <Text
                 style={[
-                  typography['label-md'] as any,
+                  typography['label-md'] as TextStyle,
                   { color: colors.primary, textDecorationLine: 'underline' },
                 ]}
               >

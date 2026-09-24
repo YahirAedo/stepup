@@ -36,6 +36,10 @@ export const ENDPOINTS = {
   progress: {
     list: '/api/progress',
   },
+  ai: {
+    suggestSteps: '/api/ai/suggest-steps',
+    describeHelp: '/api/ai/describe-help',
+  },
 } as const;
 
 function resolveBaseUrl(): string {

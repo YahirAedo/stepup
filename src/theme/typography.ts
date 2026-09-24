@@ -56,5 +56,6 @@ export const typography: ThemeTypography = {
     fontWeight: '700',
     lineHeight: 16,
     letterSpacing: 0.05 * 16,
+    textTransform: 'uppercase',
   },
 };

@@ -115,7 +115,7 @@ export default function TaskListScreen({ navigation }: Props) {
         <EmptyState
           headline="No tenés tareas todavía"
           subtext="Tocá el botón + para agregar tu primera tarea y dividirla en pasos."
-          cta="Crear Tarea"
+          cta="Crear tarea"
           onCtaPress={() => navigation.navigate('TaskForm', {})}
         />
       </View>
@@ -143,9 +143,10 @@ export default function TaskListScreen({ navigation }: Props) {
           >
             <Text style={[typography['headline-md'], { color: colors.primary }]}>StepUp</Text>
             <Pressable
-              onPress={() => (navigation as any).navigate('Profile')}
+onPress={() => navigation.getParent()?.navigate('Profile')}
               accessibilityRole="button"
               accessibilityLabel="Ver perfil"
+              hitSlop={12}
               style={({ pressed }) => ({
                 width: 40,
                 height: 40,
@@ -174,7 +175,6 @@ export default function TaskListScreen({ navigation }: Props) {
               {
                 color: colors.secondary,
                 textTransform: 'uppercase',
-                letterSpacing: 2,
                 marginBottom: spacing.unit,
               },
             ]}
@@ -310,12 +310,12 @@ export default function TaskListScreen({ navigation }: Props) {
                       featured.stepsTotal > 0 ? featured.stepsCompleted / featured.stepsTotal : 0
                     }
                     color={colors.secondary}
-                  />
+/>
                 </View>
               </View>
-</Pressable>
-           </View>
-         )}
+            </Pressable>
+          </View>
+        )}
 
         {/* Secondary cards grid */}
         {secondary.length > 0 && (
@@ -412,7 +412,6 @@ export default function TaskListScreen({ navigation }: Props) {
                 {
                   color: colors['on-surface-variant'],
                   textTransform: 'uppercase',
-                  letterSpacing: 2,
                   marginBottom: spacing['stack-gap'],
                 },
               ]}
@@ -516,7 +515,7 @@ export default function TaskListScreen({ navigation }: Props) {
                   </Text>
                 </View>
                 <Text style={[typography['label-md'], { color: colors['on-surface-variant'] }]}>
-                  Nueva Tarea
+                  Nueva tarea
                 </Text>
               </Pressable>
             </View>
@@ -544,7 +543,6 @@ export default function TaskListScreen({ navigation }: Props) {
                 {
                   color: colors['on-surface-variant'],
                   textTransform: 'uppercase',
-                  letterSpacing: 2,
                   marginBottom: 16,
                 },
               ]}

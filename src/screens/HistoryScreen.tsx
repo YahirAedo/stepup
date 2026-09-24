@@ -98,7 +98,6 @@ export default function HistoryScreen({ navigation }: Props) {
               {
                 color: colors.primary,
                 textTransform: 'uppercase',
-                letterSpacing: 2,
                 marginBottom: spacing.unit * 2,
               },
             ]}
@@ -181,7 +180,6 @@ export default function HistoryScreen({ navigation }: Props) {
               {
                 color: colors['on-surface-variant'],
                 textTransform: 'uppercase',
-                letterSpacing: 1,
                 marginBottom: spacing['stack-gap'],
               },
             ]}
@@ -293,9 +291,11 @@ export default function HistoryScreen({ navigation }: Props) {
                   Has mantenido tu actividad durante una semana completa. ¡Mantén el ritmo!
                 </Text>
                 <Pressable
-                  onPress={() => (navigation as any).navigate('Badges')}
+                  onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'Badges' })}
                   accessibilityRole="button"
-                  accessibilityLabel="Ver Insignias"
+                  accessibilityLabel="Ver insignias"
+                  accessibilityHint="Navega a la pantalla de logros"
+                  hitSlop={12}
                   style={({ pressed }) => ({
                     backgroundColor: colors['primary-fixed'],
                     alignSelf: 'flex-start',

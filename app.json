@@ -1,12 +1,17 @@
 {
   "expo": {
     "name": "stepup",
-    "slug": "stepup",
+    "slug": "stepup-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "a2794ec9-f028-4f0e-b8cb-103c08bb980e"
+      }
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -16,6 +21,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.stepup.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

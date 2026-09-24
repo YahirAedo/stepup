@@ -219,7 +219,7 @@ export default function RegisterScreen({ navigation }: Props) {
             onPress={handleRegister}
             disabled={loading}
             accessibilityRole="button"
-            accessibilityLabel={loading ? 'Creando cuenta' : 'Crear Cuenta'}
+            accessibilityLabel={loading ? 'Creando cuenta' : 'Crear cuenta'}
             style={({ pressed }) => ({
               width: '100%',
               height: 56,
@@ -233,7 +233,7 @@ export default function RegisterScreen({ navigation }: Props) {
             })}
           >
             <Text style={[typography['label-md'] as TextStyle, { color: colors['on-primary'] }]}>
-              {loading ? 'Creando cuenta…' : 'Crear Cuenta'}
+              {loading ? 'Creando cuenta…' : 'Crear cuenta'}
             </Text>
             {loading && (
               <MaterialIcons name="hourglass-empty" size={20} color={colors['on-primary']} />

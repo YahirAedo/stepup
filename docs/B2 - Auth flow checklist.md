@@ -7,7 +7,7 @@
 > Rama base de código: `feature/b2-auth-flow` (commit `2b6c4c3`) — backend previo en `feature/backend-auth-sync`
 > PR: https://github.com/YahirAedo/stepup/pull/55 → mergeada a `develop2` (commit `41f71a6`)
 > Última actualización: 2026-08-11 (B2 + Slice 9 terminados; issues cerrados)
-> Backend en producción: https://stepup-backend-api-production.up.railway.app
+> Backend en producción: https://stepup-backend-api-production.up.railway.app (histórico Railway, plan vencido — nueva prod: https://stepup-940v.onrender.com en Render + Neon, issue #273)
 
 ## Qué piden los issues (acceptance criteria)
 
