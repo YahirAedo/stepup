@@ -294,7 +294,7 @@ Cada entrega publicada se conserva como historial en su rama y su release:
 |---|---|---|
 | E1 | `entrega-1` | [entrega-1](https://github.com/YahirAedo/stepup/releases/tag/entrega-1) |
 | E2 | `entrega-2` | [v2.0.0-entrega2](https://github.com/YahirAedo/stepup/releases/tag/v2.0.0-entrega2) |
-| E3 (final) | `main` | [v3.0.0-entrega3](https://github.com/YahirAedo/stepup/releases/tag/v3.0.0-entrega3) |
+| E3 | `main` | [v3.0.0-entrega3](https://github.com/YahirAedo/stepup/releases/tag/v3.0.0-entrega3) |
 
 ---
 

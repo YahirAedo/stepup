@@ -21,7 +21,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 ## Contexto académico
 
 - Materia: Ingeniería en Sistemas de Información
-- Duración total: marzo a septiembre 2026 (3 entregas; E3 cerrada el 24/09)
+- Duración: desde marzo 2026 en adelante; al cierre de la E3 (24/09) hay 3 entregas entregadas — E1 (mayo), E2 (agosto) y E3 (septiembre). Las próximas entregas están por definirse.
 - Equipo: 3 integrantes (sin roles fijos, todos hacen de todo)
 - **E1 entregada:** Mayo 2026 — app funcional offline con ciclo completo de tareas y pasos
 - **E2 entregada:** Julio-Agosto 2026 — entrega **18 de Agosto**. Migración visual + backend + auth + sync
@@ -61,7 +61,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
   - Sincronización pull/push con last-write-wins
 - Modelo de datos replicado entre SQLite local y PostgreSQL remoto
 
-### Entrega 3 — Septiembre 2026 (entrega final, cerrada el 24/09)
+### Entrega 3 — Septiembre 2026 (entregada el 24/09)
 
 **Foco principal: IA.** Plan detallado en `docs/Entrega 3 PRD.md` (epic #152).
 
@@ -75,7 +75,7 @@ El proyecto arrancó siendo una app anti-procrastinación llamada **BreakPattern
 - **Dashboard de consistencia:** racha de días con actividad (1 día de gracia fijo por racha, no acumulable) + tendencia semanal con LineChart
 - Notificaciones push (FCM), slices de polish 8/10/11 y refino conversacional de la IA quedan FUERA del alcance obligatorio de E3
 
-> **Nota:** originalmente se planificaron 4 entregas (la cuarta en diciembre con widget Android y estadísticas avanzadas), pero la cursada termina a fines de noviembre. Todo lo que entre en el tiempo disponible se agrupó en E3, que se **cerró el 24/09/2026** con el alcance implementado a esa fecha. La E4 queda descartada; lo no alcanzado (dashboard #156, epic responsive #205, XP/FCM) queda como trabajo futuro.
+> **Nota:** originalmente se planificaron 4 entregas (la cuarta en diciembre con widget Android y estadísticas avanzadas), pero la cursada termina a fines de noviembre. La E3 se **entregó el 24/09/2026** con el alcance implementado a esa fecha. **Habrá más entregas** (aún sin fechas ni alcance definidos); lo no alcanzado en E3 (dashboard #156, epic responsive #205, XP/FCM) queda como candidato para las próximas.
 
 ---
 

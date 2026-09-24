@@ -12,7 +12,7 @@
 |---|---|
 | Materia | Ingeniería en Sistemas de Información (cursada 2026) |
 | Proyecto | **StepUp** — app anti-procrastinación "Un paso. Solo uno. Ahora." |
-| Entrega | **E3 (final)**, **entregada el 24/09/2026** (cierre anticipado: alcance implementado a esa fecha) |
+| Entrega | **E3**, **entregada el 24/09/2026** (cierre anticipado: alcance implementado a esa fecha) |
 | Foco planificado | **IA con Google Gemini** (sugeridor de pasos + asistente de descripción) + **dashboard de consistencia** (racha + tendencia semanal) |
 | Plan detallado | `docs/Entrega 3 PRD.md` — epic GitHub **#152** |
 | Repo | https://github.com/YahirAedo/stepup |
