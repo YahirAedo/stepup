@@ -60,3 +60,6 @@ docs-capturas/
 md2docx.js
 pptx-e2.js
 SKILL-BACKEND.md
+
+# local dev logs (backend npm run dev output)
+backend/*.log
