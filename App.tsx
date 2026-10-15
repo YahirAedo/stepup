@@ -19,6 +19,14 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
+// Design Lab (#295): Space Grotesk + Inter solo para las previews bajo
+// src/screens/designlab/. Excepcion documentada al DS — ver
+// src/theme/serene/typography.ts.
+import {
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+} from '@expo-google-fonts/space-grotesk';
+import { Inter_400Regular } from '@expo-google-fonts/inter';
 
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
@@ -81,6 +89,9 @@ export default function App() {
     PlusJakartaSans_400Regular,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    Inter_400Regular,
   });
 
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);

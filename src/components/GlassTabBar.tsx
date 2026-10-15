@@ -29,6 +29,24 @@ const TABS = [
   { name: 'Profile', label: 'Perfil', icon: 'account-circle-outline' },
 ] as const;
 
+/**
+ * Pantallas del Design Lab que se muestran a pantalla completa, sin tab bar.
+ * Los mockups no la incluyen y la pilora glass arruinaria la evaluacion
+ * visual de la preview. Se ocultan leyendo el estado anidado del stack
+ * porque la tab bar se renderiza desde el `Tab.Navigator` padre.
+ * Issue: #295.
+ */
+const FULLSCREEN_ROUTES = new Set([
+  'DesignLab',
+  'CronometroLimpio',
+  'FocusPrevio',
+  'FocusCompletado',
+  'EnfoqueFocus',
+  'FocusSinTareas',
+  'TareasListado',
+  'TareasDetalle',
+]);
+
 export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
   const { scale: s } = useResponsive();
   const { tabBarHeight, tabBarOffset } = useBottomLayout();
@@ -36,6 +54,13 @@ export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
   const iconSize = s(22);
   const horizontalPadding = s(8);
   const labelMarginTop = s(2);
+
+  const activeTabRoute = state.routes[state.index];
+  const nestedState = activeTabRoute?.state;
+  const nestedRouteName = nestedState?.routes?.[nestedState.index ?? 0]?.name;
+  if (nestedRouteName && FULLSCREEN_ROUTES.has(nestedRouteName)) {
+    return null;
+  }
 
   return (
     <View
@@ -148,6 +173,14 @@ import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BadgesScreen from '../screens/BadgesScreen';
 import SyncConflictScreen from '../screens/SyncConflictScreen';
+import DesignLabScreen from '../screens/designlab/DesignLabScreen';
+import CronometroLimpioScreen from '../screens/designlab/CronometroLimpioScreen';
+import FocusPrevioScreen from '../screens/designlab/FocusPrevioScreen';
+import FocusCompletadoScreen from '../screens/designlab/FocusCompletadoScreen';
+import EnfoqueFocusScreen from '../screens/designlab/EnfoqueFocusScreen';
+import FocusSinTareasScreen from '../screens/designlab/FocusSinTareasScreen';
+import TareasListadoScreen from '../screens/designlab/TareasListadoScreen';
+import TareasDetalleScreen from '../screens/designlab/TareasDetalleScreen';
 
 const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
 const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
@@ -194,6 +227,14 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStackNav.Screen name="Badges" component={BadgesScreen} />
       <ProfileStackNav.Screen name="SyncConflict" component={SyncConflictScreen} />
+      <ProfileStackNav.Screen name="DesignLab" component={DesignLabScreen} />
+      <ProfileStackNav.Screen name="CronometroLimpio" component={CronometroLimpioScreen} />
+      <ProfileStackNav.Screen name="FocusPrevio" component={FocusPrevioScreen} />
+      <ProfileStackNav.Screen name="FocusCompletado" component={FocusCompletadoScreen} />
+      <ProfileStackNav.Screen name="EnfoqueFocus" component={EnfoqueFocusScreen} />
+      <ProfileStackNav.Screen name="FocusSinTareas" component={FocusSinTareasScreen} />
+      <ProfileStackNav.Screen name="TareasListado" component={TareasListadoScreen} />
+      <ProfileStackNav.Screen name="TareasDetalle" component={TareasDetalleScreen} />
     </ProfileStackNav.Navigator>
   );
 }

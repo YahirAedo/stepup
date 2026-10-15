@@ -300,6 +300,32 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
           <Text style={{ fontSize: 20, color: colors['outline'] }}>›</Text>
         </Pressable>
+
+        <Pressable
+          onPress={() => navigation.navigate('DesignLab')}
+          accessibilityRole="button"
+          accessibilityLabel="Laboratorio de diseño"
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            padding: spacing['stack-gap'],
+            backgroundColor: colors['surface-container-low'],
+            borderRadius: borderRadius.xl,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ fontSize: 24 }}>🧪</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[typography['body-md'] as TextStyle, { color: colors['on-surface'] }]}>
+              Laboratorio de diseño
+            </Text>
+            <Text style={[typography['label-sm'] as TextStyle, { color: colors['on-surface-variant'] }]}>
+              Previews de los mockups de rediseño
+            </Text>
+          </View>
+          <Text style={{ fontSize: 20, color: colors['outline'] }}>›</Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
