@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#f9f9fc;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-container": "#624123", "error-container": "#ffdad6", "on-secondary-container": "#55695e", "inverse-on-surface": "#f0f0f3", "on-tertiary-fixed": "#2e1500", "surface-container-high": "#e8e8ea", "primary": "#003a24", "on-secondary": "#ffffff", "primary-fixed-dim": "#9dd2b3", "surface": "#f9f9fc", "error": "#ba1a1a", "on-surface-variant": "#414943", "on-error-container": "#93000a", "outline-variant": "#c0c9c1", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#edbd96", "on-primary-fixed-variant": "#1d5038", "on-tertiary-fixed-variant": "#604022", "surface-dim": "#dadadc", "surface-container-highest": "#e2e2e5", "secondary-container": "#d2e8da", "tertiary": "#482b0f", "on-tertiary-container": "#dcae88", "on-primary-container": "#8ec2a4", "outline": "#717972", "on-primary": "#ffffff", "surface-container": "#eeeef0", "surface-bright": "#f9f9fc", "secondary": "#4f6358", "on-tertiary": "#ffffff", "tertiary-fixed": "#ffdcc1", "surface-variant": "#e2e2e5", "on-error": "#ffffff", "on-surface": "#1a1c1e", "secondary-fixed": "#d2e8da", "on-primary-fixed": "#002112", "surface-container-low": "#f3f3f6", "inverse-surface": "#2f3133", "secondary-fixed-dim": "#b6ccbe", "on-background": "#1a1c1e", "surface-tint": "#36684e", "inverse-primary": "#9dd2b3", "on-secondary-fixed-variant": "#384b41", "background": "#f9f9fc", "primary-fixed": "#b8efce", "on-secondary-fixed": "#0c1f17", "primary-container": "#1e5139" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2.5rem", "margin-desktop": "3rem", "space-lg": "1.5rem", "margin-tablet": "2rem", "gutter": "1.25rem", "margin": "1.25rem", "space-xs": "0.25rem", "space-md": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem" }, fontFamily: { "title-md": ["Space Grotesk"], "body-md": ["Inter"], "headline-lg": ["Space Grotesk"], "label-md": ["Space Grotesk"], "headline-md": ["Space Grotesk"], "label-lg": ["Space Grotesk"], "headline-sm": ["Space Grotesk"], "body-sm": ["Inter"], "headline-lg-mobile": ["Space Grotesk"], "body-lg": ["Inter"], "display-lg-mobile": ["Space Grotesk"], "label-sm": ["Space Grotesk"], "display-lg": ["Space Grotesk"] }, fontSize: { "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }], "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "display-lg-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-space-sm flex items-center justify-between"><div class="flex items-center gap-space-xs"><button aria-label="Volver" class="w-11 h-11 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container transition-colors duration-150" onclick="window.history.back()" type="button"><span class="material-symbols-outlined text-[22px]">arrow_back</span></button><h1 class="font-title-md text-title-md text-on-surface tracking-tight line-clamp-1">Step Form</h1></div><div class="flex items-center gap-space-xs pr-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface"><div class="flex flex-col w-full pb-safe">
+<!-- Subtle Ambient Top Graphic -->
+<div class="px-margin pt-space-md pb-space-xs">
+<!-- Context Badge & Parent Task -->
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md uppercase tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-[15px] text-primary">inventory_2</span>
+<span>Tarea activa</span>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-xl shadow-sm mb-space-md">
+<p class="font-label-sm text-label-sm text-secondary tracking-wide mb-1">REDISEÑO DE PROPUESTA COMERCIAL Q3</p>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Editar Micro-Paso</h2>
+</div>
+<!-- 2-Minute Rule Reassurance Pill -->
+<div class="bg-secondary-container/60 p-space-md rounded-xl flex items-start gap-space-sm shadow-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">timer_10</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary font-semibold">REGLA DE LOS 2 MINUTOS</span>
+<p class="font-body-sm text-body-sm text-on-secondary-container mt-0.5 leading-snug">
+          Si este paso todavía te genera dudas o pereza, hazlo aún más pequeño. La inercia se construye empezando con casi nada.
+        </p>
+</div>
+</div>
+</div>
+<!-- Form Body -->
+<form class="flex flex-col px-margin gap-space-lg mt-space-sm" id="step-form" onsubmit="event.preventDefault();">
+<!-- 1. Input: Nombre de la acción -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-lg text-label-lg text-on-surface font-medium flex items-center gap-1.5" for="step-action">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+          Acción concreta y observable
+        </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant" id="char-counter">38/80</span>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest text-on-surface font-body-md text-body-md px-space-md py-3.5 rounded-xl shadow-sm focus:outline-none transition-all placeholder:text-on-surface-variant/50" id="step-action" placeholder="¿Qué acción concreta harás?" type="text" value="Escribir las 3 viñetas de solución técnica"/>
+</div>
+<p class="font-body-sm text-body-sm text-secondary px-1">
+        Usa verbos directos: <em>abrir, tipear, seleccionar, redactar</em>.
+      </p>
+</div>
+<!-- Visual Calibrated Anti-Friction Card (Reactive) -->
+<div class="bg-primary-fixed/30 p-space-md rounded-xl flex items-center gap-space-sm shadow-sm transition-all duration-300" id="calibration-card">
+<div class="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">done_all</span>
+</div>
+<div class="flex flex-col">
+<p class="font-label-md text-label-md text-primary font-semibold">Micro-paso calibrado</p>
+<p class="font-body-sm text-body-sm text-on-primary-fixed-variant leading-tight mt-0.5">
+          Breve, nítido y realizable en una sola sentada sin fatiga.
+        </p>
+</div>
+</div>
+<!-- 2. Ergonomic Duration Selector -->
+<div class="flex flex-col gap-space-sm bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-1">
+<label class="font-label-lg text-label-lg text-on-surface font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-secondary">schedule</span>
+          Duración estimada
+        </label>
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-secondary-container text-primary font-medium" id="friction-badge">
+          Fricción nula
+        </span>
+</div>
+<!-- Quick Preset Chips -->
+<div class="grid grid-cols-5 gap-space-xs">
+<button class="duration-chip py-2.5 rounded-lg font-label-md text-label-md bg-surface-container text-on-surface-variant hover:bg-secondary-container transition-colors flex flex-col items-center justify-center" onclick="setDuration(1)" type="button">
+          1m
+        </button>
+<button class="duration-chip py-2.5 rounded-lg font-label-md text-label-md bg-surface-container text-on-surface-variant hover:bg-secondary-container transition-colors flex flex-col items-center justify-center" onclick="setDuration(2)" type="button">
+          2m
+        </button>
+<button class="duration-chip py-2.5 rounded-lg font-label-md text-label-md bg-surface-container text-on-surface-variant hover:bg-secondary-container transition-colors flex flex-col items-center justify-center" onclick="setDuration(3)" type="button">
+          3m
+        </button>
+<button class="duration-chip active-chip py-2.5 rounded-lg font-label-md text-label-md bg-primary-container text-on-primary font-semibold flex flex-col items-center justify-center shadow-sm" onclick="setDuration(5)" type="button">
+          5m
+        </button>
+<button class="duration-chip py-2.5 rounded-lg font-label-md text-label-md bg-surface-container text-on-surface-variant hover:bg-secondary-container transition-colors flex flex-col items-center justify-center" onclick="setDuration(10)" type="button">
+          10m
+        </button>
+</div>
+<!-- Stepper Stepped Fine Control -->
+<div class="flex items-center justify-between bg-surface-container-low p-2 rounded-xl mt-space-xs">
+<button aria-label="Reducir un minuto" class="w-11 h-11 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center active:scale-95 transition-transform shadow-sm" onclick="adjustDuration(-1)" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<div class="flex flex-col items-center">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-primary font-semibold" id="duration-val">5</span>
+<span class="font-label-md text-label-md text-on-surface-variant">minutos</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Ajuste fino</span>
+</div>
+<button aria-label="Aumentar un minuto" class="w-11 h-11 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center active:scale-95 transition-transform shadow-sm" onclick="adjustDuration(1)" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<!-- Reassuring Statistic -->
+<div class="flex items-center gap-space-xs mt-space-xs bg-surface-container/50 p-2.5 rounded-lg">
+<span class="material-symbols-outlined text-[17px] text-primary">psychology</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+          Los pasos de <strong>menos de 5 minutos</strong> tienen un <strong>87% más</strong> de probabilidad de completarse sin procrastinar.
+        </p>
+</div>
+</div>
+<!-- 3. Selector de Orden Secuencial -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-container/70 text-on-secondary-container flex items-center justify-center font-title-md text-title-md">
+<span id="pos-indicator">2</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface font-medium">Secuencia de ejecución</span>
+<span class="font-body-sm text-body-sm text-secondary" id="pos-label">Paso 2 de 4 planificados</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Mover paso arriba" class="w-9 h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:bg-secondary-container transition-colors" onclick="moveStep(-1)" type="button">
+<span class="material-symbols-outlined text-[20px]">expand_less</span>
+</button>
+<button aria-label="Mover paso abajo" class="w-9 h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:bg-secondary-container transition-colors" onclick="moveStep(1)" type="button">
+<span class="material-symbols-outlined text-[20px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- 4. Micro-Nota de Rescate Mental -->
+<div class="flex flex-col gap-space-xs mb-space-sm">
+<label class="font-label-lg text-label-lg text-on-surface font-medium flex items-center gap-1.5" for="step-note">
+<span class="material-symbols-outlined text-[17px] text-tertiary">lightbulb</span>
+        Nota mental para desatascarte <span class="font-body-sm text-secondary font-normal">(opcional)</span>
+</label>
+<div class="relative bg-surface-container-lowest rounded-xl shadow-sm p-3">
+<textarea class="w-full bg-transparent text-on-surface font-body-md text-body-md resize-none focus:outline-none placeholder:text-on-surface-variant/40" id="step-note" placeholder="Ej: No busques perfección, solo haz un borrador sucio de 2 líneas..." rows="2">No te preocupes por el formato visual, solo pon las ideas crudas.</textarea>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant/80 px-1">
+        Este mensaje aparecerá en grande si dudas más de 30 segundos frente a la pantalla de foco.
+      </p>
+</div>
+<!-- 5. Actions Footer Area (Fixed to thumb zone) -->
+<div class="sticky bottom-0 bg-surface/95 backdrop-blur-md pt-space-sm pb-space-lg flex flex-col gap-space-xs mt-space-md">
+<button class="w-full h-12 bg-primary text-on-primary font-label-lg text-label-lg rounded-xl flex items-center justify-center gap-space-xs shadow-md active:bg-primary-container transition-all" id="btn-save" onclick="saveStep()" type="button">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+        Guardar Micro-Paso
+      </button>
+<button class="w-full h-11 bg-transparent text-error font-label-lg text-label-lg rounded-xl flex items-center justify-center gap-1.5 hover:bg-error-container/40 transition-colors" onclick="confirmDelete()" type="button">
+<span class="material-symbols-outlined text-[19px]">delete_outline</span>
+        Eliminar este paso
+      </button>
+</div>
+</form>
+</div>
+<script>
+  let currentDuration = 5;
+  let currentPosition = 2;
+  const totalSteps = 4;
+
+  function updateDurationDisplay() {
+    const valEl = document.getElementById('duration-val');
+    const badgeEl = document.getElementById('friction-badge');
+    const cardEl = document.getElementById('calibration-card');
+    
+    if (valEl) valEl.textContent = currentDuration;
+    
+    // Friction state indicator
+    if (badgeEl) {
+      if (currentDuration <= 3) {
+        badgeEl.textContent = 'Fricción cero ⚡';
+        badgeEl.className = 'font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-medium';
+      } else if (currentDuration <= 7) {
+        badgeEl.textContent = 'Fricción mínima ✨';
+        badgeEl.className = 'font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-secondary-container text-primary font-medium';
+      } else {
+        badgeEl.textContent = 'Considera dividir ⚠️';
+        badgeEl.className = 'font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-medium';
+      }
+    }
+
+    // Refresh chips selection highlight
+    document.querySelectorAll('.duration-chip').forEach(chip => {
+      const match = chip.textContent.trim().replace('m', '') == currentDuration;
+      if (match) {
+        chip.className = 'duration-chip active-chip py-2.5 rounded-lg font-label-md text-label-md bg-primary-container text-on-primary font-semibold flex flex-col items-center justify-center shadow-sm';
+      } else {
+        chip.className = 'duration-chip py-2.5 rounded-lg font-label-md text-label-md bg-surface-container text-on-surface-variant hover:bg-secondary-container transition-colors flex flex-col items-center justify-center';
+      }
+    });
+  }
+
+  function setDuration(val) {
+    currentDuration = Math.max(1, Math.min(15, val));
+    updateDurationDisplay();
+  }
+
+  function adjustDuration(delta) {
+    currentDuration = Math.max(1, Math.min(15, currentDuration + delta));
+    updateDurationDisplay();
+  }
+
+  function moveStep(direction) {
+    currentPosition = Math.max(1, Math.min(totalSteps, currentPosition + direction));
+    const indicator = document.getElementById('pos-indicator');
+    const label = document.getElementById('pos-label');
+    if (indicator) indicator.textContent = currentPosition;
+    if (label) label.textContent = `Paso ${currentPosition} de ${totalSteps} planificados`;
+  }
+
+  function saveStep() {
+    const btn = document.getElementById('btn-save');
+    if (btn) {
+      btn.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Guardado con éxito`;
+      setTimeout(() => {
+        window.history.back();
+      }, 500);
+    }
+  }
+
+  function confirmDelete() {
+    if (confirm('¿Eliminar este micro-paso? Tu tarea se reordenará suavemente.')) {
+      window.history.back();
+    }
+  }
+
+  // Reactive character count
+  const actionInput = document.getElementById('step-action');
+  const charCounter = document.getElementById('char-counter');
+  if (actionInput && charCounter) {
+    actionInput.addEventListener('input', (e) => {
+      const len = e.target.value.length;
+      charCounter.textContent = `${len}/80`;
+    });
+  }
+</script></main></body></html>

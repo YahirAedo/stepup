@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#f9f9fc;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-container": "#624123", "error-container": "#ffdad6", "on-secondary-container": "#55695e", "inverse-on-surface": "#f0f0f3", "on-tertiary-fixed": "#2e1500", "surface-container-high": "#e8e8ea", "primary": "#003a24", "on-secondary": "#ffffff", "primary-fixed-dim": "#9dd2b3", "surface": "#f9f9fc", "error": "#ba1a1a", "on-surface-variant": "#414943", "on-error-container": "#93000a", "outline-variant": "#c0c9c1", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#edbd96", "on-primary-fixed-variant": "#1d5038", "on-tertiary-fixed-variant": "#604022", "surface-dim": "#dadadc", "surface-container-highest": "#e2e2e5", "secondary-container": "#d2e8da", "tertiary": "#482b0f", "on-tertiary-container": "#dcae88", "on-primary-container": "#8ec2a4", "outline": "#717972", "on-primary": "#ffffff", "surface-container": "#eeeef0", "surface-bright": "#f9f9fc", "secondary": "#4f6358", "on-tertiary": "#ffffff", "tertiary-fixed": "#ffdcc1", "surface-variant": "#e2e2e5", "on-error": "#ffffff", "on-surface": "#1a1c1e", "secondary-fixed": "#d2e8da", "on-primary-fixed": "#002112", "surface-container-low": "#f3f3f6", "inverse-surface": "#2f3133", "secondary-fixed-dim": "#b6ccbe", "on-background": "#1a1c1e", "surface-tint": "#36684e", "inverse-primary": "#9dd2b3", "on-secondary-fixed-variant": "#384b41", "background": "#f9f9fc", "primary-fixed": "#b8efce", "on-secondary-fixed": "#0c1f17", "primary-container": "#1e5139" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2.5rem", "margin-desktop": "3rem", "space-lg": "1.5rem", "margin-tablet": "2rem", "gutter": "1.25rem", "margin": "1.25rem", "space-xs": "0.25rem", "space-md": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem" }, fontFamily: { "title-md": ["Space Grotesk"], "body-md": ["Inter"], "headline-lg": ["Space Grotesk"], "label-md": ["Space Grotesk"], "headline-md": ["Space Grotesk"], "label-lg": ["Space Grotesk"], "headline-sm": ["Space Grotesk"], "body-sm": ["Inter"], "headline-lg-mobile": ["Space Grotesk"], "body-lg": ["Inter"], "display-lg-mobile": ["Space Grotesk"], "label-sm": ["Space Grotesk"], "display-lg": ["Space Grotesk"] }, fontSize: { "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }], "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "display-lg-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">spa</span></div><span class="font-title-md text-title-md text-on-surface tracking-tight">StepUp</span></div><div class="flex items-center gap-space-sm"><div class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-secondary-container/60"><span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-primary-container uppercase tracking-wider">Calma</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full px-margin pb-6 gap-space-md">
+<!-- Micro-Progreso Contextual Superior -->
+<section class="flex flex-col w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between gap-space-sm mb-2.5">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2 h-2 rounded-full bg-primary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm text-secondary truncate tracking-tight uppercase">
+          Proyecto: Rediseño Landing Q3
+        </span>
+</div>
+<span class="font-label-sm text-label-sm text-primary-container font-semibold whitespace-nowrap bg-secondary-container/70 px-2 py-0.5 rounded-full">
+        Paso 2 de 4 (50%)
+      </span>
+</div>
+<!-- Barra Serena de Avance Lineal -->
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full w-1/2 transition-all duration-500 ease-out"></div>
+</div>
+</section>
+<!-- Tarjeta Nuclear de Ejecución (Hero Focus Card) -->
+<section class="flex flex-col w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden">
+<!-- Indicador de Anclaje de Foco -->
+<div class="absolute top-0 left-0 bottom-0 w-1.5 bg-primary-container"></div>
+<div class="flex items-center justify-between gap-space-xs mb-space-sm">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/60">
+<span class="material-symbols-outlined text-[14px] text-primary-container" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-sm text-label-sm text-primary-container tracking-wider uppercase font-semibold">
+          Foco activo ahora
+        </span>
+</div>
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-label-sm text-label-sm font-medium">~4 min</span>
+</div>
+</div>
+<!-- Título del Micro-paso -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight mb-space-md">
+      Escribir las primeras 3 viñetas con beneficios clave
+    </h1>
+<!-- Caja de Rescate Cognitivo y Anti-Fricción -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex items-start gap-space-sm">
+<div class="w-7 h-7 rounded-full bg-secondary-container flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-primary-container text-[18px]">psychology_alt</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary-container font-semibold mb-0.5">
+          Regla anti-fricción
+        </span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          No busques prosa perfecta. Solo escribe frases incompletas o palabras clave para arrancar sin parálisis.
+        </p>
+</div>
+</div>
+</section>
+<!-- Temporizador Despejado y Sin Estrés -->
+<section class="flex flex-col items-center justify-center bg-surface-container-lowest rounded-xl p-space-lg shadow-sm text-center">
+<span class="font-label-sm text-label-sm text-secondary tracking-widest uppercase mb-1">
+      Tiempo sugerido restante
+    </span>
+<!-- Contador Visual Espacioso -->
+<div class="font-display-lg-mobile text-display-lg-mobile text-on-surface tracking-tight my-1 tabular-nums" id="timer-display">
+      03:42
+    </div>
+<!-- Indicador de Ritmo Calmado -->
+<div class="w-48 h-1 bg-surface-container rounded-full my-space-sm overflow-hidden">
+<div class="h-full bg-secondary-fixed-dim rounded-full w-2/3 transition-all duration-300"></div>
+</div>
+<!-- Controles Serenos de Ritmo -->
+<div class="flex items-center gap-space-sm mt-space-xs">
+<button class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md transition-colors active:bg-surface-container-high" id="pause-btn" type="button">
+<span class="material-symbols-outlined text-[18px]" id="pause-icon">pause</span>
+<span id="pause-label">Pausar</span>
+</button>
+<button class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-surface-container-low text-secondary font-label-md text-label-md transition-colors active:bg-surface-container-high" id="extend-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">more_time</span>
+<span>+1 min</span>
+</button>
+</div>
+</section>
+<!-- Botones de Acción al Alcance del Pulgar -->
+<section class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Botón Principal Ergonómico -->
+<button class="w-full h-14 bg-primary-container active:bg-primary text-on-primary rounded-xl flex items-center justify-center gap-2.5 font-label-lg text-label-lg tracking-wide uppercase font-semibold transition-transform duration-100 active:scale-[0.99] shadow-sm" id="complete-step-btn" type="button">
+<span class="material-symbols-outlined text-[22px]">check_circle</span>
+<span>Completar micro-paso</span>
+</button>
+<!-- Asistente de Sobrecarga / Resistencia Emocional -->
+<button class="w-full py-2.5 text-center text-secondary hover:text-on-surface font-label-sm text-label-sm transition-colors flex items-center justify-center gap-1.5" id="breakdown-btn" type="button">
+<span class="material-symbols-outlined text-[16px]">horizontal_split</span>
+<span>¿Sientes resistencia? Dividir en un paso de 1 min</span>
+</button>
+</section>
+<!-- Modal / Drawer Minimalista para Subdivisión Rápida (Oculto por defecto) -->
+<div class="hidden flex flex-col gap-2.5 bg-surface-container-low p-space-md rounded-xl transition-all" id="subdivide-drawer">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Micro-desglose inmediato</span>
+<button class="w-6 h-6 flex items-center justify-center text-secondary" id="close-drawer-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Elige uno aún más pequeño para ganar inercia sin esfuerzo:</p>
+<div class="flex flex-col gap-2 pt-1">
+<button class="substep-option w-full text-left p-2.5 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface active:bg-secondary-container/40 flex items-center justify-between" type="button">
+<span>1. Abrir el documento y escribir solo el título</span>
+<span class="material-symbols-outlined text-secondary text-[16px]">arrow_forward</span>
+</button>
+<button class="substep-option w-full text-left p-2.5 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface active:bg-secondary-container/40 flex items-center justify-between" type="button">
+<span>2. Dictar 3 palabras sueltas por voz</span>
+<span class="material-symbols-outlined text-secondary text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Métricas de Tracción Sin Culpa y Cita Zen -->
+<section class="flex flex-col gap-space-sm pt-2">
+<!-- Fila de Rendimiento Calmado -->
+<div class="flex items-center justify-between bg-surface-container-lowest px-space-md py-3 rounded-xl shadow-sm">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-secondary-container/70 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[18px]">nature</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary">Ritmo de hoy</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">4 pasos superados</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded-full text-secondary">
+<span class="material-symbols-outlined text-[14px]">timelapse</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">18 min enfocados</span>
+</div>
+</div>
+<!-- Micro-Recordatorio Tranquilo -->
+<div class="text-center py-2 px-space-md">
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+        “La inercia se rompe con el paso más pequeño.”
+      </p>
+</div>
+</section>
+</div>
+<script>
+  (function() {
+    let secondsLeft = 222; // 03:42
+    let isRunning = true;
+    let timerInterval = null;
+
+    const display = document.getElementById('timer-display');
+    const pauseBtn = document.getElementById('pause-btn');
+    const pauseLabel = document.getElementById('pause-label');
+    const pauseIcon = document.getElementById('pause-icon');
+    const extendBtn = document.getElementById('extend-btn');
+    const breakdownBtn = document.getElementById('breakdown-btn');
+    const subdivideDrawer = document.getElementById('subdivide-drawer');
+    const closeDrawerBtn = document.getElementById('close-drawer-btn');
+    const completeBtn = document.getElementById('complete-step-btn');
+    const substepOptions = document.querySelectorAll('.substep-option');
+
+    function updateDisplay() {
+      const mins = Math.floor(secondsLeft / 60);
+      const secs = secondsLeft % 60;
+      display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (secondsLeft > 0) {
+          secondsLeft--;
+          updateDisplay();
+        } else {
+          clearInterval(timerInterval);
+        }
+      }, 1000);
+    }
+
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', () => {
+        if (isRunning) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          pauseLabel.textContent = 'Reanudar';
+          pauseIcon.textContent = 'play_arrow';
+        } else {
+          startTimer();
+          isRunning = true;
+          pauseLabel.textContent = 'Pausar';
+          pauseIcon.textContent = 'pause';
+        }
+      });
+    }
+
+    if (extendBtn) {
+      extendBtn.addEventListener('click', () => {
+        secondsLeft += 60;
+        updateDisplay();
+      });
+    }
+
+    if (breakdownBtn && subdivideDrawer) {
+      breakdownBtn.addEventListener('click', () => {
+        subdivideDrawer.classList.toggle('hidden');
+      });
+    }
+
+    if (closeDrawerBtn && subdivideDrawer) {
+      closeDrawerBtn.addEventListener('click', () => {
+        subdivideDrawer.classList.add('hidden');
+      });
+    }
+
+    substepOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        secondsLeft = 60;
+        updateDisplay();
+        subdivideDrawer.classList.add('hidden');
+      });
+    });
+
+    if (completeBtn) {
+      completeBtn.addEventListener('click', () => {
+        completeBtn.classList.remove('bg-primary-container');
+        completeBtn.classList.add('bg-primary');
+        completeBtn.innerHTML = '<span class="material-symbols-outlined text-[22px]">celebration</span><span>¡Paso Superado!</span>';
+        setTimeout(() => {
+          completeBtn.classList.remove('bg-primary');
+          completeBtn.classList.add('bg-primary-container');
+          completeBtn.innerHTML = '<span class="material-symbols-outlined text-[22px]">check_circle</span><span>Completar micro-paso</span>';
+        }, 1800);
+      });
+    }
+
+    startTimer();
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.03)]" data-active-classes="text-primary-container font-semibold"><div class="h-16 px-margin flex items-center justify-around"><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] transition-colors duration-150 text-primary-container font-semibold" data-path="focus" href="#"><span class="material-symbols-outlined text-[22px]">timer</span><span class="font-label-sm text-label-sm mt-0.5">Ahora</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors duration-150" data-path="tasks" href="#"><span class="material-symbols-outlined text-[22px]">format_list_bulleted</span><span class="font-label-sm text-label-sm mt-0.5">Tareas</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors duration-150" data-path="log" href="#"><span class="material-symbols-outlined text-[22px]">history_edu</span><span class="font-label-sm text-label-sm mt-0.5">Bitácora</span></a></div></nav></body></html>

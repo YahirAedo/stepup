@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#f9f9fc;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-container": "#624123", "error-container": "#ffdad6", "on-secondary-container": "#55695e", "inverse-on-surface": "#f0f0f3", "on-tertiary-fixed": "#2e1500", "surface-container-high": "#e8e8ea", "primary": "#003a24", "on-secondary": "#ffffff", "primary-fixed-dim": "#9dd2b3", "surface": "#f9f9fc", "error": "#ba1a1a", "on-surface-variant": "#414943", "on-error-container": "#93000a", "outline-variant": "#c0c9c1", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#edbd96", "on-primary-fixed-variant": "#1d5038", "on-tertiary-fixed-variant": "#604022", "surface-dim": "#dadadc", "surface-container-highest": "#e2e2e5", "secondary-container": "#d2e8da", "tertiary": "#482b0f", "on-tertiary-container": "#dcae88", "on-primary-container": "#8ec2a4", "outline": "#717972", "on-primary": "#ffffff", "surface-container": "#eeeef0", "surface-bright": "#f9f9fc", "secondary": "#4f6358", "on-tertiary": "#ffffff", "tertiary-fixed": "#ffdcc1", "surface-variant": "#e2e2e5", "on-error": "#ffffff", "on-surface": "#1a1c1e", "secondary-fixed": "#d2e8da", "on-primary-fixed": "#002112", "surface-container-low": "#f3f3f6", "inverse-surface": "#2f3133", "secondary-fixed-dim": "#b6ccbe", "on-background": "#1a1c1e", "surface-tint": "#36684e", "inverse-primary": "#9dd2b3", "on-secondary-fixed-variant": "#384b41", "background": "#f9f9fc", "primary-fixed": "#b8efce", "on-secondary-fixed": "#0c1f17", "primary-container": "#1e5139" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2.5rem", "margin-desktop": "3rem", "space-lg": "1.5rem", "margin-tablet": "2rem", "gutter": "1.25rem", "margin": "1.25rem", "space-xs": "0.25rem", "space-md": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem" }, fontFamily: { "title-md": ["Space Grotesk"], "body-md": ["Inter"], "headline-lg": ["Space Grotesk"], "label-md": ["Space Grotesk"], "headline-md": ["Space Grotesk"], "label-lg": ["Space Grotesk"], "headline-sm": ["Space Grotesk"], "body-sm": ["Inter"], "headline-lg-mobile": ["Space Grotesk"], "body-lg": ["Inter"], "display-lg-mobile": ["Space Grotesk"], "label-sm": ["Space Grotesk"], "display-lg": ["Space Grotesk"] }, fontSize: { "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }], "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "display-lg-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">spa</span></div><span class="font-title-md text-title-md text-on-surface tracking-tight">StepUp</span></div><div class="flex items-center gap-space-sm"><div class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-secondary-container/60"><span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-primary-container uppercase tracking-wider">Calma</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full px-margin pb-8 space-y-space-lg">
+<!-- Encabezado sereno de sección -->
+<section class="space-y-space-sm pt-2">
+<div class="flex items-center justify-between">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">
+        Tareas &amp; Micro-Pasos
+      </h1>
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary-container/50 text-primary-container">
+<span class="material-symbols-outlined text-[18px]">checklist</span>
+</span>
+</div>
+<div class="flex items-center gap-2 p-2.5 rounded-xl bg-surface-container-low">
+<span class="material-symbols-outlined text-[16px] text-primary-container shrink-0">calendar_today</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+<strong class="font-semibold text-on-surface">Hoy:</strong> 4 micro-pasos completados · 1 en foco activo · 2 en cola
+      </p>
+</div>
+<!-- Filtros tipo pills táctiles -->
+<div aria-label="Filtros de tareas" class="flex items-center gap-2 pt-1 overflow-x-auto scrollbar-none" role="tablist">
+<button class="tab-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md transition-all shadow-sm" data-filter="activas" type="button">
+<span>Activas (3)</span>
+</button>
+<button class="tab-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors" data-filter="pausa" type="button">
+<span>En pausa (2)</span>
+</button>
+<button class="tab-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors" data-filter="completadas" type="button">
+<span>Completadas (8)</span>
+</button>
+</div>
+</section>
+<!-- Tarjeta Destacada de Tarea Activa (Next Up / En Foco) -->
+<section aria-label="Tarea activa en foco">
+<div class="relative overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm p-4 space-y-3.5">
+<!-- Indicador táctil izquierdo sin border -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container rounded-l-xl"></div>
+<div class="flex items-center justify-between pl-1">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container/70 text-primary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">En foco principal</span>
+</div>
+<span class="inline-flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-primary-container">schedule</span>
+          ~4 min
+        </span>
+</div>
+<div class="pl-1 space-y-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">
+          Rediseño de Propuesta Comercial Q3
+        </h2>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary-container">subdirectory_arrow_right</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-medium">
+            Paso 2/4: Escribir las 3 viñetas clave (~4 min)
+          </p>
+</div>
+</div>
+<!-- Barra de progreso -->
+<div class="pl-1 space-y-1.5">
+<div class="flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+<span>Avance de la sesión</span>
+<span class="font-semibold text-primary-container">50%</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full bg-primary-container rounded-full transition-all duration-500 ease-out" style="width: 50%;"></div>
+</div>
+</div>
+<!-- Botón CTA principal -->
+<div class="pt-1 space-y-2 pl-1">
+<button class="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg hover:bg-primary active:scale-[0.99] transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+<span>Reanudar Foco Inmediato</span>
+</button>
+<button class="w-full py-1 text-center font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors inline-flex items-center justify-center gap-1" id="toggle-steps-btn" type="button">
+<span>Ver detalle y pasos</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<!-- Desglose micro-pasos colapsable -->
+<div class="hidden pl-1 pt-2 space-y-2" id="substeps-panel">
+<div class="p-3 rounded-lg bg-surface-container-low space-y-2">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-[10px]">
+<span class="material-symbols-outlined text-[12px]">check</span>
+</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-through">1. Recopilar métricas de abril y mayo (3 min)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-full bg-secondary-container text-primary-container flex items-center justify-center text-[10px] font-semibold">2</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">2. Escribir las 3 viñetas clave (4 min)</span>
+</div>
+<div class="flex items-center gap-2 opacity-60">
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[10px]">3</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">3. Exportar borrador PDF a Figma (3 min)</span>
+</div>
+<div class="flex items-center gap-2 opacity-60">
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[10px]">4</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">4. Enviar enlace de revisión a Sofía (2 min)</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Botón de Creación Destacado con Badge Anti-fricción -->
+<section>
+<button class="w-full text-left p-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors active:scale-[0.99] flex items-center justify-between gap-3 group" type="button">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-lowest text-primary-container flex items-center justify-center shrink-0 shadow-sm group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+<div class="min-w-0">
+<span class="font-title-md text-title-md text-on-surface block truncate">Crear nueva tarea o micro-paso</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Escribe solo una acción de 3 a 5 minutos</span>
+</div>
+</div>
+<span class="shrink-0 px-2 py-1 rounded-full bg-secondary-container/80 text-primary-container font-label-sm text-label-sm font-semibold">
+        Desglose anti-fricción
+      </span>
+</button>
+</section>
+<!-- Cola de Espera Serena (Restringida a pocas tareas) -->
+<section aria-label="Cola de espera" class="space-y-space-sm">
+<div class="flex items-baseline justify-between">
+<h3 class="font-title-md text-title-md text-on-surface">
+        Cola de espera <span class="font-body-sm text-body-sm text-on-surface-variant font-normal">(Sin sobrecarga)</span>
+</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Máximo 3 visibles</span>
+</div>
+<div class="space-y-2.5">
+<!-- Tarea 1 en cola -->
+<article class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between gap-3 hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-3 min-w-0">
+<button aria-label="Completar micro-paso" class="mt-0.5 w-5 h-5 rounded-md bg-surface-container flex items-center justify-center text-primary-container hover:bg-secondary-container transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</button>
+<div class="min-w-0 space-y-1">
+<h4 class="font-label-lg text-label-lg text-on-surface truncate">
+              Revisión y respuesta a email de cliente
+            </h4>
+<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 micro-pasos (~8 min total)</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                Lista para iniciar
+              </span>
+</div>
+</div>
+</div>
+<button aria-label="Ver detalles de revisión de email" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
+</button>
+</article>
+<!-- Tarea 2 en cola -->
+<article class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between gap-3 hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-3 min-w-0">
+<button aria-label="Completar micro-paso" class="mt-0.5 w-5 h-5 rounded-md bg-surface-container flex items-center justify-center text-primary-container hover:bg-secondary-container transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</button>
+<div class="min-w-0 space-y-1">
+<h4 class="font-label-lg text-label-lg text-on-surface truncate">
+              Actualizar dependencias de proyecto SQLite
+            </h4>
+<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">2 micro-pasos (~6 min total)</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                Borrador
+              </span>
+</div>
+</div>
+</div>
+<button aria-label="Ver detalles de dependencias SQLite" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
+</button>
+</article>
+</div>
+</section>
+<!-- Mini-sección de rescate ante parálisis -->
+<section>
+<div class="p-4 rounded-xl bg-secondary-container/40 flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">self_improvement</span>
+</div>
+<div class="space-y-1.5 flex-1">
+<h4 class="font-label-lg text-label-lg text-primary-container font-semibold">
+          ¿Muchas cosas pendientes?
+        </h4>
+<p class="font-body-sm text-body-sm text-on-secondary-container leading-relaxed">
+          Elige solo una y oculta el resto por 25 minutos. Tu mente necesita calma, no prisa.
+        </p>
+<button class="mt-1 inline-flex items-center gap-1 font-label-sm text-label-sm text-primary-container font-semibold hover:underline" type="button">
+<span>Activar modo túnel anti-abrumamiento</span>
+<span class="material-symbols-outlined text-[14px]">visibility_off</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Imagen serena de contexto editorial y descanso visual -->
+<section class="rounded-xl overflow-hidden bg-surface-container-low">
+<div class="relative h-28 w-full bg-cover bg-center" data-alt="A minimalist quiet architectural desk bathed in gentle morning daylight with an open tactile linen notebook, wooden fountain pen, ceramic cup with steam, calm sage green plant leaf casting soft shadow, warm natural tones, peaceful focus atmosphere, high-end editorial photography style" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA89s-vNTw3UF4Z1kl4Vw8s2HHfTL_Vtjh_xEAbXQb0B7ch_aXVK2w4WxgeVhFsYupSn9kw1SsH0wMcA0leIoAToe1swA9GzO7oG4Mjx9KQVKmyh_nsW1lEQxbVZ0bhNYHpBvxSVkn_NQXSJmuWkqxAZshpa6jtEr3wn4htjbswH7xOzeMXTGysGKox2nRU8tR2aKmq8gKKzSByB8ZPk35Nabqy0GDdUuv4TRjRhNcZ08VwEfvTHqZ_')">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/90 via-surface-container-lowest/40 to-transparent flex items-end p-3.5">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary-container">eco</span>
+<span>"Un micro-paso a la vez es suficiente para avanzar hoy."</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+  // Micro-interacción: conmutar desglose de pasos en la tarjeta de foco
+  const toggleBtn = document.getElementById('toggle-steps-btn');
+  const panel = document.getElementById('substeps-panel');
+
+  if (toggleBtn && panel) {
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+      toggleBtn.innerHTML = isHidden 
+        ? '<span>Ocultar detalle de pasos</span><span class="material-symbols-outlined text-[14px]">expand_less</span>'
+        : '<span>Ver detalle y pasos</span><span class="material-symbols-outlined text-[14px]">arrow_forward</span>';
+    });
+  }
+
+  // Micro-interacción: cambio visual de pestañas de filtro
+  const filterPills = document.querySelectorAll('.tab-pill');
+  filterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      filterPills.forEach(p => {
+        p.classList.remove('bg-primary-container', 'text-on-primary', 'shadow-sm');
+        p.classList.add('bg-surface-container', 'text-on-surface-variant');
+      });
+      pill.classList.remove('bg-surface-container', 'text-on-surface-variant');
+      pill.classList.add('bg-primary-container', 'text-on-primary', 'shadow-sm');
+    });
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.03)]" data-active-classes="text-primary-container font-semibold"><div class="h-16 px-margin flex items-center justify-around"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors duration-150" data-path="focus" href="#"><span class="material-symbols-outlined text-[22px]">timer</span><span class="font-label-sm text-label-sm mt-0.5">Ahora</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] transition-colors duration-150 text-primary-container font-semibold" data-path="tasks" href="#"><span class="material-symbols-outlined text-[22px]">format_list_bulleted</span><span class="font-label-sm text-label-sm mt-0.5">Tareas</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors duration-150" data-path="log" href="#"><span class="material-symbols-outlined text-[22px]">history_edu</span><span class="font-label-sm text-label-sm mt-0.5">Bitácora</span></a></div></nav></body></html>
