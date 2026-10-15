@@ -45,6 +45,20 @@ const FULLSCREEN_ROUTES = new Set([
   'FocusSinTareas',
   'TareasListado',
   'TareasDetalle',
+  'TareasAListado',
+  'TareasACrear',
+  'TareasADetalle',
+  'TareasAEditar',
+  'TareasACompletada',
+  'TareasBListado',
+  'TareasBCrear',
+  'TareasBDetalle',
+  'TareasBEditar',
+  'TareasCListado',
+  'TareasCCrear',
+  'TareasCDetalle',
+  'TareasCEditar',
+  'TareasEditarPasoSheet',
 ]);
 
 export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
@@ -181,6 +195,20 @@ import EnfoqueFocusScreen from '../screens/designlab/EnfoqueFocusScreen';
 import FocusSinTareasScreen from '../screens/designlab/FocusSinTareasScreen';
 import TareasListadoScreen from '../screens/designlab/TareasListadoScreen';
 import TareasDetalleScreen from '../screens/designlab/TareasDetalleScreen';
+import TareasAListadoScreen from '../screens/designlab/TareasAListadoScreen';
+import TareasACrearScreen from '../screens/designlab/TareasACrearScreen';
+import TareasADetalleScreen from '../screens/designlab/TareasADetalleScreen';
+import TareasAEditarScreen from '../screens/designlab/TareasAEditarScreen';
+import TareasACompletadaScreen from '../screens/designlab/TareasACompletadaScreen';
+import TareasBListadoScreen from '../screens/designlab/TareasBListadoScreen';
+import TareasBCrearScreen from '../screens/designlab/TareasBCrearScreen';
+import TareasBDetalleScreen from '../screens/designlab/TareasBDetalleScreen';
+import TareasBEditarScreen from '../screens/designlab/TareasBEditarScreen';
+import TareasCListadoScreen from '../screens/designlab/TareasCListadoScreen';
+import TareasCCrearScreen from '../screens/designlab/TareasCCrearScreen';
+import TareasCDetalleScreen from '../screens/designlab/TareasCDetalleScreen';
+import TareasCEditarScreen from '../screens/designlab/TareasCEditarScreen';
+import TareasEditarPasoSheetScreen from '../screens/designlab/TareasEditarPasoSheetScreen';
 
 const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
 const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
@@ -235,6 +263,20 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="FocusSinTareas" component={FocusSinTareasScreen} />
       <ProfileStackNav.Screen name="TareasListado" component={TareasListadoScreen} />
       <ProfileStackNav.Screen name="TareasDetalle" component={TareasDetalleScreen} />
+      <ProfileStackNav.Screen name="TareasAListado" component={TareasAListadoScreen} />
+      <ProfileStackNav.Screen name="TareasACrear" component={TareasACrearScreen} />
+      <ProfileStackNav.Screen name="TareasADetalle" component={TareasADetalleScreen} />
+      <ProfileStackNav.Screen name="TareasAEditar" component={TareasAEditarScreen} />
+      <ProfileStackNav.Screen name="TareasACompletada" component={TareasACompletadaScreen} />
+      <ProfileStackNav.Screen name="TareasBListado" component={TareasBListadoScreen} />
+      <ProfileStackNav.Screen name="TareasBCrear" component={TareasBCrearScreen} />
+      <ProfileStackNav.Screen name="TareasBDetalle" component={TareasBDetalleScreen} />
+      <ProfileStackNav.Screen name="TareasBEditar" component={TareasBEditarScreen} />
+      <ProfileStackNav.Screen name="TareasCListado" component={TareasCListadoScreen} />
+      <ProfileStackNav.Screen name="TareasCCrear" component={TareasCCrearScreen} />
+      <ProfileStackNav.Screen name="TareasCDetalle" component={TareasCDetalleScreen} />
+      <ProfileStackNav.Screen name="TareasCEditar" component={TareasCEditarScreen} />
+      <ProfileStackNav.Screen name="TareasEditarPasoSheet" component={TareasEditarPasoSheetScreen} />
     </ProfileStackNav.Navigator>
   );
 }

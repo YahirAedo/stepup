@@ -1,11 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import {
   clampStepPosition,
+  clockLabel,
+  completedStepCount,
   computeTotalMinutes,
   frictionIcons,
   frictionLabels,
   frictionLevelFor,
+  isLongTitle,
+  nextStepPosition,
+  remainingMinutes,
+  stepCountLabel,
   stepPositionLabel,
+  stepStartMinutes,
   totalMinutesLabel,
 } from './microplan';
 
@@ -83,5 +90,83 @@ describe('stepPositionLabel', () => {
 describe('totalMinutesLabel', () => {
   it('formato "8 min total"', () => {
     expect(totalMinutesLabel(8)).toBe('8 min total');
+  });
+});
+
+describe('nextStepPosition', () => {
+  it('sube un paso', () => {
+    expect(nextStepPosition(2, 4, 'up')).toBe(1);
+  });
+
+  it('baja un paso', () => {
+    expect(nextStepPosition(2, 4, 'down')).toBe(3);
+  });
+
+  it('clampa en los extremos', () => {
+    expect(nextStepPosition(1, 4, 'up')).toBe(1);
+    expect(nextStepPosition(4, 4, 'down')).toBe(4);
+  });
+});
+
+describe('stepStartMinutes', () => {
+  it('devuelve offsets acumulados', () => {
+    expect(stepStartMinutes([{ duration_min: 2 }, { duration_min: 4 }, { duration_min: 3 }])).toEqual([0, 2, 6]);
+  });
+
+  it('lista vacia da []', () => {
+    expect(stepStartMinutes([])).toEqual([]);
+  });
+});
+
+describe('remainingMinutes', () => {
+  it('suma solo los no completados', () => {
+    expect(
+      remainingMinutes([
+        { duration_min: 2, completed: true },
+        { duration_min: 4, completed: false },
+        { duration_min: 3, completed: false },
+      ]),
+    ).toBe(7);
+  });
+
+  it('todo completo da 0', () => {
+    expect(remainingMinutes([{ duration_min: 2, completed: true }])).toBe(0);
+  });
+});
+
+describe('completedStepCount', () => {
+  it('cuenta los completados', () => {
+    expect(
+      completedStepCount([{ completed: true }, { completed: false }, { completed: true }]),
+    ).toBe(2);
+  });
+});
+
+describe('stepCountLabel', () => {
+  it('singular y plural', () => {
+    expect(stepCountLabel(1)).toBe('1 paso');
+    expect(stepCountLabel(3)).toBe('3 pasos');
+  });
+});
+
+describe('clockLabel', () => {
+  it('formatea MM:00', () => {
+    expect(clockLabel(0)).toBe('00:00');
+    expect(clockLabel(6)).toBe('06:00');
+  });
+
+  it('nunca negativo', () => {
+    expect(clockLabel(-3)).toBe('00:00');
+  });
+});
+
+describe('isLongTitle', () => {
+  it('detecta titulos largos', () => {
+    expect(isLongTitle('Corto')).toBe(false);
+    expect(isLongTitle('Un titulo claramente demasiado largo para arrancar')).toBe(true);
+  });
+
+  it('respeta el umbral por parametro', () => {
+    expect(isLongTitle('abc', 2)).toBe(true);
   });
 });

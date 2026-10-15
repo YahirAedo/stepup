@@ -7,6 +7,8 @@ import { sereneColors, sereneTypography, withAlpha, useResponsive } from '../../
 
 export interface DesignLabHeaderProps {
   title?: string;
+  /** Muestra el avatar decorativo a la derecha. `false` en formularios y detalle. */
+  showAvatar?: boolean;
 }
 
 /**
@@ -19,7 +21,7 @@ export interface DesignLabHeaderProps {
  *
  * Superficie `surface` al ~92% (sin expo-blur). Decision documentada en #295.
  */
-export default function DesignLabHeader({ title = 'Cronómetro' }: DesignLabHeaderProps) {
+export default function DesignLabHeader({ title = 'Cronómetro', showAvatar = true }: DesignLabHeaderProps) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { scale: s } = useResponsive();
@@ -69,12 +71,14 @@ export default function DesignLabHeader({ title = 'Cronómetro' }: DesignLabHead
           width: avatarSize,
           height: avatarSize,
           borderRadius: s(8),
-          backgroundColor: sereneColors.primary,
+          backgroundColor: showAvatar ? sereneColors.primary : 'transparent',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <MaterialCommunityIcons name="account" size={s(20)} color={sereneColors['on-primary']} />
+        {showAvatar ? (
+          <MaterialCommunityIcons name="account" size={s(20)} color={sereneColors['on-primary']} />
+        ) : null}
       </View>
     </View>
   );

@@ -60,3 +60,58 @@ export function stepPositionLabel(current: number, total: number): string {
 export function totalMinutesLabel(totalMinutes: number): string {
   return `${totalMinutes} min total`;
 }
+
+/** Paso con estado para los calculos de progreso (Fixture/preview Tareas). */
+export interface StepProgressInput {
+  duration_min?: number | null;
+  completed?: boolean;
+}
+
+/**
+ * Nueva posicion al mover un paso arriba/abajo, clampada al rango valido.
+ * `up` en el primer paso y `down` en el ultimo devuelven la misma posicion.
+ */
+export function nextStepPosition(current: number, total: number, direction: 'up' | 'down'): number {
+  const delta = direction === 'up' ? -1 : 1;
+  return clampStepPosition(current + delta, total);
+}
+
+/**
+ * Minuto de inicio de cada paso (timeline vertical de la Variante C).
+ * `[0, d0, d0+d1, ...]` — el paso i arranca en `starts[i]`.
+ */
+export function stepStartMinutes(steps: StepPlanInput[]): number[] {
+  const starts: number[] = [];
+  let acc = 0;
+  for (const step of steps) {
+    starts.push(acc);
+    acc += step.duration_min ?? 0;
+  }
+  return starts;
+}
+
+/** Suma de duraciones de los pasos no completados. */
+export function remainingMinutes(steps: StepProgressInput[]): number {
+  return computeTotalMinutes(steps.filter((step) => !step.completed));
+}
+
+/** Cantidad de pasos completados. */
+export function completedStepCount(steps: StepProgressInput[]): number {
+  return steps.filter((step) => step.completed).length;
+}
+
+/** "1 paso" / "N pasos", sin micro-prefijo. */
+export function stepCountLabel(count: number): string {
+  return count === 1 ? '1 paso' : `${count} pasos`;
+}
+
+/** Marca de minutos acumulados "MM:00" para la timeline de la Variante C. */
+export function clockLabel(totalMinutes: number): string {
+  const clamped = Math.max(0, Math.floor(totalMinutes));
+  return `${String(clamped).padStart(2, '0')}:00`;
+}
+
+/** true si el titulo supera el umbral anti-friccion (microcopy "proyecto grande"). */
+export function isLongTitle(title: string, threshold = 25): boolean {
+  return title.trim().length > threshold;
+}

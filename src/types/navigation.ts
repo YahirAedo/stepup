@@ -37,6 +37,34 @@ export type ProfileStackParamList = {
   TareasListado: undefined;
   /** Preview Tareas — Detalle con secuencia de pasos (#297). */
   TareasDetalle: undefined;
+  /** Flujo Tareas Variante A — Listado. */
+  TareasAListado: undefined;
+  /** Flujo Tareas Variante A — Crear tarea. */
+  TareasACrear: undefined;
+  /** Flujo Tareas Variante A — Detalle. */
+  TareasADetalle: undefined;
+  /** Flujo Tareas Variante A — Editar tarea. */
+  TareasAEditar: undefined;
+  /** Flujo Tareas Variante A — Aviso calmo de tarea completada. */
+  TareasACompletada: undefined;
+  /** Flujo Tareas Variante B — Listado. */
+  TareasBListado: undefined;
+  /** Flujo Tareas Variante B — Crear tarea. */
+  TareasBCrear: undefined;
+  /** Flujo Tareas Variante B — Detalle. */
+  TareasBDetalle: undefined;
+  /** Flujo Tareas Variante B — Editar tarea. */
+  TareasBEditar: undefined;
+  /** Flujo Tareas Variante C — Listado. */
+  TareasCListado: undefined;
+  /** Flujo Tareas Variante C — Crear tarea. */
+  TareasCCrear: undefined;
+  /** Flujo Tareas Variante C — Detalle. */
+  TareasCDetalle: undefined;
+  /** Flujo Tareas Variante C — Editar tarea. */
+  TareasCEditar: undefined;
+  /** Propuesta unica "Editar paso" como bottom sheet (compartida). */
+  TareasEditarPasoSheet: undefined;
 };
 
 export type MainTabParamList = {
