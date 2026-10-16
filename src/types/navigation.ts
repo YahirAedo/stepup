@@ -65,6 +65,12 @@ export type ProfileStackParamList = {
   TareasCEditar: undefined;
   /** Propuesta unica "Editar paso" como bottom sheet (compartida). */
   TareasEditarPasoSheet: undefined;
+  /** Variante A de Perfil — tarjetas por sección. */
+  PerfilA: undefined;
+  /** Variante B de Perfil — ajustes estilo nativo. */
+  PerfilB: undefined;
+  /** Variante C de Perfil — resumen + datos primero. */
+  PerfilC: undefined;
 };
 
 export type MainTabParamList = {

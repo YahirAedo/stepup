@@ -59,6 +59,9 @@ const FULLSCREEN_ROUTES = new Set([
   'TareasCDetalle',
   'TareasCEditar',
   'TareasEditarPasoSheet',
+  'PerfilA',
+  'PerfilB',
+  'PerfilC',
 ]);
 
 export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
@@ -209,6 +212,9 @@ import TareasCCrearScreen from '../screens/designlab/TareasCCrearScreen';
 import TareasCDetalleScreen from '../screens/designlab/TareasCDetalleScreen';
 import TareasCEditarScreen from '../screens/designlab/TareasCEditarScreen';
 import TareasEditarPasoSheetScreen from '../screens/designlab/TareasEditarPasoSheetScreen';
+import PerfilAVarianteScreen from '../screens/designlab/PerfilAVarianteScreen';
+import PerfilBVarianteScreen from '../screens/designlab/PerfilBVarianteScreen';
+import PerfilCVarianteScreen from '../screens/designlab/PerfilCVarianteScreen';
 
 const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
 const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
@@ -277,6 +283,9 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="TareasCDetalle" component={TareasCDetalleScreen} />
       <ProfileStackNav.Screen name="TareasCEditar" component={TareasCEditarScreen} />
       <ProfileStackNav.Screen name="TareasEditarPasoSheet" component={TareasEditarPasoSheetScreen} />
+      <ProfileStackNav.Screen name="PerfilA" component={PerfilAVarianteScreen} />
+      <ProfileStackNav.Screen name="PerfilB" component={PerfilBVarianteScreen} />
+      <ProfileStackNav.Screen name="PerfilC" component={PerfilCVarianteScreen} />
     </ProfileStackNav.Navigator>
   );
 }

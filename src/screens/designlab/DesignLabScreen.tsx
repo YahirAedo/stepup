@@ -38,7 +38,10 @@ type DesignLabTarget =
   | 'TareasCCrear'
   | 'TareasCDetalle'
   | 'TareasCEditar'
-  | 'TareasEditarPasoSheet';
+  | 'TareasEditarPasoSheet'
+  | 'PerfilA'
+  | 'PerfilB'
+  | 'PerfilC';
 
 interface MockupEntry {
   key: string;
@@ -235,6 +238,35 @@ const TAREAS_COMPARTIDO: MockupEntry[] = [
     description: 'Propuesta única compartida: duración con chips, fricción calibrada y nota opcional',
     icon: 'swap-vertical',
     target: 'TareasEditarPasoSheet',
+  },
+];
+
+/**
+ * Variantes de Perfil (rediseño Serene Focus). Cada una propone una jerarquía
+ * distinta para la misma información: tarjetas, ajustes nativos y resumen con
+ * datos primero. Todas con un control de demo de 6 estados.
+ */
+const PERFIL_VARIANTES: MockupEntry[] = [
+  {
+    key: 'perfil-a',
+    title: 'A — Tarjetas por sección',
+    description: 'Tarjetas apiladas: identidad + métricas, logros, datos y sincronización, recordatorios y cuenta',
+    icon: 'card-outline',
+    target: 'PerfilA',
+  },
+  {
+    key: 'perfil-b',
+    title: 'B — Ajustes estilo nativo',
+    description: 'Lista agrupada con filas y accesorios, al estilo de los ajustes del sistema',
+    icon: 'format-list-bulleted',
+    target: 'PerfilB',
+  },
+  {
+    key: 'perfil-c',
+    title: 'C — Resumen + datos primero',
+    description: 'Cabecera de resumen compacta y el estado de sincronización como primer bloque',
+    icon: 'view-dashboard-outline',
+    target: 'PerfilC',
   },
 ];
 
@@ -447,6 +479,24 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {TAREAS_COMPARTIDO.map((m) => (
+          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+        ))}
+
+        <RNText
+          style={[
+            sereneTypography['label-sm'] as TextStyle,
+            {
+              color: sereneColors['on-surface-variant'],
+              textTransform: 'uppercase',
+              letterSpacing: 0.8,
+              marginTop: sereneSpacing['space-md'],
+            },
+          ]}
+        >
+          Perfil — Variantes
+        </RNText>
+
+        {PERFIL_VARIANTES.map((m) => (
           <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
         ))}
 
