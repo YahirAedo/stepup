@@ -19,29 +19,19 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'DesignLab'>;
 /** Destinos validos de la preview; evita castear a `keyof ProfileStackParamList`. */
 type DesignLabTarget =
   | 'CronometroLimpio'
-  | 'FocusPrevio'
   | 'FocusCompletado'
   | 'EnfoqueFocus'
   | 'FocusSinTareas'
-  | 'TareasListado'
-  | 'TareasDetalle'
   | 'TareasAListado'
   | 'TareasACrear'
   | 'TareasADetalle'
   | 'TareasAEditar'
   | 'TareasACompletada'
-  | 'TareasBListado'
-  | 'TareasBCrear'
-  | 'TareasBDetalle'
-  | 'TareasBEditar'
-  | 'TareasCListado'
-  | 'TareasCCrear'
-  | 'TareasCDetalle'
-  | 'TareasCEditar'
   | 'TareasEditarPasoSheet'
   | 'PerfilA'
-  | 'PerfilB'
-  | 'PerfilC';
+  | 'SereneTabs'
+  | 'LogrosA'
+  | 'ConflictosA';
 
 interface MockupEntry {
   key: string;
@@ -60,13 +50,6 @@ const MOCKUPS: MockupEntry[] = [
     target: 'CronometroLimpio',
   },
   {
-    key: 'focus-previo',
-    title: 'Focus — Paso previo',
-    description: 'Estado de preparación: step hero, selector 3/5/10 min, cola, transición al timer',
-    icon: 'play-circle-outline',
-    target: 'FocusPrevio',
-  },
-  {
     key: 'focus-completado',
     title: 'Focus — Paso completado',
     description: 'Cierre: celebración, logro registrado, siguiente paso, acciones y pausa consciente',
@@ -76,8 +59,8 @@ const MOCKUPS: MockupEntry[] = [
 ];
 
 /**
- * Variantes de arte para la skin del "paso previo". Mismo contenido que
- * `FocusPrevio`, distinta presentación — sirven para elegir dirección visual.
+ * Skin elegida del "paso previo" de Focus: título protagonista en panel inset
+ * y cola colapsada en acordeón.
  */
 const VARIANTS: MockupEntry[] = [
   {
@@ -86,6 +69,19 @@ const VARIANTS: MockupEntry[] = [
     description: 'Título protagonista en panel inset + cola colapsada (acordeón). Propuesta armonizada',
     icon: 'gesture-tap',
     target: 'EnfoqueFocus',
+  },
+];
+
+/**
+ * Base compartida del rediseño (Fase 1): piezas comunes a Foco, Tareas y Perfil.
+ */
+const SISTEMA_BASE: MockupEntry[] = [
+  {
+    key: 'serene-tabs',
+    title: 'Marco con tabs — Foco / Tareas / Perfil',
+    description: 'Barra de 3 tabs dentro del layout: comprobá que no tape el botón de abajo',
+    icon: 'dock-bottom',
+    target: 'SereneTabs',
   },
 ];
 
@@ -103,30 +99,9 @@ const EMPTY_STATES: MockupEntry[] = [
 ];
 
 /**
- * Epico Tareas (rediseño Serene Focus). Se agregan aquí a medida que se portan
- * los 9 mockups de `Stepup Rediseño/stitch_stepup_anti_procrastination_app`.
- */
-const TAREAS_MOCKUPS: MockupEntry[] = [
-  {
-    key: 'tareas-listado',
-    title: 'Tareas — Listado',
-    description: 'Encabezado + resumen, filtros, tarjeta en foco, quick-create, cola de espera, rescate anti-abrumamiento',
-    icon: 'format-list-checks',
-    target: 'TareasListado',
-  },
-  {
-    key: 'tareas-detalle',
-    title: 'Tareas — Detalle',
-    description: 'Resumen de tarea, avance segmentado, secuencia de pasos, gestión, respiro consciente y acciones',
-    icon: 'format-list-bulleted',
-    target: 'TareasDetalle',
-  },
-];
-
-/**
- * Flujos completos de Tareas (rediseño Serene Focus). Cada variante cubre las
- * 4 pantallas del flujo (Listado → Crear → Detalle → Editar) sobre fixtures.
- * Variante A "Enfoque", B "Ritmo" y C "Sendero".
+ * Flujo elegido de Tareas (rediseño Serene Focus): las 4 pantallas del flujo
+ * (Listado → Crear → Detalle → Editar) más el aviso de tarea completada, sobre
+ * fixtures. Variante A "Enfoque".
  */
 const TAREAS_FLUJO_A: MockupEntry[] = [
   {
@@ -166,68 +141,6 @@ const TAREAS_FLUJO_A: MockupEntry[] = [
   },
 ];
 
-const TAREAS_FLUJO_B: MockupEntry[] = [
-  {
-    key: 'tareas-b-listado',
-    title: 'B — Listado',
-    description: 'Ritmo: densidad, swipe entre tareas y quick-create rápido',
-    icon: 'format-list-checks',
-    target: 'TareasBListado',
-  },
-  {
-    key: 'tareas-b-crear',
-    title: 'B — Crear',
-    description: 'Alta ágil con filas densas y pasos sugeridos',
-    icon: 'playlist-plus',
-    target: 'TareasBCrear',
-  },
-  {
-    key: 'tareas-b-detalle',
-    title: 'B — Detalle',
-    description: 'Detalle denso con progreso y acciones rápidas',
-    icon: 'format-list-bulleted',
-    target: 'TareasBDetalle',
-  },
-  {
-    key: 'tareas-b-editar',
-    title: 'B — Editar',
-    description: 'Formulario denso precargado',
-    icon: 'pencil-outline',
-    target: 'TareasBEditar',
-  },
-];
-
-const TAREAS_FLUJO_C: MockupEntry[] = [
-  {
-    key: 'tareas-c-listado',
-    title: 'C — Listado',
-    description: 'Sendero: progreso por minutos, plantillas y quick-create',
-    icon: 'routes',
-    target: 'TareasCListado',
-  },
-  {
-    key: 'tareas-c-crear',
-    title: 'C — Crear',
-    description: 'Alta con plantillas reutilizables y mini timeline de pasos',
-    icon: 'content-copy',
-    target: 'TareasCCrear',
-  },
-  {
-    key: 'tareas-c-detalle',
-    title: 'C — Detalle',
-    description: 'Timeline vertical con minutos acumulados y editar paso por sheet',
-    icon: 'timelapse',
-    target: 'TareasCDetalle',
-  },
-  {
-    key: 'tareas-c-editar',
-    title: 'C — Editar',
-    description: 'Formulario precargado con plantillas y timeline',
-    icon: 'pencil-outline',
-    target: 'TareasCEditar',
-  },
-];
-
 /**
  * Piezas compartidas por las tres variantes del flujo Tareas.
  */
@@ -242,11 +155,10 @@ const TAREAS_COMPARTIDO: MockupEntry[] = [
 ];
 
 /**
- * Variantes de Perfil (rediseño Serene Focus). Cada una propone una jerarquía
- * distinta para la misma información: tarjetas, ajustes nativos y resumen con
- * datos primero. Todas con un control de demo de 6 estados.
+ * Variante elegida de Perfil (rediseño Serene Focus): tarjetas apiladas con
+ * identidad, métricas, logros, datos y sincronización, recordatorios y cuenta.
  */
-const PERFIL_VARIANTES: MockupEntry[] = [
+const PERFIL_VARIANTE_A: MockupEntry[] = [
   {
     key: 'perfil-a',
     title: 'A — Tarjetas por sección',
@@ -254,19 +166,26 @@ const PERFIL_VARIANTES: MockupEntry[] = [
     icon: 'card-outline',
     target: 'PerfilA',
   },
+];
+
+/**
+ * Pantallas del flujo Perfil Variante A (rediseño Serene Focus). Son los destinos
+ * de las filas de logros y conflictos de la Variante A.
+ */
+const PERFIL_PANTALLAS: MockupEntry[] = [
   {
-    key: 'perfil-b',
-    title: 'B — Ajustes estilo nativo',
-    description: 'Lista agrupada con filas y accesorios, al estilo de los ajustes del sistema',
-    icon: 'format-list-bulleted',
-    target: 'PerfilB',
+    key: 'perfil-logros',
+    title: 'A — Tus logros',
+    description: 'Lista de logros con resumen y filtros Todos / Obtenidos / Por lograr',
+    icon: 'trophy-outline',
+    target: 'LogrosA',
   },
   {
-    key: 'perfil-c',
-    title: 'C — Resumen + datos primero',
-    description: 'Cabecera de resumen compacta y el estado de sincronización como primer bloque',
-    icon: 'view-dashboard-outline',
-    target: 'PerfilC',
+    key: 'perfil-conflictos',
+    title: 'A — Conflictos de sincronización',
+    description: 'Un conflicto por item: versiones lado a lado y una acción por lado',
+    icon: 'swap-horizontal',
+    target: 'ConflictosA',
   },
 ];
 
@@ -327,6 +246,11 @@ function MockupCard({ entry, onPress }: { entry: MockupEntry; onPress: () => voi
 export default function DesignLabScreen({ navigation }: Props) {
   const { contentPaddingBottom } = useBottomLayout();
 
+  // `navigate` tipa cada ruta como una sobrecarga distinta y no acepta un
+  // argumento de tipo union (`DesignLabTarget`), asi que el cast vive aca una
+  // sola vez en lugar de repetirse en cada card.
+  const open = (target: DesignLabTarget) => navigation.navigate(target as never);
+
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
       <DesignLabHeader title="Design Lab" />
@@ -353,7 +277,25 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {MOCKUPS.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
+        ))}
+
+        <RNText
+          style={[
+            sereneTypography['label-sm'] as TextStyle,
+            {
+              color: sereneColors['on-surface-variant'],
+              textTransform: 'uppercase',
+              letterSpacing: 0.8,
+              marginTop: sereneSpacing['space-md'],
+            },
+          ]}
+        >
+          Base compartida
+        </RNText>
+
+        {SISTEMA_BASE.map((m) => (
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 
         <RNText
@@ -371,7 +313,7 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {VARIANTS.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 
         <RNText
@@ -389,25 +331,7 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {EMPTY_STATES.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
-        ))}
-
-        <RNText
-          style={[
-            sereneTypography['label-sm'] as TextStyle,
-            {
-              color: sereneColors['on-surface-variant'],
-              textTransform: 'uppercase',
-              letterSpacing: 0.8,
-              marginTop: sereneSpacing['space-md'],
-            },
-          ]}
-        >
-          Tareas
-        </RNText>
-
-        {TAREAS_MOCKUPS.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 
         <RNText
@@ -425,43 +349,7 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {TAREAS_FLUJO_A.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
-        ))}
-
-        <RNText
-          style={[
-            sereneTypography['label-sm'] as TextStyle,
-            {
-              color: sereneColors['on-surface-variant'],
-              textTransform: 'uppercase',
-              letterSpacing: 0.8,
-              marginTop: sereneSpacing['space-md'],
-            },
-          ]}
-        >
-          Tareas — Variante B · Ritmo
-        </RNText>
-
-        {TAREAS_FLUJO_B.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
-        ))}
-
-        <RNText
-          style={[
-            sereneTypography['label-sm'] as TextStyle,
-            {
-              color: sereneColors['on-surface-variant'],
-              textTransform: 'uppercase',
-              letterSpacing: 0.8,
-              marginTop: sereneSpacing['space-md'],
-            },
-          ]}
-        >
-          Tareas — Variante C · Sendero
-        </RNText>
-
-        {TAREAS_FLUJO_C.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 
         <RNText
@@ -479,7 +367,7 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {TAREAS_COMPARTIDO.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 
         <RNText
@@ -493,11 +381,29 @@ export default function DesignLabScreen({ navigation }: Props) {
             },
           ]}
         >
-          Perfil — Variantes
+          Perfil — Variante A · Tarjetas
         </RNText>
 
-        {PERFIL_VARIANTES.map((m) => (
-          <MockupCard key={m.key} entry={m} onPress={() => navigation.navigate(m.target)} />
+        {PERFIL_VARIANTE_A.map((m) => (
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
+        ))}
+
+        <RNText
+          style={[
+            sereneTypography['label-sm'] as TextStyle,
+            {
+              color: sereneColors['on-surface-variant'],
+              textTransform: 'uppercase',
+              letterSpacing: 0.8,
+              marginTop: sereneSpacing['space-md'],
+            },
+          ]}
+        >
+          Perfil — Pantallas
+        </RNText>
+
+        {PERFIL_PANTALLAS.map((m) => (
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 
         <RNText

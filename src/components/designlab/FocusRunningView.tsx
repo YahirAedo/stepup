@@ -41,7 +41,7 @@ const TOAST_DURATION_MS = 2800;
 
 /**
  * Vista compartida del estado "corriendo" del Focus.
- * Usada por `CronometroLimpioScreen` y `FocusPrevioScreen`.
+ * Usada por `CronometroLimpioScreen` y `EnfoqueFocusScreen`.
  *
  * Recibe `initialSeconds` y `maxSeconds` como props para permitir
  * que el selector de duración del estado previo los determine.
@@ -222,7 +222,7 @@ export default function FocusRunningView({
               },
             ]}
           >
-            {fixtures.step.title}
+            {fixtures.step.name}
           </RNText>
 
           <View

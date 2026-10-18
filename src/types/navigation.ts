@@ -25,18 +25,12 @@ export type ProfileStackParamList = {
   DesignLab: undefined;
   /** Preview del mockup Focus Timer limpio (#295). */
   CronometroLimpio: undefined;
-  /** Preview Focus — Paso previo con selector y cola (#296). */
-  FocusPrevio: undefined;
   /** Preview Focus — Paso completado v2 (#296). */
   FocusCompletado: undefined;
   /** Variante elegida — Enfoque: título protagonista en panel inset + cola colapsada (#296). */
   EnfoqueFocus: undefined;
   /** Estado vacío del flujo Focus — sin tareas activas (#296). */
   FocusSinTareas: undefined;
-  /** Preview Tareas — Listado con tarjeta en foco y cola de espera (#297). */
-  TareasListado: undefined;
-  /** Preview Tareas — Detalle con secuencia de pasos (#297). */
-  TareasDetalle: undefined;
   /** Flujo Tareas Variante A — Listado. */
   TareasAListado: undefined;
   /** Flujo Tareas Variante A — Crear tarea. */
@@ -47,30 +41,16 @@ export type ProfileStackParamList = {
   TareasAEditar: undefined;
   /** Flujo Tareas Variante A — Aviso calmo de tarea completada. */
   TareasACompletada: undefined;
-  /** Flujo Tareas Variante B — Listado. */
-  TareasBListado: undefined;
-  /** Flujo Tareas Variante B — Crear tarea. */
-  TareasBCrear: undefined;
-  /** Flujo Tareas Variante B — Detalle. */
-  TareasBDetalle: undefined;
-  /** Flujo Tareas Variante B — Editar tarea. */
-  TareasBEditar: undefined;
-  /** Flujo Tareas Variante C — Listado. */
-  TareasCListado: undefined;
-  /** Flujo Tareas Variante C — Crear tarea. */
-  TareasCCrear: undefined;
-  /** Flujo Tareas Variante C — Detalle. */
-  TareasCDetalle: undefined;
-  /** Flujo Tareas Variante C — Editar tarea. */
-  TareasCEditar: undefined;
   /** Propuesta unica "Editar paso" como bottom sheet (compartida). */
   TareasEditarPasoSheet: undefined;
   /** Variante A de Perfil — tarjetas por sección. */
   PerfilA: undefined;
-  /** Variante B de Perfil — ajustes estilo nativo. */
-  PerfilB: undefined;
-  /** Variante C de Perfil — resumen + datos primero. */
-  PerfilC: undefined;
+  /** Marco con tabs (Foco / Tareas / Perfil) con la barra puesta, dentro del layout. */
+  SereneTabs: undefined;
+  /** Flujo Perfil Variante A — Tus logros (rediseño Serene). */
+  LogrosA: undefined;
+  /** Flujo Perfil Variante A — Conflictos de sincronización (rediseño Serene). */
+  ConflictosA: undefined;
 };
 
 export type MainTabParamList = {

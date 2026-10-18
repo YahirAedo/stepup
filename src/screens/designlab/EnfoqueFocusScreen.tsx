@@ -1,4 +1,4 @@
-﻿// âš ï¸ DESIGN: variante visual para evaluar en Design Lab; no es la pantalla final.
+// ⚠️ DESIGN: variante visual para evaluar en Design Lab; no es la pantalla final.
 
 import React, { useCallback, useRef, useState } from 'react';
 import {
@@ -34,17 +34,17 @@ type Phase = 'previo' | 'corriendo' | 'completado';
 const CROSSFADE_DURATION = 250;
 
 /**
- * Design Lab â€” "Variante E â€” Enfoque" (flujo completo).
+ * Design Lab — "Variante E — Enfoque" (flujo completo).
  *
- * HarmonizaciÃ³n del focus "paso previo" (tÃ­tulo dominante en panel inset +
- * cola en acordeÃ³n colapsado) con el flujo completo de 3 fases:
+ * Harmonización del focus "paso previo" (título dominante en panel inset +
+ * cola en acordeón colapsado) con el flujo completo de 3 fases:
  * - 'previo': superficie primaria con `EnfoqueStepCard`, luego `EnfoqueQueue`
- *   (dos secundarias: cola + strip zen). La duraciÃ³n ya viene definida.
+ *   (dos secundarias: cola + strip zen). La duración ya viene definida.
  * - 'corriendo': reusa el `FocusRunningView` compartido (igual que la base y
- *   el CronÃ³metro limpio). Al llegar a 0:00 dispara el overlay de tiempo cumplido.
+ *   el Cronómetro limpio). Al llegar a 0:00 dispara el overlay de tiempo cumplido.
  * - 'completado': reusa `StepCompleteView`.
  *
- * TransiciÃ³n: crossfade animado entre fases (mismo patrÃ³n que `FocusPrevioScreen`).
+ * Transición: crossfade animado entre fases.
  */
 export default function EnfoqueFocusScreen() {
   const { contentPaddingBottom } = useBottomLayout();
@@ -129,7 +129,7 @@ export default function EnfoqueFocusScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
-      {/* FASE PREVIO â€” PreparaciÃ³n */}
+      {/* FASE PREVIO — Preparación */}
       <Animated.View
         style={{
           opacity: previoOpacity,
@@ -142,7 +142,7 @@ export default function EnfoqueFocusScreen() {
         }}
         pointerEvents={phase === 'previo' ? 'auto' : 'none'}
       >
-        <DesignLabHeader title="Variante E â€” Enfoque" />
+        <DesignLabHeader title="Variante E — Enfoque" />
 
         <ScrollView
           contentContainerStyle={{
@@ -152,7 +152,7 @@ export default function EnfoqueFocusScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Intro: una sola lÃ­nea */}
+          {/* Intro: una sola línea */}
           <RNText
             style={[
               sereneTypography['headline-lg-mobile'] as TextStyle,
@@ -167,18 +167,18 @@ export default function EnfoqueFocusScreen() {
             {previoFixtures.motivation.headline}
           </RNText>
 
-          {/* Superficie primaria: step card con tÃ­tulo dominante */}
+          {/* Superficie primaria: step card con título dominante */}
           <EnfoqueStepCard
             currentIndex={activeTask.stepIndex}
             totalSteps={activeTask.totalSteps}
             minutes={activeTask.minutes}
-            title={activeTask.stepTitle}
+            title={activeTask.stepName}
             description={activeTask.description}
             onStart={switchToCorriendo}
             onPostpone={() => console.log('[DesignLab] Postpone step')}
           />
 
-          {/* Superficie secundaria: cola en acordeÃ³n + form inline */}
+          {/* Superficie secundaria: cola en acordeón + form inline */}
           <View style={{ marginTop: sereneSpacing['space-xl'] }}>
             <EnfoqueQueue
               items={previoFixtures.queue as unknown as EnfoqueQueueItem[]}
@@ -208,7 +208,7 @@ export default function EnfoqueFocusScreen() {
               onSelect={handleSelectTask}
             />
           </View>
-          {/* Strip zen: una lÃ­nea, sin card */}
+          {/* Strip zen: una línea, sin card */}
           <View
             style={{
               flexDirection: 'row',
@@ -235,7 +235,7 @@ export default function EnfoqueFocusScreen() {
         </ScrollView>
       </Animated.View>
 
-      {/* FASE CORRIENDO â€” CronÃ³metro */}
+      {/* FASE CORRIENDO — Cronómetro */}
       {phase === 'corriendo' && (
         <Animated.View
           style={{
@@ -258,7 +258,7 @@ export default function EnfoqueFocusScreen() {
         </Animated.View>
       )}
 
-      {/* FASE COMPLETADO â€” Paso completado */}
+      {/* FASE COMPLETADO — Paso completado */}
       {phase === 'completado' && (
         <Animated.View
           style={{
@@ -276,7 +276,7 @@ export default function EnfoqueFocusScreen() {
             durationLabel={`${minutes} minutos`}
             subtitleTemplate={completadoFixtures.subtitleTemplate}
             recapLabel={completadoFixtures.recapLabel}
-            completedStepTitle={completadoFixtures.completedStepTitle}
+            completedStepName={completadoFixtures.completedStepName}
             nextStep={completadoFixtures.nextStep}
             breakCta={completadoFixtures.breakCta}
             primaryCta={completadoFixtures.primaryCta}

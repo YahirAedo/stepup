@@ -7,18 +7,34 @@
  * Propuesta Comercial Q3").
  *
  * ⚠️ Campos marcados con `// REQUIERE MIGRACIÓN` NO existen en el modelo real
- * (`Task { title, description?, due_date?, status: active|completed }` /
- * `Step { title, duration_min, order_index, status: pending|completed }`):
+ * (`Task { name, description?, due_date?, status: active|completed }` /
+ * `Step { name, duration_min, order_index, status: pending|completed }`):
  * requieren migracion de modelo o estado de sesion de foco. Se incluyen solo
  * para evaluar la visual; el PR documenta que hace falta.
  */
 
-import type { FeaturedStep } from '../../components/designlab/FeaturedTaskCard';
-import type { QueueTaskItem } from '../../components/designlab/QueueTaskRow';
 import type { MciSymbolKey } from '../../components/designlab/mciIconMap';
 import type { StepSequenceVariant } from '../../components/designlab/StepSequenceItem';
 
-export type FlujoAFilterKey = 'activas' | 'pausa' | 'completadas';
+/** Categoría derivada de los pasos (coincide con `deriveTaskCategory`). */
+export type FlujoACategoryKey = 'inProgress' | 'notStarted' | 'completed';
+
+/** Paso tal como vive en el modelo real (`Step.name`, status y duración). */
+export interface FlujoAStep {
+  id: string;
+  name: string;
+  status: 'pending' | 'completed';
+  /** ISO. Alimenta `pickFocusTask`: el paso completado más reciente define el foco. */
+  completedAt?: string;
+  minutes: number;
+}
+
+/** Tarea tal como vive en el modelo real (`Task.name` + sus pasos). */
+export interface FlujoATask {
+  id: string;
+  name: string;
+  steps: FlujoAStep[];
+}
 
 /* ------------------------------------------------------------------ */
 /* Listado                                                             */
@@ -27,27 +43,18 @@ export type FlujoAFilterKey = 'activas' | 'pausa' | 'completadas';
 export interface FlujoAListadoFixtures {
   headerTitle: string;
   pageTitle: string;
-  summary: {
-    todayCompleted: number;
-    /** REQUIERE MIGRACIÓN: "en foco" es estado de sesión de foco activa, no un campo de Task. */
-    focusActive: number;
-    queueCount: number;
-  };
-  /** REQUIERE MIGRACIÓN: filtro "En pausa" — Task.status solo tiene active|completed. */
-  filters: Array<{ key: FlujoAFilterKey; label: string; count: number }>;
-  /** REQUIERE MIGRACIÓN: "en foco principal" + avance de sesión + paso en curso requieren una sesion de foco activa persistida. */
-  featured: {
-    badge: string;
-    minutesLabel: string;
-    title: string;
-    stepLabel: string;
-    stepTitle: string;
+  /** Prefijo de la línea de resumen (ej. "Hoy:"). */
+  summaryLabel: string;
+  /** Textos de la tarjeta "En foco" y de los filtros (UI, no datos). */
+  copy: {
+    focusBadge: string;
+    focusMinutesSuffix: string;
+    stepWord: string;
     sessionLabel: string;
-    sessionPercent: number;
-    primaryCta: string;
+    focusCta: string;
     toggleOpen: string;
     toggleClose: string;
-    steps: FeaturedStep[];
+    categoryLabels: Record<FlujoACategoryKey, string>;
   };
   quickCreate: {
     title: string;
@@ -58,19 +65,12 @@ export interface FlujoAListadoFixtures {
     title: string;
     subtitle: string;
     maxVisible: string;
-    /** REQUIERE MIGRACIÓN: status 'draft' (borrador) no existe en el modelo de Task. */
-    items: QueueTaskItem[];
+    empty: string;
   };
-  /** REQUIERE MIGRACIÓN: modo túnel anti-abrumamiento es un concepto de producto a validar. */
-  antiOverwhelm: {
-    title: string;
-    body: string;
-    cta: string;
-  };
-  banner: {
-    imageUrl: string;
-    caption: string;
-  };
+  /** Frase de cierre al pie del listado (reemplaza la foto decorativa). */
+  footerNote: string;
+  /** Tareas reales: la categoría y el foco se DERIVAN de los pasos, sin estado guardado. */
+  tasks: FlujoATask[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -79,12 +79,15 @@ export interface FlujoAListadoFixtures {
 
 export interface FlujoAPasoDetalle {
   variant: StepSequenceVariant;
-  title: string;
+  name: string;
   meta: string;
   durationMin: number;
   description?: string;
   activeBadge?: string;
-  activeCta?: string;
+  /** Botón "Comenzar" del paso en foco (arranca el foco). */
+  startCta?: string;
+  /** Botón "Hecho" del paso en foco (completa el paso). */
+  completeCta?: string;
 }
 
 export interface FlujoADetalleFixtures {
@@ -93,7 +96,6 @@ export interface FlujoADetalleFixtures {
     statusBadge: { prefix: string; of: string };
     title: string;
     description: string;
-    paceLabel: string;
   };
   stepsTitle: string;
   editStepLabel: string;
@@ -110,7 +112,6 @@ export interface FlujoADetalleFixtures {
   actions: {
     primaryPrefix: string;
     primarySuffix: string;
-    secondary: string;
     /** REQUIERE MIGRACIÓN: iniciar una sesión de foco (registro de sesión + timer) no existe en el modelo. */
     startFocusLog: string;
   };
@@ -122,7 +123,7 @@ export interface FlujoADetalleFixtures {
 
 export interface FlujoAFormStep {
   id: string;
-  title: string;
+  name: string;
   minutes: number;
 }
 
@@ -175,9 +176,9 @@ export const flujoAFormFixtures: FlujoAFormFixtures = {
   },
   // REQUIERE MIGRACIÓN: sugerencia de pasos con IA — no existe el endpoint.
   suggestedSteps: [
-    { id: 'ai-1', title: 'Abrir el borrador actual', minutes: 2 },
-    { id: 'ai-2', title: 'Listar los 3 puntos de dolor principales', minutes: 3 },
-    { id: 'ai-3', title: 'Redactar una viñeta por punto', minutes: 4 },
+    { id: 'ai-1', name: 'Abrir el borrador actual', minutes: 2 },
+    { id: 'ai-2', name: 'Listar los 3 puntos de dolor principales', minutes: 3 },
+    { id: 'ai-3', name: 'Redactar una viñeta por punto', minutes: 4 },
   ],
   addManualLabel: 'Añadir paso manual',
   addInline: {
@@ -198,10 +199,10 @@ export const flujoAFormEditDefaults = {
   title: 'Rediseño de Propuesta Comercial Q3',
   notes: 'Entrega para el cliente corporativo. Confirmar márgenes con Sofía antes de exportar.',
   steps: [
-    { id: 'e1', title: 'Abrir borrador y listar puntos de dolor', minutes: 2 },
-    { id: 'e2', title: 'Escribir las 3 viñetas de solución técnica', minutes: 4 },
-    { id: 'e3', title: 'Estimar calendario de entregas', minutes: 3 },
-    { id: 'e4', title: 'Lectura final rápida y exportar PDF', minutes: 2 },
+    { id: 'e1', name: 'Abrir borrador y listar puntos de dolor', minutes: 2 },
+    { id: 'e2', name: 'Escribir las 3 viñetas de solución técnica', minutes: 4 },
+    { id: 'e3', name: 'Estimar calendario de entregas', minutes: 3 },
+    { id: 'e4', name: 'Lectura final rápida y exportar PDF', minutes: 2 },
   ] as FlujoAFormStep[],
 };
 
@@ -212,74 +213,79 @@ export const flujoAFormEditDefaults = {
 export const flujoAListadoFixtures: FlujoAListadoFixtures = {
   headerTitle: 'Tareas',
   pageTitle: 'Tareas & Pasos',
-  summary: {
-    todayCompleted: 4,
-    focusActive: 1,
-    queueCount: 2,
-  },
-  // REQUIERE MIGRACIÓN: el filtro "En pausa" necesita un status beyond active|completed.
-  filters: [
-    { key: 'activas', label: 'Activas', count: 3 },
-    { key: 'pausa', label: 'En pausa', count: 2 },
-    { key: 'completadas', label: 'Completadas', count: 8 },
-  ],
-  featured: {
-    badge: 'En foco principal',
-    minutesLabel: '~4 min',
-    title: 'Rediseño de Propuesta Comercial Q3',
-    stepLabel: 'Paso 2/4',
-    stepTitle: 'Escribir las 3 viñetas clave',
-    sessionLabel: 'Avance de la sesión',
-    sessionPercent: 0.5,
-    primaryCta: 'Reanudar foco inmediato',
-    toggleOpen: 'Ver detalle y pasos',
-    toggleClose: 'Ocultar detalle de pasos',
-    steps: [
-      { done: true, current: false, title: '1. Recopilar métricas de abril y mayo (3 min)' },
-      { done: false, current: true, title: '2. Escribir las 3 viñetas clave (4 min)' },
-      { done: false, current: false, title: '3. Exportar borrador PDF a Figma (3 min)' },
-      { done: false, current: false, title: '4. Enviar enlace de revisión a Sofía (2 min)' },
-    ],
+  summaryLabel: 'Hoy:',
+  copy: {
+    focusBadge: 'En foco',
+    focusMinutesSuffix: 'min',
+    stepWord: 'Paso',
+    sessionLabel: 'Avance de la tarea',
+    focusCta: 'Reanudar foco',
+    toggleOpen: 'Ver pasos',
+    toggleClose: 'Ocultar pasos',
+    categoryLabels: {
+      inProgress: 'En curso',
+      notStarted: 'Por empezar',
+      completed: 'Completadas',
+    },
   },
   quickCreate: {
     title: 'Crear nueva tarea',
     subtitle: 'Empezá por una acción de 2 a 5 minutos',
-    badge: 'Desglose anti-fricción',
+    badge: 'Dividir en pasos',
   },
   queue: {
     title: 'Cola de espera',
     subtitle: '(Sin sobrecarga)',
     maxVisible: 'Máximo 3 visibles',
-    items: [
-      {
-        id: 'qa1',
-        name: 'Revisión y respuesta a email de cliente',
-        stepCount: 3,
-        totalMinutes: 8,
-        status: 'ready',
-        statusLabel: 'Lista para iniciar',
-      },
-      // REQUIERE MIGRACIÓN: status 'draft' (borrador) no existe en el modelo.
-      {
-        id: 'qa2',
-        name: 'Actualizar dependencias de proyecto SQLite',
-        stepCount: 2,
-        totalMinutes: 6,
-        status: 'draft',
-        statusLabel: 'Borrador',
-      },
-    ],
+    empty: 'Nada por acá todavía.',
   },
-  antiOverwhelm: {
-    title: '¿Muchas cosas pendientes?',
-    body: 'Elegí solo una y ocultá el resto por 25 minutos. Tu mente necesita calma, no prisa.',
-    cta: 'Activar modo túnel anti-abrumamiento',
-  },
-  banner: {
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA89s-vNTw3UF4Z1kl4Vw8s2HHfTL_Vtjh_xEAbXQb0B7ch_aXVK2w4WxgeVhFsYupSn9kw1SsH0wMcA0leIoAToe1swA9GzO7oG4Mjx9KQVKmyh_nsW1lEQxbVZ0bhNYHpBvxSVkn_NQXSJmuWkqxAZshpa6jtEr3wn4htjbswH7xOzeMXTGysGKox2nRU8tR2aKmq8gKKzSByB8ZPk35Nabqy0GDdUuv4TRjRhNcZ08VwEfvTHqZ_',
-    caption: 'Un paso a la vez es suficiente para avanzar hoy.',
-  },
+  footerNote: 'Una tarea a la vez. El resto se acomoda.',
+  tasks: [
+    {
+      id: 't-propuesta',
+      name: 'Rediseño de Propuesta Comercial Q3',
+      steps: [
+        { id: 'p1', name: 'Recopilar métricas de abril y mayo', status: 'completed', completedAt: '2026-10-16T10:00:00.000Z', minutes: 3 },
+        { id: 'p2', name: 'Escribir las 3 viñetas clave', status: 'pending', minutes: 4 },
+        { id: 'p3', name: 'Exportar borrador PDF a Figma', status: 'pending', minutes: 3 },
+        { id: 'p4', name: 'Enviar enlace de revisión a Sofía', status: 'pending', minutes: 2 },
+      ],
+    },
+    {
+      id: 't-demo',
+      name: 'Preparar demo para inversores',
+      steps: [
+        { id: 'd1', name: 'Armar el guion de 5 minutos', status: 'completed', completedAt: '2026-10-15T09:00:00.000Z', minutes: 4 },
+        { id: 'd2', name: 'Revisar la demo con el equipo', status: 'pending', minutes: 3 },
+        { id: 'd3', name: 'Grabar la corrida de prueba', status: 'pending', minutes: 3 },
+      ],
+    },
+    {
+      id: 't-email',
+      name: 'Revisión y respuesta a email de cliente',
+      steps: [
+        { id: 'e1', name: 'Leer el pedido completo', status: 'pending', minutes: 2 },
+        { id: 'e2', name: 'Redactar la respuesta', status: 'pending', minutes: 3 },
+        { id: 'e3', name: 'Enviar y anotarlo en la agenda', status: 'pending', minutes: 2 },
+      ],
+    },
+    {
+      id: 't-sqlite',
+      name: 'Actualizar dependencias de proyecto SQLite',
+      steps: [
+        { id: 's1', name: 'Revisar versiones desactualizadas', status: 'pending', minutes: 3 },
+        { id: 's2', name: 'Actualizar y correr los tests', status: 'pending', minutes: 3 },
+      ],
+    },
+    {
+      id: 't-release',
+      name: 'Publicar notas de release v1.4',
+      steps: [
+        { id: 'r1', name: 'Listar los cambios del release', status: 'completed', completedAt: '2026-10-14T12:00:00.000Z', minutes: 2 },
+        { id: 'r2', name: 'Publicar en el changelog', status: 'completed', completedAt: '2026-10-14T12:30:00.000Z', minutes: 2 },
+      ],
+    },
+  ],
 };
 
 export const flujoADetalleFixtures: FlujoADetalleFixtures = {
@@ -289,7 +295,6 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
     title: 'Rediseño de Propuesta Comercial Q3',
     description:
       'Preparar el documento para el cliente corporativo. Prioridad al alcance técnico antes de afinar márgenes.',
-    paceLabel: 'Ritmo sereno',
   },
   stepsTitle: 'Secuencia de pasos',
   editStepLabel: 'Editar',
@@ -303,28 +308,29 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
   steps: [
     {
       variant: 'completed',
-      title: 'Abrir borrador y listar puntos de dolor',
+      name: 'Abrir borrador y listar puntos de dolor',
       meta: 'Completado · 2 min',
       durationMin: 2,
     },
     {
       variant: 'active',
-      title: 'Escribir las 3 viñetas de solución técnica',
+      name: 'Escribir las 3 viñetas de solución técnica',
       meta: 'En foco · 4 min',
       durationMin: 4,
       description: 'Solo concéntrate en la arquitectura y beneficios clave. Sin adjetivos de venta aún.',
       activeBadge: 'Foco actual',
-      activeCta: 'Ejecutar este paso ahora',
+      startCta: 'Comenzar',
+      completeCta: 'Hecho',
     },
     {
       variant: 'pending',
-      title: 'Estimar calendario de entregas',
+      name: 'Estimar calendario de entregas',
       meta: 'En espera · 3 min',
       durationMin: 3,
     },
     {
       variant: 'pending',
-      title: 'Lectura final rápida y exportar PDF',
+      name: 'Lectura final rápida y exportar PDF',
       meta: 'En espera · 2 min',
       durationMin: 2,
     },
@@ -332,32 +338,28 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
   management: [
     { key: 'editar', label: 'Editar tarea', icon: 'edit' },
     { key: 'reordenar', label: 'Reordenar', icon: 'swap_vert' },
-    // REQUIERE MIGRACIÓN: guardar una tarea como plantilla reutilizable no existe en el modelo.
-    { key: 'plantilla', label: 'Plantilla', icon: 'content_copy' },
   ],
   calm: {
-    title: 'Respiro consciente',
-    body: 'No necesitás completar todos los pasos hoy. Uno solo basta para vencer la resistencia.',
+    title: 'Un paso alcanza',
+    body: 'No hace falta terminar hoy. Con un paso ya avanzaste.',
   },
   actions: {
     primaryPrefix: 'Iniciar paso',
     primarySuffix: 'en foco',
-    secondary: 'Marcar tarea completa',
     startFocusLog: 'Start focus session',
   },
 };
 
 export const flujoACrearFixtures = {
   headerTitle: 'Crear tarea',
-  primary: 'Activar y empezar',
-  secondary: 'Guardar en cola',
+  primary: 'Guardar y empezar',
+  secondary: 'Guardar',
 };
 
 export const flujoAEditarFixtures = {
   headerTitle: 'Editar tarea',
-  primary: 'Guardar y entrar en foco',
-  // REQUIERE MIGRACIÓN: estado "borrador" — Task.status solo tiene active|completed.
-  secondary: 'Guardar como borrador',
+  primary: 'Guardar y empezar',
+  secondary: 'Guardar',
 };
 
 /* ------------------------------------------------------------------ */
@@ -369,7 +371,7 @@ export interface FlujoACompletadaFixtures {
   headline: string;
   subtitle: string;
   recapLabel: string;
-  taskTitle: string;
+  taskName: string;
   stepsCompleted: number;
   totalMinutes: number;
   microCopy: string;
@@ -385,9 +387,9 @@ export interface FlujoACompletadaFixtures {
 export const flujoACompletadaFixtures: FlujoACompletadaFixtures = {
   headerTitle: 'Tarea completada',
   headline: 'Tarea completada',
-  subtitle: 'Sin prisa. Un paso a la vez.',
+  subtitle: 'Completaste todos los pasos de esta tarea.',
   recapLabel: 'Resumen',
-  taskTitle: 'Rediseño de Propuesta Comercial Q3',
+  taskName: 'Rediseño de Propuesta Comercial Q3',
   stepsCompleted: 4,
   totalMinutes: 11,
   microCopy: 'Lo de hoy ya suma. Mañana seguimos.',

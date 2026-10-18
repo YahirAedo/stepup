@@ -19,7 +19,7 @@ import {
 
 export interface EnfoqueQueueItem {
   id: string;
-  title: string;
+  name: string;
   minutes: number;
 }
 
@@ -67,7 +67,7 @@ export default function EnfoqueQueue({
   });
 
   // La línea del header muestra el siguiente paso; `subtitle` es respaldo vacío.
-  const nextLine = items.length > 0 ? `Siguiente: ${items[0].title}` : subtitle ?? '';
+  const nextLine = items.length > 0 ? `Siguiente: ${items[0].name}` : subtitle ?? '';
 
   return (
     <View>
@@ -201,7 +201,7 @@ export default function EnfoqueQueue({
                   { flex: 1, minWidth: 0, color: sereneColors['on-surface'] },
                 ]}
               >
-                {item.title}
+                {item.name}
               </RNText>
 
               <RNText
@@ -217,7 +217,7 @@ export default function EnfoqueQueue({
                 <Pressable
                   onPress={() => onPromote(item.id)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Promover ${item.title}`}
+                  accessibilityLabel={`Promover ${item.name}`}
                   hitSlop={s(8)}
                   style={({ pressed }) => ({
                     width: s(28),

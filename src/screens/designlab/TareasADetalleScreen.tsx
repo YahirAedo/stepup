@@ -62,7 +62,7 @@ export default function TareasADetalleScreen() {
       ...prev,
       {
         variant: 'pending',
-        title: stepTitle,
+        name: stepTitle,
         meta: `En espera · ${flujoADetalleFixtures.addStepInline.suggestedMinutes} min`,
         durationMin: flujoADetalleFixtures.addStepInline.suggestedMinutes,
       },
@@ -74,6 +74,51 @@ export default function TareasADetalleScreen() {
     setSteps((prev) => prev.filter((_, index) => index !== editingIdx));
     setEditingIdx(null);
   }, [editingIdx]);
+
+  /**
+   * Marca el paso en foco como hecho y activa el siguiente. Si era el último
+   * pendiente, la tarea queda completa y se muestra el aviso de tarea completada.
+   */
+  const handleCompleteActive = useCallback(() => {
+    const activeIndex = steps.findIndex((step) => step.variant === 'active');
+    if (activeIndex < 0) return;
+    const activeStep = steps[activeIndex];
+    const nextIndex = steps.findIndex(
+      (step, index) => index > activeIndex && step.variant === 'pending'
+    );
+    setSteps((prev) =>
+      prev.map((step, index) => {
+        if (index === activeIndex) {
+          return {
+            ...step,
+            variant: 'completed' as const,
+            meta: `Completado · ${step.durationMin} min`,
+            description: undefined,
+            activeBadge: undefined,
+            startCta: undefined,
+            completeCta: undefined,
+          };
+        }
+        if (index === nextIndex) {
+          return {
+            ...step,
+            variant: 'active' as const,
+            description: activeStep.description,
+            activeBadge: activeStep.activeBadge,
+            startCta: activeStep.startCta,
+            completeCta: activeStep.completeCta,
+          };
+        }
+        return step;
+      })
+    );
+    if (nextIndex < 0) navigation.navigate('TareasACompletada');
+  }, [steps, navigation]);
+
+  /** Arranca el foco del paso en foco (REQUIERE MIGRACIÓN: sesión de foco no existe). */
+  const handleStartFocus = useCallback(() => {
+    console.log('[DesignLab]', f.actions.startFocusLog);
+  }, [f.actions.startFocusLog]);
 
   const editingStep = editingIdx !== null ? steps[editingIdx] : null;
 
@@ -152,7 +197,6 @@ export default function TareasADetalleScreen() {
             percentLabel={percentLabel}
             remainingLabel={remainingLabel}
             doneLabel={doneLabel}
-            paceLabel={f.summary.paceLabel}
             statuses={statuses}
           />
         </View>
@@ -213,25 +257,27 @@ export default function TareasADetalleScreen() {
 
           <View style={{ gap: s(10) }}>
             {steps.map((step, index) => (
-              <View key={`${index}-${step.title}`} style={{ gap: sereneSpacing['space-xs'] }}>
+              <View key={`${index}-${step.name}`} style={{ gap: sereneSpacing['space-xs'] }}>
                 <StepSequenceItem
                   variant={step.variant}
                   index={index + 1}
-                  title={step.title}
+                  title={step.name}
                   meta={step.meta}
                   minutes={step.variant === 'active' ? step.durationMin : undefined}
                   description={step.description}
                   activeBadge={step.activeBadge}
-                  activeCta={step.activeCta}
-                  onExecute={() => console.log('[DesignLab] Execute step:', step.title)}
-                  onReorder={() => console.log('[DesignLab] Reorder step:', step.title)}
-                  onPress={() => console.log('[DesignLab] Open step:', step.title)}
+                  startCta={step.startCta}
+                  completeCta={step.completeCta}
+                  onStart={step.variant === 'active' ? handleStartFocus : undefined}
+                  onComplete={step.variant === 'active' ? handleCompleteActive : undefined}
+                  onReorder={() => console.log('[DesignLab] Reorder step:', step.name)}
+                  onPress={() => console.log('[DesignLab] Open step:', step.name)}
                 />
 
                 <Pressable
                   onPress={() => setEditingIdx(index)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${f.editStepLabel} paso ${index + 1}: ${step.title}`}
+                  accessibilityLabel={`${f.editStepLabel} paso ${index + 1}: ${step.name}`}
                   style={({ pressed }) => ({
                     alignSelf: 'flex-end',
                     flexDirection: 'row',
@@ -368,26 +414,6 @@ export default function TareasADetalleScreen() {
             {`${f.actions.primaryPrefix} ${currentIndex} ${f.actions.primarySuffix}`}
           </RNText>
         </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={f.actions.secondary}
-          onPress={() => navigation.navigate('TareasACompletada')}
-          style={({ pressed }) => ({
-            minHeight: s(44),
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: sereneSpacing['space-sm'],
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: pressed ? sereneColors['surface-container-high'] : 'transparent',
-          })}
-        >
-          <RNText
-            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-          >
-            {f.actions.secondary}
-          </RNText>
-        </Pressable>
       </View>
 
       <EditarPasoSheet
@@ -396,7 +422,7 @@ export default function TareasADetalleScreen() {
         onSave={() => setEditingIdx(null)}
         onDelete={handleDeleteStep}
         taskTitle={f.summary.title}
-        initialTitle={editingStep?.title ?? ''}
+        initialTitle={editingStep?.name ?? ''}
         initialDuration={editingStep?.durationMin ?? flujoADetalleFixtures.addStepInline.suggestedMinutes}
         position={(editingIdx ?? 0) + 1}
         total={total}

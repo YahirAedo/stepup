@@ -29,6 +29,15 @@ export interface StepSequenceItemProps {
   /** CTA del paso activo, ej. "Ejecutar este paso ahora" (solo `active`). */
   activeCta?: string;
   onExecute?: () => void;
+  /**
+   * Etiqueta del botón "Comenzar" (solo `active`). Cuando se define junto con
+   * `completeCta`, el paso en foco muestra DOS botones en fila en lugar de `activeCta`.
+   */
+  startCta?: string;
+  /** Etiqueta del botón "Hecho" (solo `active`). */
+  completeCta?: string;
+  onStart?: () => void;
+  onComplete?: () => void;
   onReorder?: () => void;
   onPress?: () => void;
 }
@@ -38,7 +47,8 @@ export interface StepSequenceItemProps {
  *
  * - `completed`: paso hecho, atenuado (`opacity-75`), titulo tachado, check.
  * - `active`: paso en foco, tarjeta destacada con barra lateral, badge
- *   "Foco actual", duracion y CTA "Ejecutar este paso ahora".
+ *   "Foco actual", duracion y acciones. Con `startCta`/`completeCta` muestra dos
+ *   botones en fila ("Comenzar" + "Hecho"); si no, cae al CTA unico `activeCta`.
  * - `pending`: paso en espera, circulo numerado y handle de reordenar.
  */
 export default function StepSequenceItem({
@@ -51,6 +61,10 @@ export default function StepSequenceItem({
   activeBadge = 'Foco actual',
   activeCta,
   onExecute,
+  startCta,
+  completeCta,
+  onStart,
+  onComplete,
   onReorder,
   onPress,
 }: StepSequenceItemProps) {
@@ -137,7 +151,68 @@ export default function StepSequenceItem({
           )}
         </View>
 
-        {activeCta !== undefined && (
+        {completeCta !== undefined ? (
+          <View
+            style={{
+              paddingTop: s(4),
+              paddingLeft: s(4),
+              flexDirection: 'row',
+              gap: s(8),
+            }}
+          >
+            {startCta !== undefined && (
+              <Pressable
+                onPress={onStart}
+                accessibilityRole="button"
+                accessibilityLabel={startCta}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  height: s(44),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: s(6),
+                  borderRadius: sereneBorderRadius.lg,
+                  backgroundColor: sereneColors['primary-container'],
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <MaterialCommunityIcons name={mci('play_arrow')} size={s(18)} color={sereneColors['on-primary']} />
+                <RNText
+                  style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}
+                >
+                  {startCta}
+                </RNText>
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={onComplete}
+              accessibilityRole="button"
+              accessibilityLabel={completeCta}
+              style={({ pressed }) => ({
+                flex: 1,
+                height: s(44),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: s(6),
+                borderRadius: sereneBorderRadius.lg,
+                backgroundColor: sereneColors['surface-container-lowest'],
+                borderWidth: 1,
+                borderColor: sereneColors.primary,
+                opacity: pressed ? 0.85 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name={mci('done')} size={s(18)} color={sereneColors.primary} />
+              <RNText
+                style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors.primary }]}
+              >
+                {completeCta}
+              </RNText>
+            </Pressable>
+          </View>
+        ) : activeCta !== undefined ? (
           <View style={{ paddingTop: s(4), paddingLeft: s(4) }}>
             <Pressable
               onPress={onExecute}
@@ -163,7 +238,7 @@ export default function StepSequenceItem({
               </RNText>
             </Pressable>
           </View>
-        )}
+        ) : null}
       </View>
     );
   }

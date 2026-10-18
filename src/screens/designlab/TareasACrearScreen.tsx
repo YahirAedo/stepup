@@ -65,7 +65,7 @@ export default function TareasACrearScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={f.primary}
-          onPress={() => navigation.navigate('TareasADetalle')}
+          onPress={() => navigation.navigate('EnfoqueFocus')}
           style={({ pressed }) => ({
             minHeight: s(48),
             flexDirection: 'row',

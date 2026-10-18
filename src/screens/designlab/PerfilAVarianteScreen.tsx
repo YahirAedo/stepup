@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { View, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBottomLayout } from '../../theme/layout';
 import DesignLabHeader from '../../components/designlab/DesignLabHeader';
 import PerfilStateDemoControl from '../../components/designlab/perfil/PerfilStateDemoControl';
@@ -13,8 +15,10 @@ import PerfilDataSyncBlock from '../../components/designlab/perfil/PerfilDataSyn
 import PerfilPrivacySheet from '../../components/designlab/perfil/PerfilPrivacySheet';
 import PerfilLogoutSheet from '../../components/designlab/perfil/PerfilLogoutSheet';
 import { perfilCopy } from './perfilFixtures';
+import { logrosResumen } from './logrosAFixtures';
 import { usePerfilPreview } from './usePerfilPreview';
 import { sereneColors, sereneSpacing } from '../../theme/serene';
+import type { ProfileStackParamList } from '../../types/navigation';
 
 /**
  * Variante A — "Tarjetas por sección".
@@ -24,6 +28,7 @@ import { sereneColors, sereneSpacing } from '../../theme/serene';
  * CTA primario ("Sincronizar ahora"; en invitado, "Crear cuenta").
  */
 export default function PerfilAVarianteScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList, 'PerfilA'>>();
   const { insets } = useBottomLayout();
   const p = usePerfilPreview();
   const { identity, metrics, achievements, sync, reminder, account } = perfilCopy;
@@ -64,11 +69,11 @@ export default function PerfilAVarianteScreen() {
             icon="trophy-outline"
             title={achievements.title}
             subtitle={achievements.caption}
-            value={achievements.value}
+            value={`${logrosResumen.obtenidos} de ${logrosResumen.total}`}
             accessory="chevron"
             showDivider={false}
             horizontalInset={false}
-            onPress={() => console.log('[DesignLab] Perfil — logros')}
+            onPress={() => navigation.navigate('LogrosA')}
           />
         </PerfilCard>
 
@@ -77,7 +82,7 @@ export default function PerfilAVarianteScreen() {
             view={p.view}
             copy={sync}
             onSync={p.onSync}
-            onPressConflicts={p.onPressConflicts}
+            onPressConflicts={() => navigation.navigate('ConflictosA')}
           />
         </PerfilCard>
 

@@ -90,7 +90,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
   }, [applyAiStatus]);
 
   const updateStepTitle = useCallback((id: string, nextTitle: string) => {
-    setSteps((prev) => prev.map((step) => (step.id === id ? { ...step, title: nextTitle } : step)));
+    setSteps((prev) => prev.map((step) => (step.id === id ? { ...step, name: nextTitle } : step)));
   }, []);
 
   const removeStep = useCallback((id: string) => {
@@ -104,7 +104,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
         ...prev,
         {
           id: `manual-${stepSeq.current}`,
-          title: stepTitle,
+          name: stepTitle,
           minutes: flujoAFormFixtures.addInline.suggestedMinutes,
         },
       ]);
@@ -283,10 +283,10 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
                 }}
               >
                 <TextInput
-                  value={step.title}
+                  value={step.name}
                   onChangeText={(next) => updateStepTitle(step.id, next)}
                   maxLength={80}
-                  accessibilityLabel={`Título del paso ${step.title}`}
+                  accessibilityLabel={`Título del paso ${step.name}`}
                   style={[
                     sereneTypography['body-md'] as TextStyle,
                     { flex: 1, minWidth: 0, color: sereneColors['on-surface'], padding: 0 },
@@ -301,7 +301,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
                   onPress={() => removeStep(step.id)}
                   hitSlop={s(8)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Quitar paso ${step.title}`}
+                  accessibilityLabel={`Quitar paso ${step.name}`}
                   style={({ pressed }) => ({
                     width: s(32),
                     height: s(32),

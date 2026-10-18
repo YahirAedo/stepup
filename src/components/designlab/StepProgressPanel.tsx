@@ -20,8 +20,8 @@ export interface StepProgressPanelProps {
   remainingLabel: string;
   /** "2 de 4 pasos listos" */
   doneLabel: string;
-  /** "Ritmo sereno" */
-  paceLabel: string;
+  /** Etiqueta de ritmo; opcional. Si no viene, no se muestra. */
+  paceLabel?: string;
   /** Estado de cada segmento; la longitud define cuantos segmentos se pintan. */
   statuses: StepSegmentStatus[];
 }
@@ -126,14 +126,16 @@ export default function StepProgressPanel({
         >
           {doneLabel}
         </RNText>
-        <RNText
-          style={[
-            sereneTypography['label-sm'] as TextStyle,
-            { color: sereneColors.primary, fontWeight: '500' },
-          ]}
-        >
-          {paceLabel}
-        </RNText>
+        {paceLabel ? (
+          <RNText
+            style={[
+              sereneTypography['label-sm'] as TextStyle,
+              { color: sereneColors.primary, fontWeight: '500' },
+            ]}
+          >
+            {paceLabel}
+          </RNText>
+        ) : null}
       </View>
     </View>
   );

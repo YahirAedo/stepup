@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text as RNText,
@@ -24,7 +24,7 @@ export interface TaskSwitcherTask {
   minutes: number;
   stepIndex: number;
   totalSteps: number;
-  stepTitle: string;
+  stepName: string;
   description?: string;
 }
 

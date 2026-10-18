@@ -28,9 +28,9 @@ export interface StepCompleteViewProps {
   /** Etiqueta del resumen de logro, ej. "Logro registrado". */
   recapLabel: string;
   /** Titulo del paso que se acaba de completar. */
-  completedStepTitle: string;
+  completedStepName: string;
   /** Siguiente micro-paso sugerido. */
-  nextStep: { label: string; title: string; description: string; minutes: number };
+  nextStep: { label: string; name: string; description: string; minutes: number };
   /** CTA de descanso, ej. "Descansar 2 min". */
   breakCta: string;
   /** CTA principal, ej. "CONTINUAR CON EL SIGUIENTE PASO". */
@@ -59,7 +59,7 @@ export default function StepCompleteView({
   durationLabel,
   subtitleTemplate,
   recapLabel,
-  completedStepTitle,
+  completedStepName,
   nextStep,
   breakCta,
   primaryCta,
@@ -233,7 +233,7 @@ export default function StepCompleteView({
                 { color: sereneColors['on-surface'], fontWeight: '600', marginTop: s(2) },
               ]}
             >
-              {completedStepTitle}
+              {completedStepName}
             </RNText>
           </View>
         </View>
@@ -321,7 +321,7 @@ export default function StepCompleteView({
                   { color: sereneColors['on-surface'], fontWeight: '600' },
                 ]}
               >
-                {nextStep.title}
+                {nextStep.name}
               </RNText>
               <RNText
                 style={[

@@ -1,6 +1,6 @@
 // ⚠️ DESIGN: preview para evaluar en Design Lab; no es la pantalla final.
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, ScrollView, Text as RNText, Pressable, type TextStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -9,9 +9,7 @@ import { useBottomLayout } from '../../theme/layout';
 import DesignLabHeader from '../../components/designlab/DesignLabHeader';
 import FilterPills, { type FilterPillOption } from '../../components/designlab/FilterPills';
 import FeaturedTaskCard from '../../components/designlab/FeaturedTaskCard';
-import QueueTaskRow from '../../components/designlab/QueueTaskRow';
-import AntiOverwhelmCard from '../../components/designlab/AntiOverwhelmCard';
-import ImageBanner from '../../components/designlab/ImageBanner';
+import QueueTaskRow, { type QueueTaskItem } from '../../components/designlab/QueueTaskRow';
 import { mci } from '../../components/designlab/mciIconMap';
 import {
   sereneColors,
@@ -22,32 +20,102 @@ import {
   useResponsive,
 } from '../../theme/serene';
 import type { ProfileStackParamList } from '../../types/navigation';
-import { flujoAListadoFixtures, type FlujoAFilterKey } from './tareasFlujoAFixtures';
+import { deriveTaskCategory, pickFocusTask, type TaskCategory } from '../../utils/designlab/deriveTaskCategory';
+import { flujoAListadoFixtures, type FlujoACategoryKey } from './tareasFlujoAFixtures';
+
+const CATEGORY_ORDER: FlujoACategoryKey[] = ['inProgress', 'notStarted', 'completed'];
 
 /**
  * Variante A "Enfoque" — Tareas / Listado.
  *
- * Calma y jerarquía vertical: un título protagonista, el resumen del día en una
- * sola línea, la tarea en foco como única superficie primaria y la cola de
- * espera atenuada. Un solo CTA principal ("Reanudar foco inmediato").
+ * La categoría de cada tarea (En curso / Por empezar / Completadas) y la tarea
+ * "En foco" se DERIVAN de los pasos (sin estado guardado). Los filtros filtran
+ * de verdad la cola. Un solo CTA principal: "Reanudar foco".
  */
 export default function TareasAListadoScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList, 'TareasAListado'>>();
   const { contentPaddingBottom } = useBottomLayout();
   const { scale: s } = useResponsive();
-  const [activeFilter, setActiveFilter] = useState<FlujoAFilterKey>('activas');
+  const [activeFilter, setActiveFilter] = useState<FlujoACategoryKey>('inProgress');
 
   const f = flujoAListadoFixtures;
+  const { tasks, copy } = f;
 
-  const filterOptions: FilterPillOption<FlujoAFilterKey>[] = f.filters.map((filter) => ({
-    key: filter.key,
-    label: filter.label,
-    count: filter.count,
+  const categories = useMemo<TaskCategory[]>(
+    () => tasks.map((task) => deriveTaskCategory(task.steps)),
+    [tasks],
+  );
+
+  const counts = useMemo(() => {
+    const base: Record<FlujoACategoryKey, number> = { inProgress: 0, notStarted: 0, completed: 0 };
+    categories.forEach((category) => {
+      base[category] += 1;
+    });
+    return base;
+  }, [categories]);
+
+  const focusIndex = useMemo(() => pickFocusTask(tasks), [tasks]);
+
+  const completedSteps = useMemo(
+    () =>
+      tasks.reduce(
+        (acc, task) => acc + task.steps.filter((step) => step.status === 'completed').length,
+        0,
+      ),
+    [tasks],
+  );
+
+  const filterOptions: FilterPillOption<FlujoACategoryKey>[] = CATEGORY_ORDER.map((key) => ({
+    key,
+    label: copy.categoryLabels[key],
+    count: counts[key],
   }));
 
-  const handleFilterChange = useCallback((key: FlujoAFilterKey) => {
+  const handleFilterChange = useCallback((key: FlujoACategoryKey) => {
     setActiveFilter(key);
   }, []);
+
+  const focus = useMemo(() => {
+    if (focusIndex === null) return null;
+    const task = tasks[focusIndex];
+    const total = task.steps.length;
+    if (total === 0) return null;
+    const completed = task.steps.filter((step) => step.status === 'completed').length;
+    const found = task.steps.findIndex((step) => step.status === 'pending');
+    const currentIndex = found < 0 ? total - 1 : found;
+    const currentStep = task.steps[currentIndex];
+    return {
+      badge: copy.focusBadge,
+      minutesLabel: `~${currentStep.minutes} ${copy.focusMinutesSuffix}`,
+      title: task.name,
+      stepLabel: `${copy.stepWord} ${currentIndex + 1}/${total}`,
+      stepTitle: currentStep.name,
+      sessionLabel: copy.sessionLabel,
+      sessionPercent: completed / total,
+      primaryCta: copy.focusCta,
+      steps: task.steps.map((step, index) => ({
+        done: step.status === 'completed',
+        current: index === currentIndex,
+        title: step.name,
+      })),
+    };
+  }, [focusIndex, tasks, copy]);
+
+  const queueItems: QueueTaskItem[] = useMemo(
+    () =>
+      tasks
+        .map((task, index) => ({ task, index }))
+        .filter(({ index }) => index !== focusIndex && categories[index] === activeFilter)
+        .map(({ task, index }) => ({
+          id: task.id,
+          name: task.name,
+          stepCount: task.steps.length,
+          totalMinutes: task.steps.reduce((acc, step) => acc + step.minutes, 0),
+          status: 'ready' as const,
+          statusLabel: copy.categoryLabels[categories[index]],
+        })),
+    [tasks, categories, focusIndex, activeFilter, copy],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
@@ -75,28 +143,32 @@ export default function TareasAListadoScreen() {
               { color: sereneColors['on-surface-variant'], flexShrink: 1 },
             ]}
           >
-            <RNText style={{ fontWeight: '600', color: sereneColors['on-surface'] }}>Hoy: </RNText>
-            {`${f.summary.todayCompleted} pasos completados · ${f.summary.focusActive} en foco · ${f.summary.queueCount} en cola`}
+            <RNText style={{ fontWeight: '600', color: sereneColors['on-surface'] }}>
+              {f.summaryLabel}{' '}
+            </RNText>
+            {`${completedSteps} pasos completados · ${counts.inProgress} ${copy.categoryLabels.inProgress.toLowerCase()} · ${counts.notStarted} ${copy.categoryLabels.notStarted.toLowerCase()}`}
           </RNText>
 
           <FilterPills options={filterOptions} activeKey={activeFilter} onChange={handleFilterChange} />
         </View>
 
         {/* Tarea en foco (única superficie primaria) */}
-        <FeaturedTaskCard
-          badge={f.featured.badge}
-          minutesLabel={f.featured.minutesLabel}
-          title={f.featured.title}
-          stepLabel={f.featured.stepLabel}
-          stepTitle={f.featured.stepTitle}
-          sessionLabel={f.featured.sessionLabel}
-          sessionPercent={f.featured.sessionPercent}
-          primaryCta={f.featured.primaryCta}
-          toggleOpen={f.featured.toggleOpen}
-          toggleClose={f.featured.toggleClose}
-          steps={f.featured.steps}
-          onResume={() => navigation.navigate('TareasADetalle')}
-        />
+        {focus && (
+          <FeaturedTaskCard
+            badge={focus.badge}
+            minutesLabel={focus.minutesLabel}
+            title={focus.title}
+            stepLabel={focus.stepLabel}
+            stepTitle={focus.stepTitle}
+            sessionLabel={focus.sessionLabel}
+            sessionPercent={focus.sessionPercent}
+            primaryCta={focus.primaryCta}
+            toggleOpen={copy.toggleOpen}
+            toggleClose={copy.toggleClose}
+            steps={focus.steps}
+            onResume={() => navigation.navigate('TareasADetalle')}
+          />
+        )}
 
         {/* Quick-create */}
         <Pressable
@@ -160,7 +232,7 @@ export default function TareasAListadoScreen() {
           </View>
         </Pressable>
 
-        {/* Cola de espera */}
+        {/* Cola (filtrada por la categoría activa) */}
         <View style={{ gap: sereneSpacing['space-sm'] }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: sereneSpacing['space-sm'] }}>
             <RNText
@@ -184,27 +256,38 @@ export default function TareasAListadoScreen() {
           </View>
 
           <View style={{ gap: sereneSpacing['space-sm'] + 2 }}>
-            {f.queue.items.map((item) => (
-              <QueueTaskRow
-                key={item.id}
-                item={item}
-                onToggleComplete={() => console.log('[DesignLab] Complete queued task:', item.id)}
-                onPress={() => navigation.navigate('TareasADetalle')}
-              />
-            ))}
+            {queueItems.length === 0 ? (
+              <RNText
+                style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+              >
+                {f.queue.empty}
+              </RNText>
+            ) : (
+              queueItems.map((item) => (
+                <QueueTaskRow
+                  key={item.id}
+                  item={item}
+                  onPress={() => navigation.navigate('TareasADetalle')}
+                />
+              ))
+            )}
           </View>
         </View>
 
-        {/* Card anti-abrumamiento */}
-        <AntiOverwhelmCard
-          title={f.antiOverwhelm.title}
-          body={f.antiOverwhelm.body}
-          cta={f.antiOverwhelm.cta}
-          onActivate={() => console.log('[DesignLab] Activate tunnel mode')}
-        />
-
-        {/* Imagen serena */}
-        <ImageBanner imageUrl={f.banner.imageUrl} caption={f.banner.caption} />
+        {/* Cierre al pie (reemplaza la foto decorativa) */}
+        <RNText
+          style={[
+            sereneTypography['body-sm'] as TextStyle,
+            {
+              color: sereneColors['on-surface-variant'],
+              textAlign: 'center',
+              paddingTop: s(4),
+              opacity: 0.9,
+            },
+          ]}
+        >
+          {f.footerNote}
+        </RNText>
       </ScrollView>
     </View>
   );

@@ -163,7 +163,7 @@ export default function TareasACompletadaScreen() {
                 { color: sereneColors['on-surface'], fontWeight: '600', marginTop: s(2) },
               ]}
             >
-              {f.taskTitle}
+              {f.taskName}
             </RNText>
             <RNText
               style={[

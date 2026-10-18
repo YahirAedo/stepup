@@ -6,7 +6,7 @@ import { completadoFixtures } from './focusFixtures';
  * Pantalla del mockup `Focus - Paso completado v2` — WRAPPER.
  *
  * Preview aislada de la vista de "paso completado". Comparte `StepCompleteView`
- * con la fase 'completado' de `FocusPrevioScreen`. NO escribe en SQLite.
+ * con la fase 'completado' de `EnfoqueFocusScreen`. NO escribe en SQLite.
  */
 export default function FocusCompletadoScreen() {
   return (
@@ -15,7 +15,7 @@ export default function FocusCompletadoScreen() {
       durationLabel={completadoFixtures.durationLabel}
       subtitleTemplate={completadoFixtures.subtitleTemplate}
       recapLabel={completadoFixtures.recapLabel}
-      completedStepTitle={completadoFixtures.completedStepTitle}
+      completedStepName={completadoFixtures.completedStepName}
       nextStep={completadoFixtures.nextStep}
       breakCta={completadoFixtures.breakCta}
       primaryCta={completadoFixtures.primaryCta}

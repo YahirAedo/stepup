@@ -65,7 +65,7 @@ export default function TareasAEditarScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={f.primary}
-          onPress={() => navigation.navigate('TareasADetalle')}
+          onPress={() => navigation.navigate('EnfoqueFocus')}
           style={({ pressed }) => ({
             minHeight: s(48),
             flexDirection: 'row',
@@ -85,7 +85,6 @@ export default function TareasAEditarScreen() {
           </RNText>
         </Pressable>
 
-        {/* REQUIERE MIGRACIÓN: estado borrador — Task.status solo tiene active|completed. */}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={f.secondary}

@@ -8,7 +8,7 @@ import { corriendoFixtures } from './focusFixtures';
  * - Header custom, tab bar oculta (gestionada desde ProfileStack).
  * - Timer local, datos mock. `MARCAR PASO HECHO` SOLO muestra toast y cambia
  *   el boton a COMPLETADO; NO escribe en SQLite.
- * - Comparte la vista corriendo con `FocusPrevioScreen` vía `FocusRunningView`.
+ * - Comparte la vista corriendo con `EnfoqueFocusScreen` vía `FocusRunningView`.
  */
 export default function CronometroLimpioScreen() {
   return (
