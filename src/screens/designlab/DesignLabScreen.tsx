@@ -52,7 +52,7 @@ const MOCKUPS: MockupEntry[] = [
   {
     key: 'focus-completado',
     title: 'Focus — Paso completado',
-    description: 'Cierre: celebración, logro registrado, siguiente paso, acciones y pausa consciente',
+    description: 'Cierre: logro registrado, siguiente paso y acciones de salida',
     icon: 'check-circle-outline',
     target: 'FocusCompletado',
   },
@@ -92,7 +92,7 @@ const EMPTY_STATES: MockupEntry[] = [
   {
     key: 'focus-sin-tareas',
     title: 'Focus — Sin tareas',
-    description: 'Estado vacío: sin tareas, guía de respiración y resumen del día',
+    description: 'Estado vacío: sin tareas activas y resumen del día',
     icon: 'meditation',
     target: 'FocusSinTareas',
   },
@@ -114,14 +114,14 @@ const TAREAS_FLUJO_A: MockupEntry[] = [
   {
     key: 'tareas-a-crear',
     title: 'A — Crear',
-    description: 'Alta con IA primero: banner anti-fricción, título con contador y pasos sugeridos',
+    description: 'Alta con IA primero: banner de arranque, título con contador y pasos sugeridos',
     icon: 'playlist-plus',
     target: 'TareasACrear',
   },
   {
     key: 'tareas-a-detalle',
     title: 'A — Detalle',
-    description: 'Secuencia de pasos con paso activo, gestión y respiro consciente',
+    description: 'Secuencia de pasos con paso activo y gestión de la tarea',
     icon: 'format-list-bulleted',
     target: 'TareasADetalle',
   },
@@ -135,7 +135,7 @@ const TAREAS_FLUJO_A: MockupEntry[] = [
   {
     key: 'tareas-a-completada',
     title: 'A — Tarea completada',
-    description: 'Aviso calmo de cierre: hero botánico, resumen sereno y volver al listado',
+    description: 'Aviso de cierre: hero botánico, resumen del logro y volver al listado',
     icon: 'check-circle-outline',
     target: 'TareasACompletada',
   },
@@ -148,7 +148,7 @@ const TAREAS_COMPARTIDO: MockupEntry[] = [
   {
     key: 'tareas-editar-paso-sheet',
     title: 'Editar paso (bottom sheet)',
-    description: 'Propuesta única compartida: duración con chips, fricción calibrada y nota opcional',
+    description: 'Propuesta única compartida: duración con chips y nota opcional',
     icon: 'swap-vertical',
     target: 'TareasEditarPasoSheet',
   },

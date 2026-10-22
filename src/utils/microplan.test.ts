@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  canPostponeStep,
   clampStepPosition,
   clockLabel,
   completedStepCount,
@@ -9,6 +10,7 @@ import {
   frictionLevelFor,
   isLongTitle,
   nextStepPosition,
+  postponePendingStep,
   remainingMinutes,
   stepCountLabel,
   stepPositionLabel,
@@ -168,5 +170,63 @@ describe('isLongTitle', () => {
 
   it('respeta el umbral por parametro', () => {
     expect(isLongTitle('abc', 2)).toBe(true);
+  });
+});
+
+describe('canPostponeStep', () => {
+  const steps = [
+    { variant: 'completed' as const },
+    { variant: 'active' as const },
+    { variant: 'pending' as const },
+    { variant: 'pending' as const },
+  ];
+
+  it('true en un pendiente con otro pendiente', () => {
+    expect(canPostponeStep(steps, 2)).toBe(true);
+  });
+
+  it('false en completado o en foco', () => {
+    expect(canPostponeStep(steps, 0)).toBe(false);
+    expect(canPostponeStep(steps, 1)).toBe(false);
+  });
+
+  it('false si es el unico pendiente', () => {
+    const only = [{ variant: 'active' as const }, { variant: 'pending' as const }];
+    expect(canPostponeStep(only, 1)).toBe(false);
+  });
+
+  it('false fuera de rango', () => {
+    expect(canPostponeStep(steps, 9)).toBe(false);
+  });
+});
+
+describe('postponePendingStep', () => {
+  it('mueve el pendiente al final de los pendientes', () => {
+    const steps = [
+      { id: 'a', variant: 'completed' as const },
+      { id: 'b', variant: 'active' as const },
+      { id: 'c', variant: 'pending' as const },
+      { id: 'd', variant: 'pending' as const },
+      { id: 'e', variant: 'pending' as const },
+    ];
+    expect(postponePendingStep(steps, 2).map((step) => step.id)).toEqual(['a', 'b', 'd', 'e', 'c']);
+  });
+
+  it('no cambia nada si no se puede posponer', () => {
+    const steps = [
+      { id: 'a', variant: 'active' as const },
+      { id: 'b', variant: 'pending' as const },
+    ];
+    const result = postponePendingStep(steps, 1);
+    expect(result.map((step) => step.id)).toEqual(['a', 'b']);
+  });
+
+  it('no muta la lista original', () => {
+    const steps = [
+      { id: 'a', variant: 'pending' as const },
+      { id: 'b', variant: 'pending' as const },
+    ];
+    postponePendingStep(steps, 0);
+    expect(steps.map((step) => step.id)).toEqual(['a', 'b']);
   });
 });

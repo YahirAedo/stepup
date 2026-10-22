@@ -21,6 +21,7 @@ import {
 } from '../../theme/serene';
 import type { ProfileStackParamList } from '../../types/navigation';
 import { deriveTaskCategory, pickFocusTask, type TaskCategory } from '../../utils/designlab/deriveTaskCategory';
+import { formatDueDate } from '../../utils/designlab/dueDate';
 import { flujoAListadoFixtures, type FlujoACategoryKey } from './tareasFlujoAFixtures';
 
 const CATEGORY_ORDER: FlujoACategoryKey[] = ['inProgress', 'notStarted', 'completed'];
@@ -93,6 +94,7 @@ export default function TareasAListadoScreen() {
       sessionLabel: copy.sessionLabel,
       sessionPercent: completed / total,
       primaryCta: copy.focusCta,
+      dueLabel: task.dueDate ? formatDueDate(task.dueDate) : undefined,
       steps: task.steps.map((step, index) => ({
         done: step.status === 'completed',
         current: index === currentIndex,
@@ -113,13 +115,22 @@ export default function TareasAListadoScreen() {
           totalMinutes: task.steps.reduce((acc, step) => acc + step.minutes, 0),
           status: 'ready' as const,
           statusLabel: copy.categoryLabels[categories[index]],
+          dueLabel: task.dueDate ? formatDueDate(task.dueDate) : undefined,
         })),
     [tasks, categories, focusIndex, activeFilter, copy],
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
-      <DesignLabHeader title={f.headerTitle} showAvatar={false} />
+      <DesignLabHeader
+        title={f.headerTitle}
+        showAvatar={false}
+        rightAction={{
+          icon: mci('add'),
+          label: f.quickCreate.title,
+          onPress: () => navigation.navigate('TareasACrear'),
+        }}
+      />
 
       <ScrollView
         contentContainerStyle={{
@@ -152,8 +163,8 @@ export default function TareasAListadoScreen() {
           <FilterPills options={filterOptions} activeKey={activeFilter} onChange={handleFilterChange} />
         </View>
 
-        {/* Tarea en foco (única superficie primaria) */}
-        {focus && (
+        {/* Tarea en foco (única superficie primaria; solo en "En curso") */}
+        {focus && activeFilter === 'inProgress' && (
           <FeaturedTaskCard
             badge={focus.badge}
             minutesLabel={focus.minutesLabel}
@@ -166,6 +177,7 @@ export default function TareasAListadoScreen() {
             toggleOpen={copy.toggleOpen}
             toggleClose={copy.toggleClose}
             steps={focus.steps}
+            dueLabel={focus.dueLabel}
             onResume={() => navigation.navigate('TareasADetalle')}
           />
         )}
@@ -234,26 +246,19 @@ export default function TareasAListadoScreen() {
 
         {/* Cola (filtrada por la categoría activa) */}
         <View style={{ gap: sereneSpacing['space-sm'] }}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: sereneSpacing['space-sm'] }}>
+          <RNText
+            style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'], flexShrink: 1 }]}
+          >
+            {f.queue.title}{' '}
             <RNText
-              style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'], flexShrink: 1 }]}
+              style={[
+                sereneTypography['body-sm'] as TextStyle,
+                { color: sereneColors['on-surface-variant'], fontWeight: '400' },
+              ]}
             >
-              {f.queue.title}{' '}
-              <RNText
-                style={[
-                  sereneTypography['body-sm'] as TextStyle,
-                  { color: sereneColors['on-surface-variant'], fontWeight: '400' },
-                ]}
-              >
-                {f.queue.subtitle}
-              </RNText>
+              {f.queue.subtitle}
             </RNText>
-            <RNText
-              style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-            >
-              {f.queue.maxVisible}
-            </RNText>
-          </View>
+          </RNText>
 
           <View style={{ gap: sereneSpacing['space-sm'] + 2 }}>
             {queueItems.length === 0 ? (
@@ -267,12 +272,37 @@ export default function TareasAListadoScreen() {
                 <QueueTaskRow
                   key={item.id}
                   item={item}
+                  noStepsLabel={f.queue.noSteps}
                   onPress={() => navigation.navigate('TareasADetalle')}
                 />
               ))
             )}
           </View>
         </View>
+
+        {/* CTA secundario al pie: crear tarea */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={f.footerCta}
+          onPress={() => navigation.navigate('TareasACrear')}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: sereneSpacing['space-sm'],
+            minHeight: s(48),
+            borderRadius: sereneBorderRadius.xl,
+            borderWidth: 1,
+            borderColor: sereneColors.outline,
+            backgroundColor: sereneColors.surface,
+            opacity: pressed ? 0.9 : 1,
+          })}
+        >
+          <MaterialCommunityIcons name={mci('add')} size={s(20)} color={sereneColors.primary} />
+          <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}>
+            {f.footerCta}
+          </RNText>
+        </Pressable>
 
         {/* Cierre al pie (reemplaza la foto decorativa) */}
         <RNText

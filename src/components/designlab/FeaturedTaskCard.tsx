@@ -10,7 +10,7 @@ import {
   withAlpha,
   useResponsive,
 } from '../../theme/serene';
-import ProgressTrack from './ProgressTrack';
+import SegmentedProgressBar from './SegmentedProgressBar';
 import { mci } from './mciIconMap';
 
 export interface FeaturedStep {
@@ -31,6 +31,8 @@ export interface FeaturedTaskCardProps {
   toggleOpen: string;
   toggleClose: string;
   steps: FeaturedStep[];
+  /** Vencimiento (dato neutro), ya formateado. Opcional. */
+  dueLabel?: string;
   onResume?: () => void;
 }
 
@@ -38,9 +40,10 @@ export interface FeaturedTaskCardProps {
  * Tarjeta destacada de la tarea "en foco" (bloque D del Listado).
  *
  * Barra de acento izquierda, pill "En foco principal" con punto pulsante,
- * paso actual (con `subdirectory_arrow_right`), avance de sesion (ProgressTrack
- * simple) y CTA "Reanudar Foco Inmediato". El desglose de pasos es un acordeon
- * que replica el toggle del JS del mockup (`toggle-steps-btn`): ver/ocultar.
+ * paso actual (con `subdirectory_arrow_right`), avance de sesion con la barra
+ * segmentada compartida (`SegmentedProgressBar`, la misma del Detalle) y CTA
+ * "Reanudar Foco Inmediato". El desglose de pasos es un acordeon que replica el
+ * toggle del JS del mockup (`toggle-steps-btn`): ver/ocultar.
  */
 export default function FeaturedTaskCard({
   badge,
@@ -54,6 +57,7 @@ export default function FeaturedTaskCard({
   toggleOpen,
   toggleClose,
   steps,
+  dueLabel,
   onResume,
 }: FeaturedTaskCardProps) {
   const { scale: s } = useResponsive();
@@ -166,6 +170,25 @@ export default function FeaturedTaskCard({
               {stepLabel}: {stepTitle}
             </RNText>
           </View>
+
+          {/* Vencimiento (dato neutro) */}
+          {dueLabel !== undefined && dueLabel !== '' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(6) }}>
+              <MaterialCommunityIcons
+                name={mci('calendar_today')}
+                size={s(15)}
+                color={sereneColors['on-surface-variant']}
+              />
+              <RNText
+                style={[
+                  sereneTypography['label-sm'] as TextStyle,
+                  { color: sereneColors['on-surface-variant'] },
+                ]}
+              >
+                {dueLabel}
+              </RNText>
+            </View>
+          )}
         </View>
 
         {/* Avance de sesion */}
@@ -191,11 +214,8 @@ export default function FeaturedTaskCard({
               {Math.round(sessionPercent * 100)}%
             </RNText>
           </View>
-          <ProgressTrack
-            progress={sessionPercent}
-            height={s(8)}
-            fillColor={sereneColors['primary-container']}
-            trackColor={sereneColors['surface-container']}
+          <SegmentedProgressBar
+            statuses={steps.map((step) => (step.done ? 'done' : step.current ? 'current' : 'pending'))}
           />
         </View>
 

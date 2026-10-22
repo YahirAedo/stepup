@@ -33,6 +33,8 @@ export interface FlujoAStep {
 export interface FlujoATask {
   id: string;
   name: string;
+  /** Vencimiento (dato neutro), ISO corto `YYYY-MM-DD`. Opcional. */
+  dueDate?: string;
   steps: FlujoAStep[];
 }
 
@@ -64,9 +66,12 @@ export interface FlujoAListadoFixtures {
   queue: {
     title: string;
     subtitle: string;
-    maxVisible: string;
     empty: string;
+    /** Aviso para tareas sin pasos (reemplaza "0 pasos"). */
+    noSteps: string;
   };
+  /** Botón "crear tarea" (al pie del listado). */
+  footerCta: string;
   /** Frase de cierre al pie del listado (reemplaza la foto decorativa). */
   footerNote: string;
   /** Tareas reales: la categoría y el foco se DERIVAN de los pasos, sin estado guardado. */
@@ -96,9 +101,19 @@ export interface FlujoADetalleFixtures {
     statusBadge: { prefix: string; of: string };
     title: string;
     description: string;
+    /** Vencimiento (dato neutro y opcional), ISO corto `YYYY-MM-DD`. */
+    dueDate?: string;
+    dueLabel: string;
+    dueNone: string;
+    dueA11y: string;
+    dueClear: string;
   };
   stepsTitle: string;
   editStepLabel: string;
+  /** Acción para volver a pendiente un paso completado. */
+  undoStepLabel: string;
+  /** Acción para mover un paso pendiente al final. */
+  postponeLabel: string;
   addStep: string;
   addStepInline: {
     heading: string;
@@ -106,14 +121,16 @@ export interface FlujoADetalleFixtures {
     suggestedMinutes: number;
     maxMinutes: number;
   };
+  /** Aviso para tareas sin pasos. */
+  noSteps: { text: string; cta: string };
   steps: FlujoAPasoDetalle[];
   management: Array<{ key: string; label: string; icon: MciSymbolKey }>;
   calm: { title: string; body: string };
+  /** Confirmación para eliminar la tarea. */
+  deleteDialog: { title: string; body: string; confirm: string; cancel: string };
   actions: {
     primaryPrefix: string;
     primarySuffix: string;
-    /** REQUIERE MIGRACIÓN: iniciar una sesión de foco (registro de sesión + timer) no existe en el modelo. */
-    startFocusLog: string;
   };
 }
 
@@ -144,8 +161,19 @@ export interface FlujoAFormFixtures {
     readyMessage: string;
     errorMessage: string;
     offlineMessage: string;
+    /** Ayuda de descripción: usa SOLO el nombre de la tarea (`AIService.describeHelp`). */
+    describeCta: string;
+    describeHint: string;
+    describeLoading: string;
+    describeReady: string;
+    describeSuggested: string;
   };
-  /** REQUIERE MIGRACIÓN: sugerencia de pasos con IA (endpoint remoto) no existe. */
+  /** Vencimiento (dato neutro y opcional) del formulario. */
+  dueLabel: string;
+  dueNone: string;
+  dueClear: string;
+  dueA11y: string;
+  /** Pasos sugeridos por IA: `AIService.suggestSteps(taskName, description)` existe; acá se precargan como demo. */
   suggestedSteps: FlujoAFormStep[];
   addManualLabel: string;
   addInline: {
@@ -173,8 +201,17 @@ export const flujoAFormFixtures: FlujoAFormFixtures = {
     readyMessage: 'Listo. Revisá y ajustá los pasos propuestos.',
     errorMessage: 'No pudimos sugerir los pasos. Probá de nuevo.',
     offlineMessage: 'Estás sin conexión. Podés cargar los pasos a mano.',
+    describeCta: 'Sugerir descripción',
+    describeHint: 'Usa solo el nombre de la tarea.',
+    describeLoading: 'Pensando una descripción…',
+    describeReady: 'Listo. Revisá y ajustá la descripción.',
+    describeSuggested: 'Dejar lista la propuesta para el cliente corporativo, con foco en el alcance técnico.',
   },
-  // REQUIERE MIGRACIÓN: sugerencia de pasos con IA — no existe el endpoint.
+  dueLabel: 'Vencimiento (opcional)',
+  dueNone: 'Sin vencimiento',
+  dueClear: 'Quitar vencimiento',
+  dueA11y: 'Fecha de vencimiento',
+  // Pasos sugeridos por IA (`AIService.suggestSteps`); acá precargados como demo.
   suggestedSteps: [
     { id: 'ai-1', name: 'Abrir el borrador actual', minutes: 2 },
     { id: 'ai-2', name: 'Listar los 3 puntos de dolor principales', minutes: 3 },
@@ -192,12 +229,14 @@ export const flujoAFormFixtures: FlujoAFormFixtures = {
 export const flujoAFormCreateDefaults = {
   title: '',
   notes: '',
+  dueDate: undefined as string | undefined,
   steps: [] as FlujoAFormStep[],
 };
 
 export const flujoAFormEditDefaults = {
   title: 'Rediseño de Propuesta Comercial Q3',
   notes: 'Entrega para el cliente corporativo. Confirmar márgenes con Sofía antes de exportar.',
+  dueDate: '2026-10-24' as string | undefined,
   steps: [
     { id: 'e1', name: 'Abrir borrador y listar puntos de dolor', minutes: 2 },
     { id: 'e2', name: 'Escribir las 3 viñetas de solución técnica', minutes: 4 },
@@ -236,14 +275,16 @@ export const flujoAListadoFixtures: FlujoAListadoFixtures = {
   queue: {
     title: 'Cola de espera',
     subtitle: '(Sin sobrecarga)',
-    maxVisible: 'Máximo 3 visibles',
     empty: 'Nada por acá todavía.',
+    noSteps: 'Esta tarea no tiene pasos. Agregá uno para poder empezar',
   },
+  footerCta: 'Crear tarea',
   footerNote: 'Una tarea a la vez. El resto se acomoda.',
   tasks: [
     {
       id: 't-propuesta',
       name: 'Rediseño de Propuesta Comercial Q3',
+      dueDate: '2026-10-24',
       steps: [
         { id: 'p1', name: 'Recopilar métricas de abril y mayo', status: 'completed', completedAt: '2026-10-16T10:00:00.000Z', minutes: 3 },
         { id: 'p2', name: 'Escribir las 3 viñetas clave', status: 'pending', minutes: 4 },
@@ -263,6 +304,7 @@ export const flujoAListadoFixtures: FlujoAListadoFixtures = {
     {
       id: 't-email',
       name: 'Revisión y respuesta a email de cliente',
+      dueDate: '2026-10-20',
       steps: [
         { id: 'e1', name: 'Leer el pedido completo', status: 'pending', minutes: 2 },
         { id: 'e2', name: 'Redactar la respuesta', status: 'pending', minutes: 3 },
@@ -285,6 +327,11 @@ export const flujoAListadoFixtures: FlujoAListadoFixtures = {
         { id: 'r2', name: 'Publicar en el changelog', status: 'completed', completedAt: '2026-10-14T12:30:00.000Z', minutes: 2 },
       ],
     },
+    {
+      id: 't-inbox',
+      name: 'Ordenar la bandeja de entrada',
+      steps: [],
+    },
   ],
 };
 
@@ -295,15 +342,26 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
     title: 'Rediseño de Propuesta Comercial Q3',
     description:
       'Preparar el documento para el cliente corporativo. Prioridad al alcance técnico antes de afinar márgenes.',
+    dueDate: '2026-10-24',
+    dueLabel: 'Vencimiento (opcional)',
+    dueNone: 'Sin vencimiento',
+    dueA11y: 'Fecha de vencimiento',
+    dueClear: 'Quitar vencimiento',
   },
   stepsTitle: 'Secuencia de pasos',
   editStepLabel: 'Editar',
+  undoStepLabel: 'Desmarcar',
+  postponeLabel: 'Posponer',
   addStep: 'Añadir paso',
   addStepInline: {
     heading: 'Añadir paso a la secuencia',
     placeholder: 'Ej: abrir el archivo y revisar el apartado de alcance',
     suggestedMinutes: 3,
     maxMinutes: 10,
+  },
+  noSteps: {
+    text: 'Esta tarea no tiene pasos. Agregá uno para poder empezar',
+    cta: 'Agregar paso',
   },
   steps: [
     {
@@ -338,15 +396,21 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
   management: [
     { key: 'editar', label: 'Editar tarea', icon: 'edit' },
     { key: 'reordenar', label: 'Reordenar', icon: 'swap_vert' },
+    { key: 'eliminar', label: 'Eliminar', icon: 'delete' },
   ],
   calm: {
     title: 'Un paso alcanza',
-    body: 'No hace falta terminar hoy. Con un paso ya avanzaste.',
+    body: 'Con un paso ya avanzaste.',
+  },
+  deleteDialog: {
+    title: 'Eliminar tarea',
+    body: 'Se borran la tarea y sus pasos. Esta acción no se puede deshacer.',
+    confirm: 'Eliminar',
+    cancel: 'Cancelar',
   },
   actions: {
     primaryPrefix: 'Iniciar paso',
     primarySuffix: 'en foco',
-    startFocusLog: 'Start focus session',
   },
 };
 
@@ -392,6 +456,6 @@ export const flujoACompletadaFixtures: FlujoACompletadaFixtures = {
   taskName: 'Rediseño de Propuesta Comercial Q3',
   stepsCompleted: 4,
   totalMinutes: 11,
-  microCopy: 'Lo de hoy ya suma. Mañana seguimos.',
+  microCopy: 'Lo de hoy ya suma.',
   primary: 'Volver a mis tareas',
 };

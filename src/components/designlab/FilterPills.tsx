@@ -18,6 +18,8 @@ export interface FilterPillsProps<T extends string> {
   options: FilterPillOption<T>[];
   activeKey: T;
   onChange: (key: T) => void;
+  /** Etiqueta accesible del grupo. Default: "Filtros de tareas". */
+  accessibilityLabel?: string;
 }
 
 /**
@@ -32,6 +34,7 @@ export default function FilterPills<T extends string>({
   options,
   activeKey,
   onChange,
+  accessibilityLabel = 'Filtros de tareas',
 }: FilterPillsProps<T>) {
   const { scale: s } = useResponsive();
 
@@ -41,7 +44,7 @@ export default function FilterPills<T extends string>({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: sereneSpacing['space-sm'], paddingVertical: s(2) }}
       accessibilityRole="tablist"
-      accessibilityLabel="Filtros de tareas"
+      accessibilityLabel={accessibilityLabel}
     >
       {options.map((opt) => {
         const active = opt.key === activeKey;

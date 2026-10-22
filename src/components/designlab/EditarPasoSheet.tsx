@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import BottomSheet from './BottomSheet';
 import DurationChips from './DurationChips';
+import MinutesStepper from './MinutesStepper';
 import { mci } from './mciIconMap';
 import {
   sereneColors,
@@ -69,8 +70,6 @@ export default function EditarPasoSheet({
 
   const frictionLevel = frictionLevelFor(duration);
   const frictionColor = frictionLevel === 'high' ? sereneColors.error : sereneColors.primary;
-
-  const stepDuration = (delta: number) => setDuration((prev) => Math.min(30, Math.max(1, prev + delta)));
 
   return (
     <BottomSheet visible={visible} onClose={onClose} closeLabel="Cerrar edición de paso">
@@ -157,43 +156,7 @@ export default function EditarPasoSheet({
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
-            <Pressable
-              onPress={() => stepDuration(-1)}
-              accessibilityRole="button"
-              accessibilityLabel="Quitar un minuto"
-              style={({ pressed }) => ({
-                width: s(44),
-                height: s(44),
-                borderRadius: sereneBorderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: sereneColors['surface-container-high'],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <MaterialCommunityIcons name="minus" size={s(20)} color={sereneColors['on-surface']} />
-            </Pressable>
-            <RNText
-              style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'], minWidth: s(56), textAlign: 'center' }]}
-            >
-              {`~${duration} min`}
-            </RNText>
-            <Pressable
-              onPress={() => stepDuration(1)}
-              accessibilityRole="button"
-              accessibilityLabel="Sumar un minuto"
-              style={({ pressed }) => ({
-                width: s(44),
-                height: s(44),
-                borderRadius: sereneBorderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: sereneColors['surface-container-high'],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <MaterialCommunityIcons name="plus" size={s(20)} color={sereneColors['on-surface']} />
-            </Pressable>
+            <MinutesStepper value={duration} onChange={setDuration} />
           </View>
         </View>
 

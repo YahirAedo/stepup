@@ -6,12 +6,16 @@ import {
   Text as RNText,
   Pressable,
   TextInput,
+  ActivityIndicator,
   type TextStyle,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AiStepsPanel, { type AiStatus } from '../AiStepsPanel';
 import AiStateDemoControl from '../AiStateDemoControl';
 import AddMicroStepInline from '../AddMicroStepInline';
+import MinutesStepper from '../MinutesStepper';
+import DraggableStepList from '../DraggableStepList';
+import DueDateField from '../DueDateField';
 import { mci } from '../mciIconMap';
 import {
   sereneColors,
@@ -50,15 +54,19 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
   const [title, setTitle] = useState(defaults.title);
   const [notes, setNotes] = useState(defaults.notes);
   const [notesOpen, setNotesOpen] = useState(defaults.notes.length > 0);
+  const [dueDate, setDueDate] = useState<string | undefined>(defaults.dueDate);
   const [aiStatus, setAiStatus] = useState<AiStatus>('idle');
+  const [describeStatus, setDescribeStatus] = useState<'idle' | 'loading' | 'ready'>('idle');
   const [steps, setSteps] = useState<FlujoAFormStep[]>(defaults.steps);
   const [addOpen, setAddOpen] = useState(false);
   const stepSeq = useRef(0);
   const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const describeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
     () => () => {
       if (suggestTimer.current) clearTimeout(suggestTimer.current);
+      if (describeTimer.current) clearTimeout(describeTimer.current);
     },
     []
   );
@@ -96,6 +104,28 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
   const removeStep = useCallback((id: string) => {
     setSteps((prev) => prev.filter((step) => step.id !== id));
   }, []);
+
+  const updateStepMinutes = useCallback((id: string, minutes: number) => {
+    setSteps((prev) => prev.map((step) => (step.id === id ? { ...step, minutes } : step)));
+  }, []);
+
+  const canDescribe = title.trim().length > 0;
+
+  /**
+   * Ayuda de descripción: `AIService.describeHelp(taskName)` usa SOLO el nombre.
+   * Acá se simula la llamada con un timer para poder ver el estado (Design Lab).
+   */
+  const handleDescribe = useCallback(() => {
+    if (!canDescribe) return;
+    if (describeTimer.current) clearTimeout(describeTimer.current);
+    setNotesOpen(true);
+    setDescribeStatus('loading');
+    describeTimer.current = setTimeout(() => {
+      setNotes(f.ai.describeSuggested);
+      setDescribeStatus('ready');
+      describeTimer.current = null;
+    }, 900);
+  }, [canDescribe, f.ai.describeSuggested]);
 
   const handleAddManual = useCallback(
     (stepTitle: string) => {
@@ -223,28 +253,95 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
         </Pressable>
 
         {notesOpen && (
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder={f.notesPlaceholder}
-            placeholderTextColor={sereneColors['on-surface-variant']}
-            multiline
-            maxLength={200}
-            accessibilityLabel={f.notesLabel}
-            style={[
-              sereneTypography['body-md'] as TextStyle,
-              {
-                backgroundColor: sereneColors['surface-container-high'],
-                borderRadius: sereneBorderRadius.lg,
-                padding: sereneSpacing['space-md'],
-                color: sereneColors['on-surface'],
-                minHeight: s(72),
-                textAlignVertical: 'top',
-              },
-            ]}
-          />
+          <>
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder={f.notesPlaceholder}
+              placeholderTextColor={sereneColors['on-surface-variant']}
+              multiline
+              maxLength={200}
+              accessibilityLabel={f.notesLabel}
+              style={[
+                sereneTypography['body-md'] as TextStyle,
+                {
+                  backgroundColor: sereneColors['surface-container-high'],
+                  borderRadius: sereneBorderRadius.lg,
+                  padding: sereneSpacing['space-md'],
+                  color: sereneColors['on-surface'],
+                  minHeight: s(72),
+                  textAlignVertical: 'top',
+                },
+              ]}
+            />
+
+            {/* Ayuda de descripción con IA (usa SOLO el nombre de la tarea). */}
+            <View style={{ gap: sereneSpacing['space-xs'] }}>
+              <Pressable
+                onPress={handleDescribe}
+                disabled={!canDescribe || describeStatus === 'loading'}
+                accessibilityRole="button"
+                accessibilityLabel={f.ai.describeCta}
+                accessibilityState={{ disabled: !canDescribe }}
+                style={({ pressed }) => ({
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: sereneSpacing['space-sm'],
+                  minHeight: s(44),
+                  paddingHorizontal: sereneSpacing['space-md'],
+                  paddingVertical: sereneSpacing['space-sm'],
+                  borderRadius: sereneBorderRadius.full,
+                  backgroundColor: sereneColors['primary-container'],
+                  opacity: !canDescribe ? 0.5 : describeStatus === 'loading' ? 0.8 : pressed ? 0.9 : 1,
+                })}
+              >
+                {describeStatus === 'loading' ? (
+                  <ActivityIndicator size="small" color={sereneColors['on-primary']} />
+                ) : (
+                  <MaterialCommunityIcons name={mci('auto_awesome')} size={s(18)} color={sereneColors['on-primary']} />
+                )}
+                <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+                  {describeStatus === 'loading' ? f.ai.describeLoading : f.ai.describeCta}
+                </RNText>
+              </Pressable>
+
+              {describeStatus === 'ready' ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(6) }}>
+                  <MaterialCommunityIcons name={mci('check_circle')} size={s(16)} color={sereneColors.primary} />
+                  <RNText
+                    style={[
+                      sereneTypography['body-sm'] as TextStyle,
+                      { color: sereneColors['on-surface-variant'], flexShrink: 1 },
+                    ]}
+                  >
+                    {f.ai.describeReady}
+                  </RNText>
+                </View>
+              ) : (
+                <RNText
+                  style={[
+                    sereneTypography['body-sm'] as TextStyle,
+                    { color: sereneColors['on-surface-variant'], flexShrink: 1 },
+                  ]}
+                >
+                  {f.ai.describeHint}
+                </RNText>
+              )}
+            </View>
+          </>
         )}
       </View>
+
+      {/* Vencimiento (dato neutro y opcional) */}
+      <DueDateField
+        value={dueDate}
+        onChange={setDueDate}
+        label={f.dueLabel}
+        noneLabel={f.dueNone}
+        clearLabel={f.dueClear}
+        a11yLabel={f.dueA11y}
+      />
 
       {/* Pasos: IA primero */}
       <View style={{ gap: sereneSpacing['space-sm'] }}>
@@ -269,10 +366,13 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
         <AiStateDemoControl status={aiStatus} onChange={applyAiStatus} />
 
         {steps.length > 0 && (
-          <View style={{ gap: sereneSpacing['space-sm'] }}>
-            {steps.map((step) => (
+          <DraggableStepList
+            data={steps}
+            keyExtractor={(step) => step.id}
+            onReorder={(next) => setSteps(next)}
+            gap={sereneSpacing['space-sm']}
+            renderItem={({ item: step, drag, isActive }) => (
               <View
-                key={step.id}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -280,8 +380,31 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
                   padding: sereneSpacing['space-sm'] + 2,
                   borderRadius: sereneBorderRadius.xl,
                   backgroundColor: sereneColors['surface-container-lowest'],
+                  opacity: isActive ? 0.9 : 1,
                 }}
               >
+                <Pressable
+                  onLongPress={drag}
+                  disabled={isActive}
+                  delayLongPress={180}
+                  hitSlop={s(8)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Reordenar ${step.name}`}
+                  style={({ pressed }) => ({
+                    width: s(32),
+                    height: s(32),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <MaterialCommunityIcons
+                    name={mci('drag_indicator')}
+                    size={s(20)}
+                    color={sereneColors.outline}
+                  />
+                </Pressable>
+
                 <TextInput
                   value={step.name}
                   onChangeText={(next) => updateStepTitle(step.id, next)}
@@ -292,11 +415,11 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
                     { flex: 1, minWidth: 0, color: sereneColors['on-surface'], padding: 0 },
                   ]}
                 />
-                <RNText
-                  style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-                >
-                  {`~${step.minutes} min`}
-                </RNText>
+                <MinutesStepper
+                  value={step.minutes}
+                  onChange={(minutes) => updateStepMinutes(step.id, minutes)}
+                  size="compact"
+                />
                 <Pressable
                   onPress={() => removeStep(step.id)}
                   hitSlop={s(8)}
@@ -314,8 +437,8 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
                   <MaterialCommunityIcons name="close" size={s(16)} color={sereneColors['on-surface-variant']} />
                 </Pressable>
               </View>
-            ))}
-          </View>
+            )}
+          />
         )}
 
         {!addOpen ? (

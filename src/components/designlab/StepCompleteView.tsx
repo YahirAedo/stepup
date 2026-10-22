@@ -29,18 +29,20 @@ export interface StepCompleteViewProps {
   recapLabel: string;
   /** Titulo del paso que se acaba de completar. */
   completedStepName: string;
-  /** Siguiente micro-paso sugerido. */
-  nextStep: { label: string; name: string; description: string; minutes: number };
+  /** Siguiente paso sugerido. Si falta, se omite el bloque (último paso / sin pendientes). */
+  nextStep?: { label: string; name: string; description: string; minutes: number };
   /** CTA de descanso, ej. "Descansar 2 min". */
   breakCta: string;
   /** CTA principal, ej. "CONTINUAR CON EL SIGUIENTE PASO". */
   primaryCta: string;
-  /** CTA secundario, ej. "Guardar progreso y descansar por hoy". */
+  /** CTA secundario, ej. "Guardar y salir". */
   secondaryCta: string;
   /** Texto de cierre. */
   microCopy: string;
   /** Titulo del header. Default: "Sesión terminada". */
   headerTitle?: string;
+  /** SOLO DESIGN LAB: control opcional arriba del contenido (ej. conmutador de estados). */
+  demoControl?: React.ReactNode;
   onContinue: () => void;
   onRest: () => void;
   onBreak: () => void;
@@ -51,7 +53,7 @@ const PLACEHOLDER = '{duration}';
 /**
  * Vista completa del estado "Paso completado v2".
  *
- * Se muestra cuando el usuario termina su micro-paso de foco. Sigue el molde
+ * Se muestra cuando el usuario termina su paso de foco. Sigue el molde
  * de `FocusRunningView`: header propio + ScrollView con padding de gutter.
  */
 export default function StepCompleteView({
@@ -66,6 +68,7 @@ export default function StepCompleteView({
   secondaryCta,
   microCopy,
   headerTitle,
+  demoControl,
   onContinue,
   onRest,
   onBreak,
@@ -95,6 +98,8 @@ export default function StepCompleteView({
           gap: sereneSpacing['space-lg'],
         }}
       >
+        {demoControl ? <View style={{ width: '100%' }}>{demoControl}</View> : null}
+
         {/* Hero de celebracion */}
         <View
           style={{
@@ -239,6 +244,7 @@ export default function StepCompleteView({
         </View>
 
         {/* Siguiente paso */}
+        {nextStep && (
         <View
           style={{
             width: '100%',
@@ -334,6 +340,7 @@ export default function StepCompleteView({
             </View>
           </View>
         </View>
+        )}
 
         {/* Descanso */}
         <Pressable

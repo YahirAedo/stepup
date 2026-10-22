@@ -40,16 +40,31 @@ export interface StepSequenceItemProps {
   onComplete?: () => void;
   onReorder?: () => void;
   onPress?: () => void;
+  /** Abre la edición del paso (integrada en la tarjeta, en cualquiera de las variantes). */
+  onEdit?: () => void;
+  editLabel?: string;
+  /** Desmarca un paso completado (vuelve a pendiente). Solo `completed`. */
+  onUndo?: () => void;
+  undoLabel?: string;
+  /** Mueve el paso pendiente al final de los pendientes. Solo `pending`. */
+  onPostpone?: () => void;
+  /** `true` cuando es el unico pendiente: posponer no cambia nada. */
+  postponeDisabled?: boolean;
+  postponeLabel?: string;
 }
 
 /**
  * Fila de la "Secuencia de pasos" del Detalle. Tres variantes:
  *
  * - `completed`: paso hecho, atenuado (`opacity-75`), titulo tachado, check.
+ *   Con `onUndo` ofrece "Desmarcar".
  * - `active`: paso en foco, tarjeta destacada con barra lateral, badge
  *   "Foco actual", duracion y acciones. Con `startCta`/`completeCta` muestra dos
  *   botones en fila ("Comenzar" + "Hecho"); si no, cae al CTA unico `activeCta`.
- * - `pending`: paso en espera, circulo numerado y handle de reordenar.
+ * - `pending`: paso en espera, circulo numerado, handle de reordenar y, con
+ *   `onPostpone`, la accion "Posponer".
+ *
+ * La edición (`onEdit`) se integra como acción dentro de la propia tarjeta.
  */
 export default function StepSequenceItem({
   variant,
@@ -67,6 +82,13 @@ export default function StepSequenceItem({
   onComplete,
   onReorder,
   onPress,
+  onEdit,
+  editLabel = 'Editar',
+  onUndo,
+  undoLabel = 'Desmarcar',
+  onPostpone,
+  postponeDisabled = false,
+  postponeLabel = 'Posponer',
 }: StepSequenceItemProps) {
   const { scale: s } = useResponsive();
 
@@ -121,19 +143,40 @@ export default function StepSequenceItem({
             </RNText>
           </View>
 
-          {minutes !== undefined && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(4) }}>
-              <MaterialCommunityIcons name={mci('schedule')} size={s(15)} color={sereneColors.primary} />
-              <RNText
-                style={[
-                  sereneTypography['label-md'] as TextStyle,
-                  { color: sereneColors.primary, fontWeight: '500' },
-                ]}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8) }}>
+            {minutes !== undefined && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(4) }}>
+                <MaterialCommunityIcons name={mci('schedule')} size={s(15)} color={sereneColors.primary} />
+                <RNText
+                  style={[
+                    sereneTypography['label-md'] as TextStyle,
+                    { color: sereneColors.primary, fontWeight: '500' },
+                  ]}
+                >
+                  {minutes} min
+                </RNText>
+              </View>
+            )}
+
+            {onEdit && (
+              <Pressable
+                onPress={onEdit}
+                hitSlop={s(8)}
+                accessibilityRole="button"
+                accessibilityLabel={editLabel}
+                style={({ pressed }) => ({
+                  width: s(32),
+                  height: s(32),
+                  borderRadius: sereneBorderRadius.DEFAULT,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: pressed ? 0.7 : 1,
+                })}
               >
-                {minutes} min
-              </RNText>
-            </View>
-          )}
+                <MaterialCommunityIcons name={mci('edit')} size={s(18)} color={sereneColors.primary} />
+              </Pressable>
+            )}
+          </View>
         </View>
 
         <View style={{ paddingLeft: s(4), gap: s(4) }}>
@@ -313,29 +356,105 @@ export default function StepSequenceItem({
           >
             {meta}
           </RNText>
+
+          {!isCompleted && onPostpone && (
+            <Pressable
+              onPress={postponeDisabled ? undefined : onPostpone}
+              disabled={postponeDisabled}
+              hitSlop={s(6)}
+              accessibilityRole="button"
+              accessibilityLabel={postponeLabel}
+              accessibilityState={{ disabled: postponeDisabled }}
+              style={({ pressed }) => ({
+                alignSelf: 'flex-start',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: s(4),
+                minHeight: s(28),
+                marginTop: s(4),
+                opacity: postponeDisabled ? 0.4 : pressed ? 0.7 : 1,
+              })}
+            >
+              <MaterialCommunityIcons
+                name={mci('hourglass_empty')}
+                size={s(14)}
+                color={sereneColors['primary-container']}
+              />
+              <RNText
+                style={[
+                  sereneTypography['label-sm'] as TextStyle,
+                  { color: sereneColors['primary-container'] },
+                ]}
+              >
+                {postponeLabel}
+              </RNText>
+            </Pressable>
+          )}
         </View>
       </View>
 
-      {isCompleted ? (
-        <MaterialCommunityIcons name={mci('check_circle')} size={s(20)} color={sereneColors['outline-variant']} />
-      ) : (
-        <Pressable
-          onPress={onReorder}
-          hitSlop={s(8)}
-          accessibilityRole="button"
-          accessibilityLabel={`Reordenar ${title}`}
-          style={({ pressed }) => ({
-            width: s(32),
-            height: s(32),
-            borderRadius: sereneBorderRadius.DEFAULT,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name={mci('drag_handle')} size={s(19)} color={sereneColors.outline} />
-        </Pressable>
-      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(4) }}>
+        {isCompleted && onUndo && (
+          <Pressable
+            onPress={onUndo}
+            hitSlop={s(8)}
+            accessibilityRole="button"
+            accessibilityLabel={undoLabel}
+            style={({ pressed }) => ({
+              width: s(32),
+              height: s(32),
+              borderRadius: sereneBorderRadius.DEFAULT,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <MaterialCommunityIcons name="undo-variant" size={s(19)} color={sereneColors['on-surface-variant']} />
+          </Pressable>
+        )}
+
+        {onEdit && (
+          <Pressable
+            onPress={onEdit}
+            hitSlop={s(8)}
+            accessibilityRole="button"
+            accessibilityLabel={editLabel}
+            style={({ pressed }) => ({
+              width: s(32),
+              height: s(32),
+              borderRadius: sereneBorderRadius.DEFAULT,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <MaterialCommunityIcons name={mci('edit')} size={s(18)} color={sereneColors['primary-container']} />
+          </Pressable>
+        )}
+
+        {!isCompleted && (
+          <Pressable
+            onPress={onReorder}
+            hitSlop={s(8)}
+            accessibilityRole="button"
+            accessibilityLabel={`Reordenar ${title}`}
+            style={({ pressed }) => ({
+              width: s(32),
+              height: s(32),
+              borderRadius: sereneBorderRadius.DEFAULT,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <MaterialCommunityIcons name={mci('drag_handle')} size={s(19)} color={sereneColors.outline} />
+          </Pressable>
+        )}
+
+        {isCompleted && !onUndo && !onEdit && (
+          <MaterialCommunityIcons name={mci('check_circle')} size={s(20)} color={sereneColors['outline-variant']} />
+        )}
+      </View>
     </Pressable>
   );
 }

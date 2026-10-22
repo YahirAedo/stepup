@@ -95,12 +95,12 @@ export default function TareasAEditarScreen() {
             justifyContent: 'center',
             paddingVertical: sereneSpacing['space-sm'],
             borderRadius: sereneBorderRadius.lg,
-            backgroundColor: pressed ? sereneColors['surface-container-high'] : 'transparent',
+            borderWidth: 1,
+            borderColor: sereneColors.outline,
+            backgroundColor: pressed ? sereneColors['surface-container-high'] : sereneColors.surface,
           })}
         >
-          <RNText
-            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-          >
+          <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}>
             {f.secondary}
           </RNText>
         </Pressable>

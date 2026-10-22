@@ -1,19 +1,22 @@
 // ⚠️ DESIGN: variante visual para evaluar en Design Lab; no es la pantalla final.
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { View, ScrollView, Pressable, Text as RNText, type TextStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBottomLayout } from '../../theme/layout';
 import DesignLabHeader from '../../components/designlab/DesignLabHeader';
-import ZenSanctuaryCard from '../../components/designlab/ZenSanctuaryCard';
 import CadenceCard from '../../components/designlab/CadenceCard';
 import AtmosphericBanner from '../../components/designlab/AtmosphericBanner';
 import { sinTareasFixtures } from './focusFixtures';
+import type { ProfileStackParamList } from '../../types/navigation';
 import {
   sereneColors,
   sereneTypography,
   sereneSpacing,
   sereneBorderRadius,
+  sereneShadows,
   withAlpha,
   useResponsive,
 } from '../../theme/serene';
@@ -21,23 +24,23 @@ import {
 /**
  * Design Lab — "Focus — Sin tareas" (estado vacío del flujo Focus).
  *
- * Se muestra cuando no hay ninguna tarea activa: chip de estado + guía de
- * respiración, card ancla con anillo botánico, refuerzo "Ritmo de hoy", snippet
- * atmosférico y whisper de cierre.
+ * Se muestra cuando no hay ninguna tarea activa: chip de estado, card ancla con
+ * los accesos para crear una tarea o ver las completadas, refuerzo "Ritmo de hoy",
+ * snippet atmosférico y whisper de cierre.
  */
 export default function FocusSinTareasScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ProfileStackParamList, 'FocusSinTareas'>>();
   const { contentPaddingBottom } = useBottomLayout();
   const { scale: s } = useResponsive();
 
-  const [breathing, setBreathing] = useState(false);
-
   const handleCreateTask = useCallback(() => {
-    console.log('[DesignLab] Open new task screen');
-  }, []);
+    navigation.navigate('TareasACrear');
+  }, [navigation]);
 
   const handleOpenHistory = useCallback(() => {
-    console.log('[DesignLab] Open completed tasks history');
-  }, []);
+    navigation.navigate('TareasAListado');
+  }, [navigation]);
 
   const whisperColor = withAlpha(sereneColors['on-surface-variant'], 0.6);
 
@@ -53,16 +56,8 @@ export default function FocusSinTareasScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Chip de estado + guía de respiración */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: sereneSpacing['space-sm'],
-            paddingTop: s(4),
-          }}
-        >
+        {/* Chip de estado */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: s(4) }}>
           <View
             style={{
               flexDirection: 'row',
@@ -91,53 +86,74 @@ export default function FocusSinTareasScreen() {
               {sinTareasFixtures.status.chip}
             </RNText>
           </View>
-
-          <Pressable
-            onPress={() => setBreathing((v) => !v)}
-            accessibilityRole="button"
-            accessibilityLabel="Guía de respiración"
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: s(6),
-              paddingHorizontal: s(10),
-              paddingVertical: s(4),
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: breathing
-                ? sereneColors['secondary-container']
-                : sereneColors['surface-container-low'],
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <MaterialCommunityIcons
-              name="weather-windy"
-              size={s(16)}
-              color={sereneColors['on-secondary-container']}
-            />
-            <RNText
-              style={[
-                sereneTypography['label-sm'] as TextStyle,
-                {
-                  color: breathing
-                    ? sereneColors['on-secondary-container']
-                    : sereneColors['on-surface-variant'],
-                },
-              ]}
-            >
-              {breathing ? sinTareasFixtures.status.breatheActive : sinTareasFixtures.status.breatheIdle}
-            </RNText>
-          </Pressable>
         </View>
 
-        <ZenSanctuaryCard
-          headline={sinTareasFixtures.sanctuary.headline}
-          body={sinTareasFixtures.sanctuary.body}
-          primaryCta={sinTareasFixtures.sanctuary.primaryCta}
-          secondaryCta={sinTareasFixtures.sanctuary.secondaryCta}
-          breathing={breathing}
-          onPrimary={handleCreateTask}
-          onSecondary={handleOpenHistory}
-        />
+        {/* Card ancla */}
+        <View
+          style={{
+            width: '100%',
+            backgroundColor: sereneColors['surface-container-lowest'],
+            borderRadius: sereneBorderRadius.xl,
+            padding: sereneSpacing['space-lg'],
+            gap: sereneSpacing['space-sm'],
+            ...sereneShadows.card,
+          }}
+        >
+          <RNText style={[sereneTypography['headline-sm'] as TextStyle, { color: sereneColors.primary }]}>
+            {sinTareasFixtures.sanctuary.headline}
+          </RNText>
+          <RNText style={[sereneTypography['body-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>
+            {sinTareasFixtures.sanctuary.body}
+          </RNText>
+
+          <View style={{ width: '100%', gap: sereneSpacing['space-sm'], marginTop: sereneSpacing['space-xs'] }}>
+            <Pressable
+              onPress={handleCreateTask}
+              accessibilityRole="button"
+              accessibilityLabel={sinTareasFixtures.sanctuary.primaryCta}
+              style={({ pressed }) => ({
+                width: '100%',
+                height: s(44),
+                borderRadius: sereneBorderRadius.lg,
+                backgroundColor: sereneColors['primary-container'],
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: s(8),
+                opacity: pressed ? 0.95 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name="plus-circle-outline" size={s(19)} color={sereneColors['on-primary']} />
+              <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+                {sinTareasFixtures.sanctuary.primaryCta}
+              </RNText>
+            </Pressable>
+
+            <Pressable
+              onPress={handleOpenHistory}
+              accessibilityRole="button"
+              accessibilityLabel={sinTareasFixtures.sanctuary.secondaryCta}
+              style={({ pressed }) => ({
+                width: '100%',
+                height: s(44),
+                borderRadius: sereneBorderRadius.lg,
+                backgroundColor: sereneColors['secondary-container'],
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: s(8),
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name="history" size={s(19)} color={sereneColors['on-secondary-container']} />
+              <RNText
+                style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-secondary-container'] }]}
+              >
+                {sinTareasFixtures.sanctuary.secondaryCta}
+              </RNText>
+            </Pressable>
+          </View>
+        </View>
 
         <CadenceCard
           label={sinTareasFixtures.cadence.label}

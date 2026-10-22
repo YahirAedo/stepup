@@ -11,6 +11,8 @@ import StepProgressPanel, { type StepSegmentStatus } from '../../components/desi
 import StepSequenceItem from '../../components/designlab/StepSequenceItem';
 import EditarPasoSheet from '../../components/designlab/EditarPasoSheet';
 import AddMicroStepInline from '../../components/designlab/AddMicroStepInline';
+import DueDateField from '../../components/designlab/DueDateField';
+import ConfirmDialog from '../../components/designlab/ConfirmDialog';
 import { mci } from '../../components/designlab/mciIconMap';
 import {
   sereneColors,
@@ -21,7 +23,12 @@ import {
   withAlpha,
   useResponsive,
 } from '../../theme/serene';
-import { clampStepPosition, computeTotalMinutes } from '../../utils/microplan';
+import {
+  canPostponeStep,
+  clampStepPosition,
+  computeTotalMinutes,
+  postponePendingStep,
+} from '../../utils/microplan';
 import type { ProfileStackParamList } from '../../types/navigation';
 import { flujoADetalleFixtures, type FlujoAPasoDetalle } from './tareasFlujoAFixtures';
 
@@ -41,6 +48,8 @@ export default function TareasADetalleScreen() {
   const [steps, setSteps] = useState<FlujoAPasoDetalle[]>(f.steps);
   const [addOpen, setAddOpen] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [dueDate, setDueDate] = useState<string | undefined>(f.summary.dueDate);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const total = steps.length;
   const doneCount = steps.filter((step) => step.variant === 'completed').length;
@@ -74,6 +83,22 @@ export default function TareasADetalleScreen() {
     setSteps((prev) => prev.filter((_, index) => index !== editingIdx));
     setEditingIdx(null);
   }, [editingIdx]);
+
+  /** B7: vuelve a pendiente un paso completado. */
+  const handleUndoStep = useCallback((index: number) => {
+    setSteps((prev) =>
+      prev.map((step, i) =>
+        i === index
+          ? { ...step, variant: 'pending' as const, meta: `En espera · ${step.durationMin} min` }
+          : step
+      )
+    );
+  }, []);
+
+  /** B12: mueve el paso pendiente al final de los pendientes de la tarea. */
+  const handlePostponeStep = useCallback((index: number) => {
+    setSteps((prev) => postponePendingStep(prev, index));
+  }, []);
 
   /**
    * Marca el paso en foco como hecho y activa el siguiente. Si era el último
@@ -115,10 +140,10 @@ export default function TareasADetalleScreen() {
     if (nextIndex < 0) navigation.navigate('TareasACompletada');
   }, [steps, navigation]);
 
-  /** Arranca el foco del paso en foco (REQUIERE MIGRACIÓN: sesión de foco no existe). */
+  /** Entra al flujo Focus (preview del Lab) para el paso en foco. */
   const handleStartFocus = useCallback(() => {
-    console.log('[DesignLab]', f.actions.startFocusLog);
-  }, [f.actions.startFocusLog]);
+    navigation.navigate('EnfoqueFocus');
+  }, [navigation]);
 
   const editingStep = editingIdx !== null ? steps[editingIdx] : null;
 
@@ -193,6 +218,16 @@ export default function TareasADetalleScreen() {
             </RNText>
           </View>
 
+          {/* Vencimiento (dato neutro y opcional), editable acá mismo. */}
+          <DueDateField
+            value={dueDate}
+            onChange={setDueDate}
+            label={f.summary.dueLabel}
+            noneLabel={f.summary.dueNone}
+            clearLabel={f.summary.dueClear}
+            a11yLabel={f.summary.dueA11y}
+          />
+
           <StepProgressPanel
             percentLabel={percentLabel}
             remainingLabel={remainingLabel}
@@ -255,10 +290,53 @@ export default function TareasADetalleScreen() {
             />
           )}
 
-          <View style={{ gap: s(10) }}>
-            {steps.map((step, index) => (
-              <View key={`${index}-${step.name}`} style={{ gap: sereneSpacing['space-xs'] }}>
+          {total === 0 ? (
+            <View
+              style={{
+                gap: sereneSpacing['space-sm'],
+                padding: sereneSpacing['space-md'],
+                borderRadius: sereneBorderRadius.xl,
+                backgroundColor: withAlpha(sereneColors['secondary-container'], 0.4),
+              }}
+            >
+              <RNText
+                style={[
+                  sereneTypography['body-md'] as TextStyle,
+                  { color: sereneColors['on-secondary-container'], flexShrink: 1 },
+                ]}
+              >
+                {f.noSteps.text}
+              </RNText>
+              {!addOpen && (
+                <Pressable
+                  onPress={() => setAddOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={f.noSteps.cta}
+                  style={({ pressed }) => ({
+                    alignSelf: 'flex-start',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: sereneSpacing['space-sm'],
+                    minHeight: s(44),
+                    paddingHorizontal: sereneSpacing['space-md'],
+                    paddingVertical: sereneSpacing['space-sm'],
+                    borderRadius: sereneBorderRadius.full,
+                    backgroundColor: sereneColors.primary,
+                    opacity: pressed ? 0.9 : 1,
+                  })}
+                >
+                  <MaterialCommunityIcons name={mci('add')} size={s(18)} color={sereneColors['on-primary']} />
+                  <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+                    {f.noSteps.cta}
+                  </RNText>
+                </Pressable>
+              )}
+            </View>
+          ) : (
+            <View style={{ gap: s(10) }}>
+              {steps.map((step, index) => (
                 <StepSequenceItem
+                  key={`${index}-${step.name}`}
                   variant={step.variant}
                   index={index + 1}
                   title={step.name}
@@ -270,34 +348,23 @@ export default function TareasADetalleScreen() {
                   completeCta={step.completeCta}
                   onStart={step.variant === 'active' ? handleStartFocus : undefined}
                   onComplete={step.variant === 'active' ? handleCompleteActive : undefined}
-                  onReorder={() => console.log('[DesignLab] Reorder step:', step.name)}
+                  onReorder={
+                    step.variant !== 'completed'
+                      ? () => console.log('[DesignLab] Reorder step:', step.name)
+                      : undefined
+                  }
                   onPress={() => console.log('[DesignLab] Open step:', step.name)}
+                  onEdit={() => setEditingIdx(index)}
+                  editLabel={f.editStepLabel}
+                  onUndo={step.variant === 'completed' ? () => handleUndoStep(index) : undefined}
+                  undoLabel={f.undoStepLabel}
+                  onPostpone={step.variant === 'pending' ? () => handlePostponeStep(index) : undefined}
+                  postponeDisabled={!canPostponeStep(steps, index)}
+                  postponeLabel={f.postponeLabel}
                 />
-
-                <Pressable
-                  onPress={() => setEditingIdx(index)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${f.editStepLabel} paso ${index + 1}: ${step.name}`}
-                  style={({ pressed }) => ({
-                    alignSelf: 'flex-end',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: s(4),
-                    minHeight: s(44),
-                    paddingHorizontal: sereneSpacing['space-sm'],
-                    opacity: pressed ? 0.7 : 1,
-                  })}
-                >
-                  <MaterialCommunityIcons name={mci('edit')} size={s(15)} color={sereneColors['primary-container']} />
-                  <RNText
-                    style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['primary-container'] }]}
-                  >
-                    {f.editStepLabel}
-                  </RNText>
-                </Pressable>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Gestión + calma */}
@@ -311,6 +378,10 @@ export default function TareasADetalleScreen() {
                 onPress={() => {
                   if (item.key === 'editar') {
                     navigation.navigate('TareasAEditar');
+                    return;
+                  }
+                  if (item.key === 'eliminar') {
+                    setDeleteOpen(true);
                     return;
                   }
                   console.log('[DesignLab] Manage:', item.key);
@@ -380,41 +451,43 @@ export default function TareasADetalleScreen() {
       </ScrollView>
 
       {/* Barra de acción fija (en flujo del layout, no absolute) */}
-      <View
-        style={{
-          paddingHorizontal: sereneSpacing.margin,
-          paddingTop: sereneSpacing['space-sm'],
-          paddingBottom: insets.bottom + sereneSpacing['space-md'],
-          gap: sereneSpacing['space-sm'],
-          borderTopWidth: 1,
-          borderTopColor: withAlpha(sereneColors.outline, 0.2),
-          backgroundColor: sereneColors.surface,
-        }}
-      >
-        {/* REQUIERE MIGRACIÓN: iniciar una sesión de foco no existe en el modelo. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${f.actions.primaryPrefix} ${currentIndex} ${f.actions.primarySuffix}`}
-          onPress={() => console.log('[DesignLab]', f.actions.startFocusLog)}
-          style={({ pressed }) => ({
-            minHeight: s(48),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
+      {total > 0 && (
+        <View
+          style={{
+            paddingHorizontal: sereneSpacing.margin,
+            paddingTop: sereneSpacing['space-sm'],
+            paddingBottom: insets.bottom + sereneSpacing['space-md'],
             gap: sereneSpacing['space-sm'],
-            paddingVertical: sereneSpacing['space-sm'],
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: sereneColors.primary,
-            ...sereneShadows.card,
-            opacity: pressed ? 0.9 : 1,
-          })}
+            borderTopWidth: 1,
+            borderTopColor: withAlpha(sereneColors.outline, 0.2),
+            backgroundColor: sereneColors.surface,
+          }}
         >
-          <MaterialCommunityIcons name={mci('play_circle')} size={s(20)} color={sereneColors['on-primary']} />
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-            {`${f.actions.primaryPrefix} ${currentIndex} ${f.actions.primarySuffix}`}
-          </RNText>
-        </Pressable>
-      </View>
+          {/* CTA principal: entra al flujo Focus (preview del Lab). */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${f.actions.primaryPrefix} ${currentIndex} ${f.actions.primarySuffix}`}
+            onPress={() => navigation.navigate('EnfoqueFocus')}
+            style={({ pressed }) => ({
+              minHeight: s(48),
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: sereneSpacing['space-sm'],
+              paddingVertical: sereneSpacing['space-sm'],
+              borderRadius: sereneBorderRadius.lg,
+              backgroundColor: sereneColors.primary,
+              ...sereneShadows.card,
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <MaterialCommunityIcons name={mci('play_circle')} size={s(20)} color={sereneColors['on-primary']} />
+            <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+              {`${f.actions.primaryPrefix} ${currentIndex} ${f.actions.primarySuffix}`}
+            </RNText>
+          </Pressable>
+        </View>
+      )}
 
       <EditarPasoSheet
         visible={editingStep !== null}
@@ -426,6 +499,19 @@ export default function TareasADetalleScreen() {
         initialDuration={editingStep?.durationMin ?? flujoADetalleFixtures.addStepInline.suggestedMinutes}
         position={(editingIdx ?? 0) + 1}
         total={total}
+      />
+
+      <ConfirmDialog
+        visible={deleteOpen}
+        title={f.deleteDialog.title}
+        body={f.deleteDialog.body}
+        confirmLabel={f.deleteDialog.confirm}
+        cancelLabel={f.deleteDialog.cancel}
+        onConfirm={() => {
+          setDeleteOpen(false);
+          navigation.navigate('TareasAListado');
+        }}
+        onClose={() => setDeleteOpen(false)}
       />
     </View>
   );

@@ -285,7 +285,7 @@ export default function EnfoqueFocusScreen() {
             headerTitle={completadoFixtures.headerTitle}
             onContinue={switchToPrevio}
             onRest={switchToPrevio}
-            onBreak={() => console.log('[DesignLab] Mindful break')}
+            onBreak={() => console.log('[DesignLab] Break')}
           />
         </Animated.View>
       )}

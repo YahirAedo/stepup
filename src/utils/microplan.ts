@@ -115,3 +115,36 @@ export function clockLabel(totalMinutes: number): string {
 export function isLongTitle(title: string, threshold = 25): boolean {
   return title.trim().length > threshold;
 }
+
+/** Paso con su variante de secuencia (para reordenar pendientes). */
+export interface OrderedStepInput {
+  variant: 'completed' | 'active' | 'pending';
+}
+
+/**
+ * true si el paso en `index` se puede posponer: esta pendiente y hay mas de un
+ * pendiente (si es el unico, moverlo no cambia nada).
+ */
+export function canPostponeStep(steps: ReadonlyArray<OrderedStepInput>, index: number): boolean {
+  const step = steps[index];
+  if (!step || step.variant !== 'pending') return false;
+  return steps.filter((s) => s.variant === 'pending').length > 1;
+}
+
+/**
+ * Mueve el paso pendiente en `index` al final de los pendientes de la misma
+ * tarea. Deja intactos los completados y el paso en foco. Si no se puede
+ * posponer, devuelve la lista original sin cambios.
+ */
+export function postponePendingStep<T extends OrderedStepInput>(steps: T[], index: number): T[] {
+  if (!canPostponeStep(steps, index)) return steps;
+  const step = steps[index];
+  const rest = steps.filter((_, i) => i !== index);
+  let lastPending = -1;
+  rest.forEach((item, i) => {
+    if (item.variant === 'pending') lastPending = i;
+  });
+  const result = rest.slice();
+  result.splice(lastPending + 1, 0, step);
+  return result;
+}

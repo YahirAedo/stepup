@@ -140,7 +140,7 @@ export default function EnfoqueQueue({
               onAdd();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Añadir micro-paso"
+            accessibilityLabel="Añadir paso"
             hitSlop={s(8)}
             style={({ pressed }) => ({
               width: s(32),

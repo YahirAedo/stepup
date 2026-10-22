@@ -82,8 +82,8 @@ export const previoFixtures = {
     description: 'Escribe únicamente los modelos User, Session y VerificationToken para desbloquear la sesión backend.',
   },
 
-  // ⚠️ DESIGN: al guardar un micro-paso debe redirigir a la sección Tareas (no quedarse en Focus).
-  /** Config del formulario inline "Añadir micro-paso" (desglose sin fricción). */
+  // ⚠️ DESIGN: al guardar un paso debe redirigir a la sección Tareas (no quedarse en Focus).
+  /** Config del formulario inline "Añadir paso" (desglose en pasos cortos). */
   microStep: {
     suggestedMinutes: 3,
     maxMinutes: 5,
@@ -136,9 +136,90 @@ export const completadoFixtures = {
   },
   breakCta: 'Descansar 2 min',
   primaryCta: 'CONTINUAR CON EL SIGUIENTE PASO',
-  secondaryCta: 'Guardar progreso y descansar por hoy',
+  secondaryCta: 'Guardar y salir',
   microCopy: 'Cada paso hecho cuenta.',
 } as const;
+
+// ──────────────────────────────────────────────────────────────
+// Estado COMPLETADO — escenarios (Lote C)
+// ──────────────────────────────────────────────────────────────
+
+/**
+ * Los tres cierres posibles al terminar un paso:
+ * - `next-step`: queda otro paso en la misma tarea (cierre por defecto).
+ * - `last-step`: era el último paso de la tarea.
+ * - `all-done`: no quedan tareas activas.
+ */
+export type CompletadoScenario = 'next-step' | 'last-step' | 'all-done';
+
+export interface CompletadoScenarioFixture {
+  headerTitle: string;
+  headline: string;
+  durationLabel: string;
+  /** `{duration}` se reemplaza por durationLabel. */
+  subtitleTemplate: string;
+  recapLabel: string;
+  completedStepName: string;
+  /** Sin siguiente paso (último de la tarea / sin pendientes) se omite. */
+  nextStep?: { label: string; name: string; description: string; minutes: number };
+  breakCta: string;
+  primaryCta: string;
+  secondaryCta: string;
+  microCopy: string;
+}
+
+/** SOLO DESIGN LAB: conmutador de estados del cierre de paso. */
+export const completadoDemo: {
+  label: string;
+  options: Array<{ key: CompletadoScenario; label: string }>;
+} = {
+  label: 'Estado del cierre',
+  options: [
+    { key: 'next-step', label: 'Queda otro paso' },
+    { key: 'last-step', label: 'Último paso de la tarea' },
+    { key: 'all-done', label: 'No quedan tareas' },
+  ],
+};
+
+export const completadoScenarios: Record<CompletadoScenario, CompletadoScenarioFixture> = {
+  'next-step': {
+    headerTitle: completadoFixtures.headerTitle,
+    headline: completadoFixtures.headline,
+    durationLabel: completadoFixtures.durationLabel,
+    subtitleTemplate: completadoFixtures.subtitleTemplate,
+    recapLabel: completadoFixtures.recapLabel,
+    completedStepName: completadoFixtures.completedStepName,
+    nextStep: completadoFixtures.nextStep,
+    breakCta: completadoFixtures.breakCta,
+    primaryCta: completadoFixtures.primaryCta,
+    secondaryCta: completadoFixtures.secondaryCta,
+    microCopy: completadoFixtures.microCopy,
+  },
+  'last-step': {
+    headerTitle: 'Tarea terminada',
+    headline: '¡Tarea terminada!',
+    durationLabel: completadoFixtures.durationLabel,
+    subtitleTemplate: '¡Felicitaciones! {duration} de trabajo. Cerraste todos los pasos de la tarea.',
+    recapLabel: 'Logro registrado',
+    completedStepName: 'Probar conexión local a la base de datos',
+    breakCta: 'Descansar 2 min',
+    primaryCta: 'VOLVER A MIS TAREAS',
+    secondaryCta: 'Guardar y salir',
+    microCopy: 'Cada paso hecho cuenta.',
+  },
+  'all-done': {
+    headerTitle: 'Todo al día',
+    headline: '¡Todo al día!',
+    durationLabel: completadoFixtures.durationLabel,
+    subtitleTemplate: '¡Felicitaciones! {duration} de trabajo. No te queda nada pendiente.',
+    recapLabel: 'Logro registrado',
+    completedStepName: 'Revisar variables de entorno en .env.example',
+    breakCta: 'Descansar 2 min',
+    primaryCta: 'CREAR UNA TAREA',
+    secondaryCta: 'Guardar y salir',
+    microCopy: 'Cada paso hecho cuenta.',
+  },
+};
 
 // ──────────────────────────────────────────────────────────────
 // Helpers para derivar valores del running view
@@ -160,14 +241,12 @@ export const sinTareasFixtures = {
   headerTitle: 'Focus — Sin tareas',
   status: {
     chip: 'Sin tareas activas',
-    breatheIdle: 'Inspirar',
-    breatheActive: 'Exhalar...',
   },
   sanctuary: {
     headline: 'Todo al día',
     body: 'Cuando quieras, elegí el siguiente paso.',
     primaryCta: 'Crear tarea',
-    secondaryCta: 'Ver historial',
+    secondaryCta: 'Ver completadas',
   },
   cadence: {
     label: 'Ritmo de hoy',

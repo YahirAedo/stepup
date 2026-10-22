@@ -2,6 +2,7 @@ import React, { useEffect, useState, createRef } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, useNavigationState, type NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -142,20 +143,22 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <NavigationContainer ref={rootNavigationRef}>
-        <RootStack.Navigator
-          initialRouteName={initialRoute}
-          screenOptions={{ headerShown: false }}
-        >
-          <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
-          <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
-          <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
-          <RootStack.Screen name="Login" component={LoginScreen} />
-          <RootStack.Screen name="Register" component={RegisterScreen} />
-          <RootStack.Screen name="MainTabs" component={AppContent} />
-        </RootStack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <NavigationContainer ref={rootNavigationRef}>
+          <RootStack.Navigator
+            initialRouteName={initialRoute}
+            screenOptions={{ headerShown: false }}
+          >
+            <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
+            <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
+            <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
+            <RootStack.Screen name="Login" component={LoginScreen} />
+            <RootStack.Screen name="Register" component={RegisterScreen} />
+            <RootStack.Screen name="MainTabs" component={AppContent} />
+          </RootStack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -6,12 +6,12 @@ import {
   sereneTypography,
   sereneSpacing,
   sereneBorderRadius,
-  withAlpha,
   useResponsive,
 } from '../../theme/serene';
 import { mci } from './mciIconMap';
+import SegmentedProgressBar, { type StepSegmentStatus } from './SegmentedProgressBar';
 
-export type StepSegmentStatus = 'done' | 'current' | 'pending';
+export type { StepSegmentStatus } from './SegmentedProgressBar';
 
 export interface StepProgressPanelProps {
   /** "50% completado" */
@@ -29,10 +29,8 @@ export interface StepProgressPanelProps {
 /**
  * Panel de avance segmentado del Detalle (bloque "Visual Progress Panel").
  *
- * El mockup dibuja N segmentos con separacion (`gap-0.5 p-[1px]`), coloreados
- * por estado: completado `primary`, actual `primary-fixed-dim` con overlay
- * pulsante, pendiente `surface-container-highest`. Reusa el patron visual de
- * `ProgressTrack` pero con segmentos discretos con gap (que aquel no soporta).
+ * Envuelve `SegmentedProgressBar` (barra compartida con la tarjeta "en foco"
+ * del Listado) con el header de % / tiempo restante y el footer de pasos listos.
  */
 export default function StepProgressPanel({
   percentLabel,
@@ -42,17 +40,6 @@ export default function StepProgressPanel({
   statuses,
 }: StepProgressPanelProps) {
   const { scale: s } = useResponsive();
-
-  const segmentColor = (status: StepSegmentStatus) => {
-    switch (status) {
-      case 'done':
-        return sereneColors.primary;
-      case 'current':
-        return sereneColors['primary-fixed-dim'];
-      default:
-        return sereneColors['surface-container-highest'];
-    }
-  };
 
   return (
     <View
@@ -80,44 +67,8 @@ export default function StepProgressPanel({
         </RNText>
       </View>
 
-      {/* Barra segmentada */}
-      <View
-        style={{
-          height: s(8),
-          flexDirection: 'row',
-          gap: s(2),
-          padding: s(1),
-          borderRadius: sereneBorderRadius.full,
-          backgroundColor: sereneColors['surface-container-high'],
-          overflow: 'hidden',
-        }}
-      >
-        {statuses.map((status, idx) => (
-          <View
-            key={idx}
-            style={{
-              flex: 1,
-              height: '100%',
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: segmentColor(status),
-              overflow: 'hidden',
-            }}
-          >
-            {status === 'current' && (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: withAlpha(sereneColors.primary, 0.4),
-                }}
-              />
-            )}
-          </View>
-        ))}
-      </View>
+      {/* Barra segmentada compartida */}
+      <SegmentedProgressBar statuses={statuses} />
 
       {/* Footer: pasos listos + ritmo */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

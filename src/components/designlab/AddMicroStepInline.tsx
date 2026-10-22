@@ -132,7 +132,7 @@ export default function AddMicroStepInline({
           onPress={handleSave}
           disabled={!canSave}
           accessibilityRole="button"
-          accessibilityLabel="Guardar micro-paso"
+          accessibilityLabel="Guardar paso"
           style={({ pressed }) => ({
             paddingHorizontal: sereneSpacing['space-lg'],
             paddingVertical: s(8),

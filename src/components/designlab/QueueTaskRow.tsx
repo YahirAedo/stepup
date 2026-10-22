@@ -20,12 +20,16 @@ export interface QueueTaskItem {
   totalMinutes: number;
   status: QueueTaskStatus;
   statusLabel: string;
+  /** Vencimiento (dato neutro), ya formateado. Opcional. */
+  dueLabel?: string;
 }
 
 export interface QueueTaskRowProps {
   item: QueueTaskItem;
   onToggleComplete?: () => void;
   onPress?: () => void;
+  /** Texto para tareas sin pasos (reemplaza "0 pasos"). */
+  noStepsLabel?: string;
 }
 
 /**
@@ -34,8 +38,9 @@ export interface QueueTaskRowProps {
  * Checkbox de completar (visual; la preview no persiste), nombre truncado,
  * meta "X pasos (~Y min total)" + badge de estado (Lista para iniciar =
  * secondary-container; Borrador = surface-container) y chevron de navegacion.
+ * Con `noStepsLabel`, una tarea sin pasos muestra ese aviso en vez del conteo.
  */
-export default function QueueTaskRow({ item, onToggleComplete, onPress }: QueueTaskRowProps) {
+export default function QueueTaskRow({ item, onToggleComplete, onPress, noStepsLabel }: QueueTaskRowProps) {
   const { scale: s } = useResponsive();
   const isReady = item.status === 'ready';
 
@@ -89,8 +94,37 @@ export default function QueueTaskRow({ item, onToggleComplete, onPress }: QueueT
             <RNText
               style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
             >
-              {item.stepCount} pasos (~{item.totalMinutes} min total)
+              {item.stepCount === 0 && noStepsLabel
+                ? noStepsLabel
+                : `${item.stepCount} pasos (~${item.totalMinutes} min total)`}
             </RNText>
+            {item.dueLabel ? (
+              <>
+                <View
+                  style={{
+                    width: s(4),
+                    height: s(4),
+                    borderRadius: sereneBorderRadius.full,
+                    backgroundColor: sereneColors['outline-variant'],
+                  }}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(4) }}>
+                  <MaterialCommunityIcons
+                    name={mci('calendar_today')}
+                    size={s(14)}
+                    color={sereneColors['on-surface-variant']}
+                  />
+                  <RNText
+                    style={[
+                      sereneTypography['label-sm'] as TextStyle,
+                      { color: sereneColors['on-surface-variant'] },
+                    ]}
+                  >
+                    {item.dueLabel}
+                  </RNText>
+                </View>
+              </>
+            ) : null}
             <View
               style={{
                 width: s(4),
