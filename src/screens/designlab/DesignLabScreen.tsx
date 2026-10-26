@@ -107,7 +107,7 @@ const TAREAS_FLUJO_A: MockupEntry[] = [
   {
     key: 'tareas-a-listado',
     title: 'A — Listado',
-    description: 'Enfoque: una superficie primaria, tarjeta en foco y cola de espera atenuada',
+    description: 'Enfoque: una superficie primaria, tarjeta en foco y lista en espera atenuada',
     icon: 'format-list-checks',
     target: 'TareasAListado',
   },

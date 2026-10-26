@@ -9,25 +9,21 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import BottomSheet from './BottomSheet';
-import DurationChips from './DurationChips';
-import MinutesStepper from './MinutesStepper';
 import { mci } from './mciIconMap';
 import {
   sereneColors,
   sereneTypography,
   sereneSpacing,
   sereneBorderRadius,
-  withAlpha,
   useResponsive,
 } from '../../theme/serene';
-import { frictionIcons, frictionLabels, frictionLevelFor, nextStepPosition } from '../../utils/microplan';
 
 export interface EditarPasoSheetProps {
   visible: boolean;
   onClose: () => void;
-  onSave: () => void;
-  onDelete: () => void;
-  /** Titulo de la tarea en contexto (no editable aca). */
+  /** Recibe el nombre y la duración editados (duración en minutos, número). */
+  onSave: (values: { title: string; duration: number }) => void;
+  /** Título de la tarea en contexto (no editable acá). */
   taskTitle: string;
   initialTitle: string;
   initialDuration: number;
@@ -36,17 +32,19 @@ export interface EditarPasoSheetProps {
 }
 
 /**
- * UNICA propuesta de "Editar paso" como bottom sheet (compartida por las 3
- * variantes). Es presentacional sobre props: la duracion calibra el badge de
- * friccion con la logica pura de `microplan`.
+ * Única propuesta de "Editar paso" como bottom sheet (compartida por las 3
+ * variantes). Solo nombre y duración. Sin nota, sin papelera, sin +/- en la
+ * duración (se escribe directamente), sin subir/bajar, sin fricción.
  *
- * // REQUIERE MIGRACIÓN: nota por paso (`Step.note`) no existe en el modelo.
+ * Es presentacional sobre props: la pantalla host persiste el resultado.
+ *
+ * // REQUIERE MIGRACIÓN: `onSave` aún no conecta con StepService; el paso
+ * real se guarda al salir de la pantalla (Crear/Editar/Detalle).
  */
 export default function EditarPasoSheet({
   visible,
   onClose,
   onSave,
-  onDelete,
   taskTitle,
   initialTitle,
   initialDuration,
@@ -55,21 +53,19 @@ export default function EditarPasoSheet({
 }: EditarPasoSheetProps) {
   const { scale: s } = useResponsive();
   const [title, setTitle] = useState(initialTitle);
-  const [duration, setDuration] = useState(initialDuration);
-  const [note, setNote] = useState('');
-  const [pos, setPos] = useState(position);
+  const [duration, setDuration] = useState(String(initialDuration));
 
   useEffect(() => {
     if (visible) {
       setTitle(initialTitle);
-      setDuration(initialDuration);
-      setNote('');
-      setPos(position);
+      setDuration(String(initialDuration));
     }
-  }, [visible, initialTitle, initialDuration, position]);
+  }, [visible, initialTitle, initialDuration]);
 
-  const frictionLevel = frictionLevelFor(duration);
-  const frictionColor = frictionLevel === 'high' ? sereneColors.error : sereneColors.primary;
+  const handleSave = () => {
+    const nextDuration = Math.max(1, Number(duration) || 1);
+    onSave({ title: title.trim(), duration: nextDuration });
+  };
 
   return (
     <BottomSheet visible={visible} onClose={onClose} closeLabel="Cerrar edición de paso">
@@ -125,103 +121,19 @@ export default function EditarPasoSheet({
           </RNText>
         </View>
 
-        <DurationChips value={duration} onChange={setDuration} />
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: sereneSpacing['space-sm'],
-            flexWrap: 'wrap',
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: s(6),
-              paddingHorizontal: s(10),
-              paddingVertical: s(6),
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: withAlpha(sereneColors['secondary-container'], 0.6),
-            }}
-          >
-            <RNText style={[sereneTypography['body-sm'] as TextStyle, { color: frictionColor }]}>
-              {frictionIcons[frictionLevel]}
-            </RNText>
-            <RNText style={[sereneTypography['label-md'] as TextStyle, { color: frictionColor }]}>
-              {frictionLabels[frictionLevel]}
-            </RNText>
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
-            <MinutesStepper value={duration} onChange={setDuration} />
-          </View>
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: sereneSpacing['space-sm'],
-          }}
-        >
-          <RNText
-            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-          >
-            {`Secuencia · Paso ${pos} de ${total}`}
-          </RNText>
-          <View style={{ flexDirection: 'row', gap: sereneSpacing['space-sm'] }}>
-            <Pressable
-              onPress={() => setPos((p) => nextStepPosition(p, total, 'up'))}
-              accessibilityRole="button"
-              accessibilityLabel="Mover paso arriba"
-              style={({ pressed }) => ({
-                width: s(44),
-                height: s(44),
-                borderRadius: sereneBorderRadius.lg,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: sereneColors['surface-container-low'],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <MaterialCommunityIcons name={mci('expand_less')} size={s(20)} color={sereneColors['on-surface']} />
-            </Pressable>
-            <Pressable
-              onPress={() => setPos((p) => nextStepPosition(p, total, 'down'))}
-              accessibilityRole="button"
-              accessibilityLabel="Mover paso abajo"
-              style={({ pressed }) => ({
-                width: s(44),
-                height: s(44),
-                borderRadius: sereneBorderRadius.lg,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: sereneColors['surface-container-low'],
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <MaterialCommunityIcons name={mci('expand_more')} size={s(20)} color={sereneColors['on-surface']} />
-            </Pressable>
-          </View>
-        </View>
-
         <View style={{ gap: sereneSpacing['space-xs'] }}>
           <RNText
             style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
           >
-            Nota mental para desatascarte (opcional)
+            Duración (minutos)
           </RNText>
           <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="Ej: si te trabás, escribí una sola oración y seguí."
+            value={duration}
+            onChangeText={setDuration}
+            keyboardType="numeric"
+            placeholder="Ej: 5"
             placeholderTextColor={sereneColors['on-surface-variant']}
-            multiline
-            maxLength={140}
+            maxLength={3}
             style={[
               sereneTypography['body-md'] as TextStyle,
               {
@@ -229,55 +141,47 @@ export default function EditarPasoSheet({
                 borderRadius: sereneBorderRadius.lg,
                 padding: sereneSpacing['space-md'],
                 color: sereneColors['on-surface'],
-                minHeight: s(64),
+                minHeight: s(56),
                 textAlignVertical: 'top',
               },
             ]}
           />
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: sereneSpacing['space-sm'],
+          }}
+        >
           <RNText
-            style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
           >
-            // REQUIERE MIGRACIÓN: la nota por paso no existe todavía en el modelo.
+            {`Secuencia · Paso ${position} de ${total}`}
           </RNText>
         </View>
       </ScrollView>
 
-      <View style={{ gap: sereneSpacing['space-sm'], paddingTop: sereneSpacing['space-sm'] }}>
-        <Pressable
-          onPress={onSave}
-          accessibilityRole="button"
-          accessibilityLabel="Guardar paso"
-          style={({ pressed }) => ({
-            minHeight: s(48),
-            borderRadius: sereneBorderRadius.lg,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: sereneColors.primary,
-            opacity: pressed ? 0.9 : 1,
-          })}
-        >
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-            Guardar paso
-          </RNText>
-        </Pressable>
-
-        <Pressable
-          onPress={onDelete}
-          accessibilityRole="button"
-          accessibilityLabel="Eliminar este paso"
-          style={({ pressed }) => ({
-            minHeight: s(44),
-            borderRadius: sereneBorderRadius.lg,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: pressed ? withAlpha(sereneColors['error-container'], 0.5) : 'transparent',
-          })}
-        >
-          <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.error }]}>
-            Eliminar este paso
-          </RNText>
-        </Pressable>
-      </View>
+      <Pressable
+        onPress={handleSave}
+        accessibilityRole="button"
+        accessibilityLabel="Guardar paso"
+        style={({ pressed }) => ({
+          minHeight: s(48),
+          borderRadius: sereneBorderRadius.lg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: sereneColors.primary,
+          opacity: pressed ? 0.9 : 1,
+        })}
+      >
+        <MaterialCommunityIcons name={mci('check')} size={s(18)} color={sereneColors['on-primary']} />
+        <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+          Guardar paso
+        </RNText>
+      </Pressable>
     </BottomSheet>
   );
 }

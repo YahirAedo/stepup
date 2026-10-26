@@ -51,8 +51,6 @@ export interface FlujoAListadoFixtures {
   copy: {
     focusBadge: string;
     focusMinutesSuffix: string;
-    stepWord: string;
-    sessionLabel: string;
     focusCta: string;
     toggleOpen: string;
     toggleClose: string;
@@ -132,6 +130,8 @@ export interface FlujoADetalleFixtures {
     primaryPrefix: string;
     primarySuffix: string;
   };
+  /** Pie de página - texto de cierre */
+  footerNote: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -207,10 +207,10 @@ export const flujoAFormFixtures: FlujoAFormFixtures = {
     describeReady: 'Listo. Revisá y ajustá la descripción.',
     describeSuggested: 'Dejar lista la propuesta para el cliente corporativo, con foco en el alcance técnico.',
   },
-  dueLabel: 'Vencimiento (opcional)',
-  dueNone: 'Sin vencimiento',
-  dueClear: 'Quitar vencimiento',
-  dueA11y: 'Fecha de vencimiento',
+  dueLabel: 'Fecha meta',
+  dueNone: 'Sin fecha meta',
+  dueClear: 'Quitar fecha meta',
+  dueA11y: 'Fecha meta',
   // Pasos sugeridos por IA (`AIService.suggestSteps`); acá precargados como demo.
   suggestedSteps: [
     { id: 'ai-1', name: 'Abrir el borrador actual', minutes: 2 },
@@ -256,9 +256,7 @@ export const flujoAListadoFixtures: FlujoAListadoFixtures = {
   copy: {
     focusBadge: 'En foco',
     focusMinutesSuffix: 'min',
-    stepWord: 'Paso',
-    sessionLabel: 'Avance de la tarea',
-    focusCta: 'Reanudar foco',
+    focusCta: 'Continuar',
     toggleOpen: 'Ver pasos',
     toggleClose: 'Ocultar pasos',
     categoryLabels: {
@@ -273,8 +271,8 @@ export const flujoAListadoFixtures: FlujoAListadoFixtures = {
     badge: 'Dividir en pasos',
   },
   queue: {
-    title: 'Cola de espera',
-    subtitle: '(Sin sobrecarga)',
+    title: 'Lista en espera',
+    subtitle: '',
     empty: 'Nada por acá todavía.',
     noSteps: 'Esta tarea no tiene pasos. Agregá uno para poder empezar',
   },
@@ -343,10 +341,10 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
     description:
       'Preparar el documento para el cliente corporativo. Prioridad al alcance técnico antes de afinar márgenes.',
     dueDate: '2026-10-24',
-    dueLabel: 'Vencimiento (opcional)',
-    dueNone: 'Sin vencimiento',
-    dueA11y: 'Fecha de vencimiento',
-    dueClear: 'Quitar vencimiento',
+    dueLabel: 'Fecha meta',
+    dueNone: 'Sin fecha meta',
+    dueClear: 'Quitar fecha meta',
+    dueA11y: 'Fecha meta',
   },
   stepsTitle: 'Secuencia de pasos',
   editStepLabel: 'Editar',
@@ -409,9 +407,11 @@ export const flujoADetalleFixtures: FlujoADetalleFixtures = {
     cancel: 'Cancelar',
   },
   actions: {
-    primaryPrefix: 'Iniciar paso',
-    primarySuffix: 'en foco',
+    primaryPrefix: 'Cuando quieras',
+    primarySuffix: 'creá una tarea',
   },
+  /** Pie de página - texto de cierre */
+  footerNote: 'Una tarea a la vez. El resto se acomoda.',
 };
 
 export const flujoACrearFixtures = {

@@ -22,6 +22,26 @@ export default function FocusCompletadoScreen() {
   const [scenario, setScenario] = useState<CompletadoScenario>('next-step');
   const f = completadoScenarios[scenario];
 
+  const handleContinue = () => {
+    if (scenario === 'next-step') {
+      navigation.navigate('TareasAListado');
+      return;
+    }
+    if (scenario === 'last-step') {
+      navigation.navigate('TareasAListado');
+      return;
+    }
+    if (scenario === 'all-done') {
+      navigation.navigate('TareasACrear');
+      return;
+    }
+    if (scenario === 'postpone') {
+      navigation.navigate('TareasAListado');
+      return;
+    }
+    navigation.navigate('TareasAListado');
+  };
+
   return (
     <StepCompleteView
       demoControl={<FocusStateDemoControl state={scenario} onChange={setScenario} />}
@@ -31,20 +51,14 @@ export default function FocusCompletadoScreen() {
       recapLabel={f.recapLabel}
       completedStepName={f.completedStepName}
       nextStep={f.nextStep}
-      breakCta={f.breakCta}
-      primaryCta={f.primaryCta}
-      secondaryCta={f.secondaryCta}
+      breakCta="Descansar 2 min"
+      primaryCta="Salir"
+      secondaryCta=""
       microCopy={f.microCopy}
       headerTitle={f.headerTitle}
-      onContinue={() => {
-        if (scenario === 'next-step') {
-          console.log('[DesignLab] Continue next step');
-          return;
-        }
-        navigation.navigate(scenario === 'all-done' ? 'TareasACrear' : 'TareasAListado');
-      }}
+      onContinue={handleContinue}
       onRest={() => navigation.navigate('TareasAListado')}
-      onBreak={() => console.log('[DesignLab] Break')}
+      onBreak={() => navigation.navigate('TareasAListado')}
     />
   );
 }

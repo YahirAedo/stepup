@@ -13,7 +13,7 @@ import { mci } from './mciIconMap';
 import { dateFromIso, formatDueDate, isoFromDate } from '../../utils/designlab/dueDate';
 
 export interface DueDateFieldProps {
-  /** Valor ISO corto `YYYY-MM-DD`, o `undefined` si no hay vencimiento. */
+  /** Valor ISO corto `YYYY-MM-DD`, o `undefined` si no hay fecha meta. */
   value?: string;
   onChange: (iso?: string) => void;
   label: string;
@@ -26,7 +26,7 @@ export interface DueDateFieldProps {
 }
 
 /**
- * Campo de vencimiento (dato neutro y opcional). Abre el date picker nativo
+ * Campo de fecha meta (dato neutro y opcional). Abre el date picker nativo
  * (`@react-native-community/datetimepicker`, ya en dependencias). Reusable por
  * el formulario de Crear/Editar y por el Detalle de la tarea.
  */

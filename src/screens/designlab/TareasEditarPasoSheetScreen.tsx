@@ -91,7 +91,6 @@ export default function TareasEditarPasoSheetScreen() {
         visible={visible}
         onClose={() => setVisible(false)}
         onSave={() => setVisible(false)}
-        onDelete={() => setVisible(false)}
         taskTitle={f.taskTitle}
         initialTitle={f.stepTitle}
         initialDuration={f.durationMin}

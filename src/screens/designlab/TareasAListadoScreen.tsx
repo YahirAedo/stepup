@@ -9,7 +9,8 @@ import { useBottomLayout } from '../../theme/layout';
 import DesignLabHeader from '../../components/designlab/DesignLabHeader';
 import FilterPills, { type FilterPillOption } from '../../components/designlab/FilterPills';
 import FeaturedTaskCard from '../../components/designlab/FeaturedTaskCard';
-import QueueTaskRow, { type QueueTaskItem } from '../../components/designlab/QueueTaskRow';
+import QueueTaskRow, { type QueueTaskItem, type QueueTaskStatus } from '../../components/designlab/QueueTaskRow';
+import { type StepSegmentStatus } from '../../components/designlab/SegmentedProgressBar';
 import { mci } from '../../components/designlab/mciIconMap';
 import {
   sereneColors,
@@ -41,6 +42,8 @@ export default function TareasAListadoScreen() {
 
   const f = flujoAListadoFixtures;
   const { tasks, copy } = f;
+
+  const whisperColor = withAlpha(sereneColors['on-surface-variant'], 0.6);
 
   const categories = useMemo<TaskCategory[]>(
     () => tasks.map((task) => deriveTaskCategory(task.steps)),
@@ -81,7 +84,6 @@ export default function TareasAListadoScreen() {
     const task = tasks[focusIndex];
     const total = task.steps.length;
     if (total === 0) return null;
-    const completed = task.steps.filter((step) => step.status === 'completed').length;
     const found = task.steps.findIndex((step) => step.status === 'pending');
     const currentIndex = found < 0 ? total - 1 : found;
     const currentStep = task.steps[currentIndex];
@@ -89,10 +91,7 @@ export default function TareasAListadoScreen() {
       badge: copy.focusBadge,
       minutesLabel: `~${currentStep.minutes} ${copy.focusMinutesSuffix}`,
       title: task.name,
-      stepLabel: `${copy.stepWord} ${currentIndex + 1}/${total}`,
       stepTitle: currentStep.name,
-      sessionLabel: copy.sessionLabel,
-      sessionPercent: completed / total,
       primaryCta: copy.focusCta,
       dueLabel: task.dueDate ? formatDueDate(task.dueDate) : undefined,
       steps: task.steps.map((step, index) => ({
@@ -108,15 +107,28 @@ export default function TareasAListadoScreen() {
       tasks
         .map((task, index) => ({ task, index }))
         .filter(({ index }) => index !== focusIndex && categories[index] === activeFilter)
-        .map(({ task, index }) => ({
-          id: task.id,
-          name: task.name,
-          stepCount: task.steps.length,
-          totalMinutes: task.steps.reduce((acc, step) => acc + step.minutes, 0),
-          status: 'ready' as const,
-          statusLabel: copy.categoryLabels[categories[index]],
-          dueLabel: task.dueDate ? formatDueDate(task.dueDate) : undefined,
-        })),
+          .map(({ task }) => {
+            const allCompleted = task.steps.length > 0 && task.steps.every((step) => step.status === 'completed');
+            const completedStep = task.steps
+              .filter((step) => step.status === 'completed')
+              .sort((a, b) => (a.completedAt ?? '').localeCompare(b.completedAt ?? ''))
+              .pop();
+            const completedDateStr = completedStep?.completedAt
+              ? completedStep.completedAt.split('T')[0]
+              : undefined;
+            return {
+              id: task.id,
+              name: task.name,
+              stepCount: task.steps.length,
+              totalMinutes: task.steps.reduce((acc, step) => acc + step.minutes, 0),
+              status: (allCompleted ? 'completed' : 'ready') as QueueTaskStatus,
+              stepStatuses: task.steps.map((step) =>
+                step.status === 'completed' ? ('done' as StepSegmentStatus) : ('pending' as StepSegmentStatus)
+              ),
+              dueLabel: task.dueDate ? formatDueDate(task.dueDate) : undefined,
+              completedDate: completedDateStr ? formatDueDate(completedDateStr) : undefined,
+            };
+          }),
     [tasks, categories, focusIndex, activeFilter, copy],
   );
 
@@ -169,10 +181,7 @@ export default function TareasAListadoScreen() {
             badge={focus.badge}
             minutesLabel={focus.minutesLabel}
             title={focus.title}
-            stepLabel={focus.stepLabel}
             stepTitle={focus.stepTitle}
-            sessionLabel={focus.sessionLabel}
-            sessionPercent={focus.sessionPercent}
             primaryCta={focus.primaryCta}
             toggleOpen={copy.toggleOpen}
             toggleClose={copy.toggleClose}
@@ -181,68 +190,6 @@ export default function TareasAListadoScreen() {
             onResume={() => navigation.navigate('TareasADetalle')}
           />
         )}
-
-        {/* Quick-create */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={f.quickCreate.title}
-          onPress={() => navigation.navigate('TareasACrear')}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: sereneSpacing['space-md'],
-            padding: s(14),
-            borderRadius: sereneBorderRadius.xl,
-            backgroundColor: sereneColors['surface-container'],
-            opacity: pressed ? 0.9 : 1,
-          })}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-md'], flex: 1, minWidth: 0 }}>
-            <View
-              style={{
-                width: s(36),
-                height: s(36),
-                borderRadius: sereneBorderRadius.lg,
-                backgroundColor: sereneColors['surface-container-lowest'],
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <MaterialCommunityIcons name={mci('add')} size={s(20)} color={sereneColors['primary-container']} />
-            </View>
-            <View style={{ minWidth: 0, flex: 1 }}>
-              <RNText
-                numberOfLines={1}
-                style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'] }]}
-              >
-                {f.quickCreate.title}
-              </RNText>
-              <RNText
-                style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-              >
-                {f.quickCreate.subtitle}
-              </RNText>
-            </View>
-          </View>
-          <View
-            style={{
-              paddingHorizontal: s(8),
-              paddingVertical: s(4),
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: withAlpha(sereneColors['secondary-container'], 0.8),
-            }}
-          >
-            <RNText
-              style={[
-                sereneTypography['label-sm'] as TextStyle,
-                { color: sereneColors['primary-container'], fontWeight: '600' },
-              ]}
-            >
-              {f.quickCreate.badge}
-            </RNText>
-          </View>
-        </Pressable>
 
         {/* Cola (filtrada por la categoría activa) */}
         <View style={{ gap: sereneSpacing['space-sm'] }}>
@@ -272,7 +219,6 @@ export default function TareasAListadoScreen() {
                 <QueueTaskRow
                   key={item.id}
                   item={item}
-                  noStepsLabel={f.queue.noSteps}
                   onPress={() => navigation.navigate('TareasADetalle')}
                 />
               ))
@@ -304,20 +250,21 @@ export default function TareasAListadoScreen() {
           </RNText>
         </Pressable>
 
-        {/* Cierre al pie (reemplaza la foto decorativa) */}
-        <RNText
-          style={[
-            sereneTypography['body-sm'] as TextStyle,
-            {
-              color: sereneColors['on-surface-variant'],
-              textAlign: 'center',
-              paddingTop: s(4),
-              opacity: 0.9,
-            },
-          ]}
+        {/* Cierre al pie - diseño igual que FocusFixture */}
+        <View
+          style={{
+            alignItems: 'center',
+            paddingTop: sereneSpacing['space-xs'],
+            paddingBottom: sereneSpacing['space-xs'],
+          }}
         >
-          {f.footerNote}
-        </RNText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(4) }}>
+            <MaterialCommunityIcons name="spa" size={s(14)} color={whisperColor} />
+            <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: whisperColor }]}>
+              {f.footerNote}
+            </RNText>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );

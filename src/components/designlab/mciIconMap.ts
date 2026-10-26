@@ -34,6 +34,7 @@ export const mciIconMap = {
   eco: 'leaf',
   edit: 'pencil-outline',
   delete: 'trash-can-outline',
+  undo: 'undo',
   more_vert: 'dots-vertical',
   flag: 'flag-outline',
   lightbulb: 'lightbulb-on-outline',

@@ -10,8 +10,9 @@ import {
   useResponsive,
 } from '../../theme/serene';
 import { mci } from './mciIconMap';
+import SegmentedProgressBar, { type StepSegmentStatus } from './SegmentedProgressBar';
 
-export type QueueTaskStatus = 'ready' | 'draft';
+export type QueueTaskStatus = 'ready' | 'completed';
 
 export interface QueueTaskItem {
   id: string;
@@ -19,36 +20,42 @@ export interface QueueTaskItem {
   stepCount: number;
   totalMinutes: number;
   status: QueueTaskStatus;
-  statusLabel: string;
-  /** Vencimiento (dato neutro), ya formateado. Opcional. */
+  /** Estados de cada paso para la barra de avance (uno por paso). */
+  stepStatuses?: StepSegmentStatus[];
+  /** Fecha meta (dato neutro), ya formateada. Opcional. */
   dueLabel?: string;
+  /** Fecha de finalizacion (dato neutro), ya formateada. Solo tareas completadas. */
+  completedDate?: string;
 }
 
 export interface QueueTaskRowProps {
   item: QueueTaskItem;
-  onToggleComplete?: () => void;
   onPress?: () => void;
-  /** Texto para tareas sin pasos (reemplaza "0 pasos"). */
-  noStepsLabel?: string;
 }
 
 /**
- * Fila de la "Cola de espera" (bloque F del Listado).
+ * Fila de la "Lista en espera" (bloque F del Listado).
  *
- * Checkbox de completar (visual; la preview no persiste), nombre truncado,
- * meta "X pasos (~Y min total)" + badge de estado (Lista para iniciar =
- * secondary-container; Borrador = surface-container) y chevron de navegacion.
- * Con `noStepsLabel`, una tarea sin pasos muestra ese aviso en vez del conteo.
+ * Nombre truncado en una línea, barra de avance debajo (si tiene pasos) o chip
+ * compacto "Definir" (si no tiene pasos), ícono de calendario con fecha (si
+ * hay) y flecha de navegar a la derecha. Tocar la tarjeta abre únicamente el
+ * Detalle de la tarea.
+ *
+ * Tareas completadas: fondo salvia, círculo con check a la izquierda, título
+ * sin tachado ni pill, fecha de finalización y flecha hacia abajo.
  */
-export default function QueueTaskRow({ item, onToggleComplete, onPress, noStepsLabel }: QueueTaskRowProps) {
+export default function QueueTaskRow({ item, onPress }: QueueTaskRowProps) {
   const { scale: s } = useResponsive();
-  const isReady = item.status === 'ready';
+  const isCompleted = item.status === 'completed';
+  const hasSteps = item.stepCount > 0;
+  const stepStatuses = item.stepStatuses ?? Array(item.stepCount).fill('pending');
+  const doneCount = stepStatuses.filter((s) => s === 'done').length;
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Ver detalles de ${item.name}`}
+      accessibilityLabel={isCompleted ? `Ver detalles de ${item.name} (completada)` : `Ver detalles de ${item.name}`}
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
@@ -56,59 +63,75 @@ export default function QueueTaskRow({ item, onToggleComplete, onPress, noStepsL
         gap: sereneSpacing['space-md'],
         padding: s(14),
         borderRadius: sereneBorderRadius.xl,
-        backgroundColor: sereneColors['surface-container-lowest'],
+        backgroundColor: isCompleted
+          ? sereneColors['secondary-container']
+          : sereneColors['surface-container-lowest'],
         ...sereneShadows.card,
         opacity: pressed ? 0.9 : 1,
       })}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: sereneSpacing['space-md'], flex: 1, minWidth: 0 }}>
-        {/* Checkbox */}
-        <Pressable
-          onPress={onToggleComplete}
-          hitSlop={s(8)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: false }}
-          accessibilityLabel={`Completar ${item.name}`}
-          style={({ pressed }) => ({
-            marginTop: s(2),
-            width: s(20),
-            height: s(20),
-            borderRadius: s(6),
-            backgroundColor: sereneColors['surface-container'],
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pressed ? 0.8 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name={mci('check')} size={s(14)} color={sereneColors['primary-container']} />
-        </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: sereneSpacing['space-sm'], flex: 1, minWidth: 0 }}>
+        {isCompleted ? (
+          <View
+            style={{
+              width: s(28),
+              height: s(28),
+              borderRadius: s(14),
+              backgroundColor: sereneColors['primary-container'],
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <MaterialCommunityIcons name={mci('check')} size={s(14)} color={sereneColors['on-primary']} />
+          </View>
+        ) : null}
 
         <View style={{ minWidth: 0, gap: s(4), flex: 1 }}>
           <RNText
             numberOfLines={1}
-            style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-surface'] }]}
+            style={[
+              sereneTypography['label-lg'] as TextStyle,
+              {
+                color: isCompleted ? sereneColors['on-surface-variant'] : sereneColors['on-surface'],
+                textDecorationLine: isCompleted ? 'line-through' : 'none',
+              },
+            ]}
           >
             {item.name}
           </RNText>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: s(8) }}>
-            <RNText
-              style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-            >
-              {item.stepCount === 0 && noStepsLabel
-                ? noStepsLabel
-                : `${item.stepCount} pasos (~${item.totalMinutes} min total)`}
-            </RNText>
-            {item.dueLabel ? (
+
+          {/* Paso + tiempo total */}
+          {hasSteps ? (
+            <View style={{ marginTop: s(4) }}>
+              <RNText
+                style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+              >
+                {item.stepCount} pasos (~{item.totalMinutes} min total)
+              </RNText>
+            </View>
+          ) : null}
+
+          {/* Fecha + calendario */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(6), marginTop: s(4) }}>
+            {isCompleted && item.completedDate ? (
               <>
-                <View
-                  style={{
-                    width: s(4),
-                    height: s(4),
-                    borderRadius: sereneBorderRadius.full,
-                    backgroundColor: sereneColors['outline-variant'],
-                  }}
+                <MaterialCommunityIcons
+                  name={mci('calendar_today')}
+                  size={s(14)}
+                  color={sereneColors['on-surface-variant']}
                 />
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(4) }}>
+                <RNText
+                  style={[
+                    sereneTypography['label-sm'] as TextStyle,
+                    { color: sereneColors['on-surface-variant'] },
+                  ]}
+                >
+                  {item.completedDate}
+                </RNText>
+              </>
+            ) : (
+              item.dueLabel ? (
+                <>
                   <MaterialCommunityIcons
                     name={mci('calendar_today')}
                     size={s(14)}
@@ -122,41 +145,50 @@ export default function QueueTaskRow({ item, onToggleComplete, onPress, noStepsL
                   >
                     {item.dueLabel}
                   </RNText>
-                </View>
-              </>
-            ) : null}
+                </>
+              ) : null
+            )}
+          </View>
+
+          {/* Barra de avance (al fondo) o chip "Definir" */}
+          {hasSteps ? (
+            <View style={{ marginTop: s(4) }}>
+              <SegmentedProgressBar
+                statuses={stepStatuses}
+                accessibilityLabel={`Avance de ${item.name}: ${doneCount} de ${item.stepCount} pasos completados`}
+                accessibilityValue={{
+                  text: item.stepCount > 0 ? `${Math.round((doneCount / item.stepCount) * 100)}%` : '0%',
+                }}
+              />
+            </View>
+          ) : (
             <View
               style={{
-                width: s(4),
-                height: s(4),
-                borderRadius: sereneBorderRadius.full,
-                backgroundColor: sereneColors['outline-variant'],
-              }}
-            />
-            <View
-              style={{
-                paddingHorizontal: s(6),
-                paddingVertical: s(2),
-                borderRadius: sereneBorderRadius.DEFAULT,
-                backgroundColor: isReady
-                  ? sereneColors['secondary-container']
-                  : sereneColors['surface-container'],
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: s(6),
+                marginTop: s(4),
               }}
             >
-              <RNText
-                style={[
-                  sereneTypography['label-sm'] as TextStyle,
-                  {
-                    color: isReady
-                      ? sereneColors['on-secondary-container']
-                      : sereneColors['on-surface-variant'],
-                  },
-                ]}
+              <View
+                style={{
+                  width: s(16),
+                  height: s(16),
+                  borderRadius: s(8),
+                  backgroundColor: sereneColors['surface-container-high'],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                {item.statusLabel}
+                <MaterialCommunityIcons name={mci('add_task')} size={s(10)} color={sereneColors['on-surface-variant']} />
+              </View>
+              <RNText
+                style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+              >
+                Definir pasos
               </RNText>
             </View>
-          </View>
+          )}
         </View>
       </View>
 
@@ -164,14 +196,18 @@ export default function QueueTaskRow({ item, onToggleComplete, onPress, noStepsL
         onPress={onPress}
         hitSlop={s(8)}
         accessibilityRole="button"
-        accessibilityLabel={`Ver detalles de ${item.name}`}
+        accessibilityLabel={isCompleted ? `Ver detalles de ${item.name} (completada)` : `Ver detalles de ${item.name}`}
         style={({ pressed }) => ({
           padding: s(6),
           borderRadius: sereneBorderRadius.lg,
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <MaterialCommunityIcons name={mci('arrow_forward_ios')} size={s(20)} color={sereneColors['on-surface-variant']} />
+        <MaterialCommunityIcons
+          name={isCompleted ? mci('expand_less') : mci('arrow_forward_ios')}
+          size={s(20)}
+          color={sereneColors['on-surface-variant']}
+        />
       </Pressable>
     </Pressable>
   );

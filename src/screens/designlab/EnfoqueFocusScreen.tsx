@@ -9,12 +9,14 @@ import {
   type TextStyle,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { ProfileStackParamList } from '../../types/navigation';
 import { useBottomLayout } from '../../theme/layout';
 import DesignLabHeader from '../../components/designlab/DesignLabHeader';
 import EnfoqueStepCard from '../../components/designlab/EnfoqueStepCard';
 import EnfoqueQueue, { type EnfoqueQueueItem } from '../../components/designlab/EnfoqueQueue';
 import TaskSwitcher, { type TaskSwitcherTask } from '../../components/designlab/TaskSwitcher';
-import AddMicroStepInline from '../../components/designlab/AddMicroStepInline';
 import FocusRunningView from '../../components/designlab/FocusRunningView';
 import StepCompleteView from '../../components/designlab/StepCompleteView';
 import {
@@ -47,11 +49,11 @@ const CROSSFADE_DURATION = 250;
  * Transición: crossfade animado entre fases.
  */
 export default function EnfoqueFocusScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList, 'EnfoqueFocus'>>();
   const { contentPaddingBottom } = useBottomLayout();
   const { scale: s } = useResponsive();
 
   const [phase, setPhase] = useState<Phase>('previo');
-  const [addVisible, setAddVisible] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string>(previoFixtures.taskSwitcher.tasks[0].id);
 
   const activeTask =
@@ -119,13 +121,15 @@ export default function EnfoqueFocusScreen() {
   }, []);
 
   const handlePromote = useCallback((id: string) => {
-    console.log('[DesignLab] Promote to focus:', id);
+    const promoted = previoFixtures.queue.find((q) => q.id === id);
+    if (promoted) {
+      setActiveTaskId(id);
+    }
   }, []);
 
-  const handleSaveMicroStep = useCallback((title: string) => {
-    console.log('[DesignLab] Save micro-step:', title);
-    setAddVisible(false);
-  }, []);
+  const handleAddStep = useCallback(() => {
+    navigation.navigate('TareasADetalle');
+  }, [navigation]);
 
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
@@ -175,29 +179,22 @@ export default function EnfoqueFocusScreen() {
             title={activeTask.stepName}
             description={activeTask.description}
             onStart={switchToCorriendo}
-            onPostpone={() => console.log('[DesignLab] Postpone step')}
+            onPostpone={() => {
+              const queueItems = previoFixtures.queue as unknown as EnfoqueQueueItem[];
+              if (queueItems.length > 0) {
+                setActiveTaskId(queueItems[0].id);
+              }
+            }}
           />
 
-          {/* Superficie secundaria: cola en acordeón + form inline */}
+          {/* Superficie secundaria: cola en acordeón */}
           <View style={{ marginTop: sereneSpacing['space-xl'] }}>
             <EnfoqueQueue
               items={previoFixtures.queue as unknown as EnfoqueQueueItem[]}
               subtitle={previoFixtures.queueSubtitle}
               onPromote={handlePromote}
-              onAdd={() => setAddVisible(true)}
+              onAdd={handleAddStep}
             />
-
-            <View style={{ marginTop: sereneSpacing['space-md'] }}>
-              <AddMicroStepInline
-                visible={addVisible}
-                suggestedMinutes={previoFixtures.microStep.suggestedMinutes}
-                maxMinutes={previoFixtures.microStep.maxMinutes}
-                heading={previoFixtures.microStep.heading}
-                placeholder={previoFixtures.microStep.placeholder}
-                onClose={() => setAddVisible(false)}
-                onSave={handleSaveMicroStep}
-              />
-            </View>
           </View>
 
           <View style={{ marginTop: sereneSpacing['space-xl'] }}>

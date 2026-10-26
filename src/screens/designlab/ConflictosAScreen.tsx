@@ -39,14 +39,19 @@ function VersionCard({
   version,
   actionLabel,
   onChoose,
+  side,
 }: {
   label: string;
   icon: MciName;
   version: ConflictoVersion;
   actionLabel: string;
   onChoose: () => void;
+  side: 'local' | 'server';
 }) {
   const { scale: s } = useResponsive();
+
+  const accentColor =
+    side === 'local' ? sereneColors['surface-tint'] : sereneColors.secondary;
 
   return (
     <View
@@ -55,6 +60,8 @@ function VersionCard({
         gap: sereneSpacing['space-sm'],
         padding: sereneSpacing['space-md'],
         borderRadius: sereneBorderRadius.xl,
+        borderLeftWidth: 4,
+        borderLeftColor: accentColor,
         backgroundColor: sereneColors['surface-container-lowest'],
         ...sereneShadows.card,
       }}
@@ -237,9 +244,15 @@ export default function ConflictosAScreen() {
                   style={{
                     flexDirection: isTablet ? 'row' : 'column',
                     gap: sereneSpacing['space-md'],
+                    borderWidth: 1,
+                    borderColor: sereneColors['outline-variant'],
+                    borderRadius: sereneBorderRadius.xl,
+                    backgroundColor: sereneColors.surface,
+                    padding: sereneSpacing['space-xs'],
                   }}
                 >
                   <VersionCard
+                    side="local"
                     label={conflictosCopy.localLabel}
                     icon="cellphone"
                     version={conflicto.local}
@@ -247,6 +260,7 @@ export default function ConflictosAScreen() {
                     onChoose={() => resolver(conflicto.id)}
                   />
                   <VersionCard
+                    side="server"
                     label={conflictosCopy.serverLabel}
                     icon="cloud-outline"
                     version={conflicto.server}

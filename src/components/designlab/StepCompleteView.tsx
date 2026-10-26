@@ -244,7 +244,12 @@ export default function StepCompleteView({
         </View>
 
         {/* Siguiente paso */}
-        {nextStep && (
+{nextStep && (
+        <Pressable
+          onPress={onContinue}
+          accessibilityRole="button"
+          accessibilityLabel="Siguiente paso"
+        >
         <View
           style={{
             width: '100%',
@@ -340,7 +345,8 @@ export default function StepCompleteView({
             </View>
           </View>
         </View>
-        )}
+        </Pressable>
+      )}
 
         {/* Descanso */}
         <Pressable
@@ -429,6 +435,7 @@ export default function StepCompleteView({
             </RNText>
           </Pressable>
 
+          {secondaryCta && (
           <Pressable
             onPress={onRest}
             accessibilityRole="button"
@@ -465,6 +472,7 @@ export default function StepCompleteView({
               {secondaryCta}
             </RNText>
           </Pressable>
+          )}
         </View>
 
         {/* Microcopy */}

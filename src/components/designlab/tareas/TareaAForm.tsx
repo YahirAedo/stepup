@@ -13,9 +13,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AiStepsPanel, { type AiStatus } from '../AiStepsPanel';
 import AiStateDemoControl from '../AiStateDemoControl';
 import AddMicroStepInline from '../AddMicroStepInline';
-import MinutesStepper from '../MinutesStepper';
-import DraggableStepList from '../DraggableStepList';
 import DueDateField from '../DueDateField';
+import EditarPasoSheet from '../EditarPasoSheet';
+import OrdenarPaso from '../OrdenarPaso';
+import StepRow from '../StepRow';
 import { mci } from '../mciIconMap';
 import {
   sereneColors,
@@ -40,8 +41,9 @@ export interface TareaAFormProps {
 
 /**
  * Cuerpo compartido del formulario de tarea (Variante A "Enfoque"), reusado por
- * Crear y Editar. La IA va primero: banner anti-fricción, título con contador,
- * notas colapsables y la sección de Pasos con `AiStepsPanel`.
+ * Crear y Editar. La IA va primero: banner, título con contador, notas
+ * colapsables y la sección de Pasos con `StepRow` (nombre + duración +
+ * tacho/deshacer). Tap en una fila abre el sheet de edición.
  *
  * Es presentacional sobre fixtures: la pantalla host provee el header, el
  * `ScrollView` y la barra de acción fija.
@@ -58,6 +60,9 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
   const [aiStatus, setAiStatus] = useState<AiStatus>('idle');
   const [describeStatus, setDescribeStatus] = useState<'idle' | 'loading' | 'ready'>('idle');
   const [steps, setSteps] = useState<FlujoAFormStep[]>(defaults.steps);
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Set<string>>(new Set());
+  const [ordenarVisible, setOrdenarVisible] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const stepSeq = useRef(0);
   const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,7 +73,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
       if (suggestTimer.current) clearTimeout(suggestTimer.current);
       if (describeTimer.current) clearTimeout(describeTimer.current);
     },
-    []
+    [],
   );
 
   /**
@@ -97,24 +102,9 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
     }, 1100);
   }, [applyAiStatus]);
 
-  const updateStepTitle = useCallback((id: string, nextTitle: string) => {
-    setSteps((prev) => prev.map((step) => (step.id === id ? { ...step, name: nextTitle } : step)));
-  }, []);
-
-  const removeStep = useCallback((id: string) => {
-    setSteps((prev) => prev.filter((step) => step.id !== id));
-  }, []);
-
-  const updateStepMinutes = useCallback((id: string, minutes: number) => {
-    setSteps((prev) => prev.map((step) => (step.id === id ? { ...step, minutes } : step)));
-  }, []);
-
   const canDescribe = title.trim().length > 0;
+  const showLongTitle = isLongTitle(title);
 
-  /**
-   * Ayuda de descripción: `AIService.describeHelp(taskName)` usa SOLO el nombre.
-   * Acá se simula la llamada con un timer para poder ver el estado (Design Lab).
-   */
   const handleDescribe = useCallback(() => {
     if (!canDescribe) return;
     if (describeTimer.current) clearTimeout(describeTimer.current);
@@ -127,23 +117,64 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
     }, 900);
   }, [canDescribe, f.ai.describeSuggested]);
 
-  const handleAddManual = useCallback(
-    (stepTitle: string) => {
-      stepSeq.current += 1;
-      setSteps((prev) => [
-        ...prev,
-        {
-          id: `manual-${stepSeq.current}`,
-          name: stepTitle,
-          minutes: flujoAFormFixtures.addInline.suggestedMinutes,
-        },
-      ]);
-      setAddOpen(false);
+  const handleAddManual = useCallback((stepTitle: string) => {
+    stepSeq.current += 1;
+    setSteps((prev) => [
+      ...prev,
+      {
+        id: `manual-${stepSeq.current}`,
+        name: stepTitle,
+        minutes: flujoAFormFixtures.addInline.suggestedMinutes,
+      },
+    ]);
+    setAddOpen(false);
+  }, []);
+
+  const editingStep = steps.find((step) => step.id === editingStepId) ?? null;
+
+  const handleSaveStep = useCallback(
+    (values: { title: string; duration: number }) => {
+      if (!editingStep) return;
+      setSteps((prev) =>
+        prev.map((step) =>
+          step.id === editingStep.id
+            ? { ...step, name: values.title, minutes: values.duration }
+            : step,
+        ),
+      );
+      setEditingStepId(null);
     },
-    []
+    [editingStep],
   );
 
-  const showLongTitle = isLongTitle(title);
+  const togglePendingDelete = useCallback((id: string) => {
+    setPendingDelete((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleOpenOrdenar = useCallback(() => {
+    setOrdenarVisible(true);
+  }, []);
+
+  const handleOrdenarDone = useCallback(
+    (orderedIds: string[]) => {
+      const byId = new Map(steps.map((step) => [step.id, step]));
+      const nextSteps = orderedIds
+        .map((id) => byId.get(id))
+        .filter((step): step is FlujoAFormStep => step !== undefined);
+      const remaining = steps.filter((step) => !orderedIds.includes(step.id));
+      setSteps([...nextSteps, ...remaining]);
+      setOrdenarVisible(false);
+    },
+    [steps],
+  );
+
+  const pendingStepsCount = steps.filter((step) => !pendingDelete.has(step.id)).length;
+  const canOrder = pendingStepsCount >= 3;
 
   return (
     <View style={{ gap: sereneSpacing['space-lg'] }}>
@@ -172,16 +203,8 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
       {/* Título */}
       <View style={{ gap: sereneSpacing['space-xs'] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: sereneSpacing['space-sm'] }}>
-          <RNText
-            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'], flexShrink: 1 }]}
-          >
-            {f.titleLabel}
-          </RNText>
-          <RNText
-            style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-          >
-            {`${title.length}/${f.titleMaxLength}`}
-          </RNText>
+          <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'], flexShrink: 1 }]}>{f.titleLabel}</RNText>
+          <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>{`${title.length}/${f.titleMaxLength}`}</RNText>
         </View>
 
         <TextInput
@@ -208,14 +231,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
         {showLongTitle && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
             <MaterialCommunityIcons name={mci('lightbulb')} size={s(16)} color={sereneColors.primary} />
-            <RNText
-              style={[
-                sereneTypography['body-sm'] as TextStyle,
-                { color: sereneColors['on-surface-variant'], flexShrink: 1 },
-              ]}
-            >
-              {f.longTitleMicrocopy}
-            </RNText>
+            <RNText style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'], flexShrink: 1 }]}>{f.longTitleMicrocopy}</RNText>
           </View>
         )}
       </View>
@@ -240,16 +256,8 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
             opacity: pressed ? 0.85 : 1,
           })}
         >
-          <RNText
-            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'], flexShrink: 1 }]}
-          >
-            {f.notesLabel}
-          </RNText>
-          <MaterialCommunityIcons
-            name={notesOpen ? mci('expand_less') : mci('expand_more')}
-            size={s(20)}
-            color={sereneColors['on-surface-variant']}
-          />
+          <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'], flexShrink: 1 }]}>{f.notesLabel}</RNText>
+          <MaterialCommunityIcons name={notesOpen ? mci('expand_less') : mci('expand_more')} size={s(20)} color={sereneColors['on-surface-variant']} />
         </Pressable>
 
         {notesOpen && (
@@ -309,136 +317,55 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
               {describeStatus === 'ready' ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(6) }}>
                   <MaterialCommunityIcons name={mci('check_circle')} size={s(16)} color={sereneColors.primary} />
-                  <RNText
-                    style={[
-                      sereneTypography['body-sm'] as TextStyle,
-                      { color: sereneColors['on-surface-variant'], flexShrink: 1 },
-                    ]}
-                  >
-                    {f.ai.describeReady}
-                  </RNText>
+                  <RNText style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'], flexShrink: 1 }]}>{f.ai.describeReady}</RNText>
                 </View>
               ) : (
-                <RNText
-                  style={[
-                    sereneTypography['body-sm'] as TextStyle,
-                    { color: sereneColors['on-surface-variant'], flexShrink: 1 },
-                  ]}
-                >
-                  {f.ai.describeHint}
-                </RNText>
+                <RNText style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'], flexShrink: 1 }]}>{f.ai.describeHint}</RNText>
               )}
             </View>
           </>
         )}
       </View>
 
-      {/* Vencimiento (dato neutro y opcional) */}
-      <DueDateField
-        value={dueDate}
-        onChange={setDueDate}
-        label={f.dueLabel}
-        noneLabel={f.dueNone}
-        clearLabel={f.dueClear}
-        a11yLabel={f.dueA11y}
-      />
+      {/* Fecha meta (dato neutro y opcional) */}
+      <DueDateField value={dueDate} onChange={setDueDate} label={f.dueLabel} noneLabel={f.dueNone} clearLabel={f.dueClear} a11yLabel={f.dueA11y} />
 
       {/* Pasos: IA primero */}
       <View style={{ gap: sereneSpacing['space-sm'] }}>
-        <RNText style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>
-          {f.stepsTitle}
-        </RNText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: sereneSpacing['space-sm'] }}>
+          <RNText style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>{f.stepsTitle}</RNText>
+          {canOrder && (
+            <Pressable
+              onPress={handleOpenOrdenar}
+              accessibilityRole="button"
+              accessibilityLabel="Ordenar pasos"
+              hitSlop={8}
+            >
+              <MaterialCommunityIcons name={mci('swap_vert')} size={s(22)} color={sereneColors.primary} />
+            </Pressable>
+          )}
+        </View>
 
-        <AiStepsPanel
-          status={aiStatus}
-          onSuggest={handleSuggest}
-          onRetry={handleSuggest}
-          title={f.ai.title}
-          cta={f.ai.cta}
-          hint={f.ai.hint}
-          loadingMessage={f.ai.loadingMessage}
-          readyMessage={f.ai.readyMessage}
-          errorMessage={f.ai.errorMessage}
-          offlineMessage={f.ai.offlineMessage}
-        />
+        <AiStepsPanel status={aiStatus} onSuggest={handleSuggest} onRetry={handleSuggest} title={f.ai.title} cta={f.ai.cta} hint={f.ai.hint} loadingMessage={f.ai.loadingMessage} readyMessage={f.ai.readyMessage} errorMessage={f.ai.errorMessage} offlineMessage={f.ai.offlineMessage} />
 
         {/* SOLO DESIGN LAB: fuerza los estados de la IA sin red real. */}
         <AiStateDemoControl status={aiStatus} onChange={applyAiStatus} />
 
         {steps.length > 0 && (
-          <DraggableStepList
-            data={steps}
-            keyExtractor={(step) => step.id}
-            onReorder={(next) => setSteps(next)}
-            gap={sereneSpacing['space-sm']}
-            renderItem={({ item: step, drag, isActive }) => (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: sereneSpacing['space-sm'],
-                  padding: sereneSpacing['space-sm'] + 2,
-                  borderRadius: sereneBorderRadius.xl,
-                  backgroundColor: sereneColors['surface-container-lowest'],
-                  opacity: isActive ? 0.9 : 1,
-                }}
-              >
-                <Pressable
-                  onLongPress={drag}
-                  disabled={isActive}
-                  delayLongPress={180}
-                  hitSlop={s(8)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Reordenar ${step.name}`}
-                  style={({ pressed }) => ({
-                    width: s(32),
-                    height: s(32),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: pressed ? 0.7 : 1,
-                  })}
-                >
-                  <MaterialCommunityIcons
-                    name={mci('drag_indicator')}
-                    size={s(20)}
-                    color={sereneColors.outline}
-                  />
-                </Pressable>
-
-                <TextInput
-                  value={step.name}
-                  onChangeText={(next) => updateStepTitle(step.id, next)}
-                  maxLength={80}
-                  accessibilityLabel={`Título del paso ${step.name}`}
-                  style={[
-                    sereneTypography['body-md'] as TextStyle,
-                    { flex: 1, minWidth: 0, color: sereneColors['on-surface'], padding: 0 },
-                  ]}
-                />
-                <MinutesStepper
-                  value={step.minutes}
-                  onChange={(minutes) => updateStepMinutes(step.id, minutes)}
-                  size="compact"
-                />
-                <Pressable
-                  onPress={() => removeStep(step.id)}
-                  hitSlop={s(8)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Quitar paso ${step.name}`}
-                  style={({ pressed }) => ({
-                    width: s(32),
-                    height: s(32),
-                    borderRadius: sereneBorderRadius.lg,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: pressed ? 0.7 : 1,
-                  })}
-                >
-                  <MaterialCommunityIcons name="close" size={s(16)} color={sereneColors['on-surface-variant']} />
-                </Pressable>
-              </View>
-            )}
-          />
+          <View style={{ gap: sereneSpacing['space-sm'] }}>
+            {steps.map((step) => (
+              <StepRow
+                key={step.id}
+                name={step.name}
+                durationMin={step.minutes}
+                completed={false}
+                pendingDelete={pendingDelete.has(step.id)}
+                onPress={() => setEditingStepId(step.id)}
+                onDelete={() => togglePendingDelete(step.id)}
+                onUndoDelete={() => togglePendingDelete(step.id)}
+              />
+            ))}
+          </View>
         )}
 
         {!addOpen ? (
@@ -460,22 +387,16 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
             })}
           >
             <MaterialCommunityIcons name={mci('add')} size={s(18)} color={sereneColors['on-surface']} />
-            <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>
-              {f.addManualLabel}
-            </RNText>
+            <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>{f.addManualLabel}</RNText>
           </Pressable>
         ) : (
-          <AddMicroStepInline
-            visible={addOpen}
-            suggestedMinutes={f.addInline.suggestedMinutes}
-            maxMinutes={f.addInline.maxMinutes}
-            heading={f.addInline.heading}
-            placeholder={f.addInline.placeholder}
-            onClose={() => setAddOpen(false)}
-            onSave={handleAddManual}
-          />
+          <AddMicroStepInline visible={addOpen} suggestedMinutes={f.addInline.suggestedMinutes} maxMinutes={f.addInline.maxMinutes} heading={f.addInline.heading} placeholder={f.addInline.placeholder} onClose={() => setAddOpen(false)} onSave={handleAddManual} />
         )}
       </View>
+
+      <EditarPasoSheet visible={editingStepId !== null} onClose={() => setEditingStepId(null)} onSave={handleSaveStep} taskTitle={title || 'Tarea'} initialTitle={editingStep?.name ?? ''} initialDuration={editingStep?.minutes ?? 3} position={1} total={steps.length} />
+
+      <OrdenarPaso visible={ordenarVisible} steps={steps.map((step) => ({ id: step.id, name: step.name, completed: false, pendingDelete: pendingDelete.has(step.id) }))} lockedIds={[...pendingDelete]} onClose={() => setOrdenarVisible(false)} onDone={handleOrdenarDone} />
     </View>
   );
 }

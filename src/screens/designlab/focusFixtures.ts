@@ -91,7 +91,7 @@ export const previoFixtures = {
     placeholder: '¿Cuál es el primer movimiento?',
   },
 
-  /** Cola de espera: otros pasos pendientes de esta u otras tareas. */
+  /** Lista en espera: otros pasos pendientes de esta u otras tareas. */
   queueSubtitle: 'Lo que sigue',
   queue: [
     {
@@ -135,8 +135,8 @@ export const completadoFixtures = {
     minutes: 3,
   },
   breakCta: 'Descansar 2 min',
-  primaryCta: 'CONTINUAR CON EL SIGUIENTE PASO',
-  secondaryCta: 'Guardar y salir',
+  primaryCta: 'Salir',
+  secondaryCta: '',
   microCopy: 'Cada paso hecho cuenta.',
 } as const;
 
@@ -145,12 +145,13 @@ export const completadoFixtures = {
 // ──────────────────────────────────────────────────────────────
 
 /**
- * Los tres cierres posibles al terminar un paso:
+ * Los cierres posibles al terminar o posponer un paso:
  * - `next-step`: queda otro paso en la misma tarea (cierre por defecto).
  * - `last-step`: era el último paso de la tarea.
  * - `all-done`: no quedan tareas activas.
+ * - `postpone`: sesión pospuesta, se retiene el progreso.
  */
-export type CompletadoScenario = 'next-step' | 'last-step' | 'all-done';
+export type CompletadoScenario = 'next-step' | 'last-step' | 'all-done' | 'postpone';
 
 export interface CompletadoScenarioFixture {
   headerTitle: string;
@@ -178,6 +179,7 @@ export const completadoDemo: {
     { key: 'next-step', label: 'Queda otro paso' },
     { key: 'last-step', label: 'Último paso de la tarea' },
     { key: 'all-done', label: 'No quedan tareas' },
+    { key: 'postpone', label: 'Posponer sesión' },
   ],
 };
 
@@ -203,8 +205,8 @@ export const completadoScenarios: Record<CompletadoScenario, CompletadoScenarioF
     recapLabel: 'Logro registrado',
     completedStepName: 'Probar conexión local a la base de datos',
     breakCta: 'Descansar 2 min',
-    primaryCta: 'VOLVER A MIS TAREAS',
-    secondaryCta: 'Guardar y salir',
+    primaryCta: 'Salir',
+    secondaryCta: '',
     microCopy: 'Cada paso hecho cuenta.',
   },
   'all-done': {
@@ -215,9 +217,22 @@ export const completadoScenarios: Record<CompletadoScenario, CompletadoScenarioF
     recapLabel: 'Logro registrado',
     completedStepName: 'Revisar variables de entorno en .env.example',
     breakCta: 'Descansar 2 min',
-    primaryCta: 'CREAR UNA TAREA',
-    secondaryCta: 'Guardar y salir',
+    primaryCta: 'Salir',
+    secondaryCta: '',
     microCopy: 'Cada paso hecho cuenta.',
+  },
+  'postpone': {
+    headerTitle: 'Sesión pospuesta',
+    headline: 'Hasta luego',
+    durationLabel: completadoFixtures.durationLabel,
+    subtitleTemplate: '{duration} de trabajo registrado. La sesión quedó guardada.',
+    recapLabel: 'Progreso guardado',
+    completedStepName: completadoFixtures.completedStepName,
+    nextStep: completadoFixtures.nextStep,
+    breakCta: 'Descansar 2 min',
+    primaryCta: 'Salir',
+    secondaryCta: '',
+    microCopy: 'Podés retomar cuando quieras.',
   },
 };
 
@@ -257,7 +272,7 @@ export const sinTareasFixtures = {
     progress: 1,
   },
   atmospheric: {
-    caption: 'Buen trabajo. Seguí así.',
+    caption: '',
   },
   quickPrompt: {
     heading: 'Paso exprés (3 min)',

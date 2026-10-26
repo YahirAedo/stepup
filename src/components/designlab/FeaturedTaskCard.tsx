@@ -23,15 +23,12 @@ export interface FeaturedTaskCardProps {
   badge: string;
   minutesLabel: string;
   title: string;
-  stepLabel: string;
   stepTitle: string;
-  sessionLabel: string;
-  sessionPercent: number;
   primaryCta: string;
   toggleOpen: string;
   toggleClose: string;
   steps: FeaturedStep[];
-  /** Vencimiento (dato neutro), ya formateado. Opcional. */
+  /** Fecha meta (dato neutro), ya formateada. Opcional. */
   dueLabel?: string;
   onResume?: () => void;
 }
@@ -49,10 +46,7 @@ export default function FeaturedTaskCard({
   badge,
   minutesLabel,
   title,
-  stepLabel,
   stepTitle,
-  sessionLabel,
-  sessionPercent,
   primaryCta,
   toggleOpen,
   toggleClose,
@@ -153,7 +147,7 @@ export default function FeaturedTaskCard({
             {title}
           </RNText>
 
-          {/* Paso actual */}
+          {/* Paso actual (solo nombre, sin "Paso X/N") */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8) }}>
             <MaterialCommunityIcons
               name={mci('subdirectory_arrow_right')}
@@ -167,11 +161,11 @@ export default function FeaturedTaskCard({
                 { color: sereneColors['on-surface-variant'], fontWeight: '500', flex: 1 },
               ]}
             >
-              {stepLabel}: {stepTitle}
+              {stepTitle}
             </RNText>
           </View>
 
-          {/* Vencimiento (dato neutro) */}
+          {/* Fecha meta (dato neutro) */}
           {dueLabel !== undefined && dueLabel !== '' && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(6) }}>
               <MaterialCommunityIcons
@@ -191,35 +185,12 @@ export default function FeaturedTaskCard({
           )}
         </View>
 
-        {/* Avance de sesion */}
-        <View style={{ gap: s(6) }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <RNText
-              style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
-            >
-              {sessionLabel}
-            </RNText>
-            <RNText
-              style={[
-                sereneTypography['label-sm'] as TextStyle,
-                { color: sereneColors['primary-container'], fontWeight: '600' },
-              ]}
-            >
-              {Math.round(sessionPercent * 100)}%
-            </RNText>
-          </View>
-          <SegmentedProgressBar
-            statuses={steps.map((step) => (step.done ? 'done' : step.current ? 'current' : 'pending'))}
-          />
-        </View>
+        {/* Barra de avance */}
+        <SegmentedProgressBar
+          statuses={steps.map((step) => (step.done ? 'done' : step.current ? 'current' : 'pending'))}
+        />
 
-        {/* CTA + toggle */}
+          {/* CTA + toggle */}
         <View style={{ gap: s(8) }}>
           <Pressable
             onPress={onResume}
@@ -249,16 +220,19 @@ export default function FeaturedTaskCard({
             accessibilityRole="button"
             accessibilityState={{ expanded: stepsOpen }}
             style={({ pressed }) => ({
-              paddingVertical: s(4),
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
               gap: s(4),
               opacity: pressed ? 0.7 : 1,
+              marginTop: s(2),
             })}
           >
             <RNText
-              style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['primary-container'] }]}
+              style={[
+                sereneTypography['label-sm'] as TextStyle,
+                { color: sereneColors['primary-container'], textDecorationLine: 'underline' },
+              ]}
             >
               {stepsOpen ? toggleClose : toggleOpen}
             </RNText>
