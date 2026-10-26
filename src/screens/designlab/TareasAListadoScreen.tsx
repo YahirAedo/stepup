@@ -187,7 +187,7 @@ export default function TareasAListadoScreen() {
             toggleClose={copy.toggleClose}
             steps={focus.steps}
             dueLabel={focus.dueLabel}
-            onResume={() => navigation.navigate('TareasADetalle')}
+            onResume={() => navigation.navigate('EnfoqueFocus')}
           />
         )}
 

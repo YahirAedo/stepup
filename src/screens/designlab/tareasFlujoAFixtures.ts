@@ -217,7 +217,7 @@ export const flujoAFormFixtures: FlujoAFormFixtures = {
     { id: 'ai-2', name: 'Listar los 3 puntos de dolor principales', minutes: 3 },
     { id: 'ai-3', name: 'Redactar una viñeta por punto', minutes: 4 },
   ],
-  addManualLabel: 'Añadir paso manual',
+  addManualLabel: 'Añadir',
   addInline: {
     heading: 'Nuevo paso',
     placeholder: 'Ej: enviar el enlace a Sofía para revisar',
@@ -422,8 +422,8 @@ export const flujoACrearFixtures = {
 
 export const flujoAEditarFixtures = {
   headerTitle: 'Editar tarea',
-  primary: 'Guardar y empezar',
-  secondary: 'Guardar',
+  primary: 'Guardar',
+  secondary: 'Borrar',
 };
 
 /* ------------------------------------------------------------------ */

@@ -179,12 +179,7 @@ export default function EnfoqueFocusScreen() {
             title={activeTask.stepName}
             description={activeTask.description}
             onStart={switchToCorriendo}
-            onPostpone={() => {
-              const queueItems = previoFixtures.queue as unknown as EnfoqueQueueItem[];
-              if (queueItems.length > 0) {
-                setActiveTaskId(queueItems[0].id);
-              }
-            }}
+            onReorder={() => navigation.navigate('TareasAEditar', { ordenarPasos: true })}
           />
 
           {/* Superficie secundaria: cola en acordeón */}

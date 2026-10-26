@@ -38,7 +38,7 @@ export type ProfileStackParamList = {
   /** Flujo Tareas Variante A — Detalle. */
   TareasADetalle: undefined;
   /** Flujo Tareas Variante A — Editar tarea. */
-  TareasAEditar: undefined;
+  TareasAEditar: { ordenarPasos?: boolean } | undefined;
   /** Flujo Tareas Variante A — Aviso calmo de tarea completada. */
   TareasACompletada: undefined;
   /** Propuesta unica "Editar paso" como bottom sheet (compartida). */

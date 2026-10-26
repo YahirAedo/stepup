@@ -37,6 +37,8 @@ import {
 export interface TareaAFormProps {
   /** `create` arranca vacío; `edit` precarga los datos de la tarea. */
   mode: 'create' | 'edit';
+  /** Abre el modal de Ordenar pasos al montar (llegada desde otro CTA). */
+  autoOpenOrdenar?: boolean;
 }
 
 /**
@@ -48,7 +50,7 @@ export interface TareaAFormProps {
  * Es presentacional sobre fixtures: la pantalla host provee el header, el
  * `ScrollView` y la barra de acción fija.
  */
-export default function TareaAForm({ mode }: TareaAFormProps) {
+export default function TareaAForm({ mode, autoOpenOrdenar }: TareaAFormProps) {
   const { scale: s } = useResponsive();
   const f = flujoAFormFixtures;
   const defaults = mode === 'edit' ? flujoAFormEditDefaults : flujoAFormCreateDefaults;
@@ -62,7 +64,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
   const [steps, setSteps] = useState<FlujoAFormStep[]>(defaults.steps);
   const [editingStepId, setEditingStepId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Set<string>>(new Set());
-  const [ordenarVisible, setOrdenarVisible] = useState(false);
+  const [ordenarVisible, setOrdenarVisible] = useState(autoOpenOrdenar === true);
   const [addOpen, setAddOpen] = useState(false);
   const stepSeq = useRef(0);
   const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -332,19 +334,7 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
 
       {/* Pasos: IA primero */}
       <View style={{ gap: sereneSpacing['space-sm'] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: sereneSpacing['space-sm'] }}>
-          <RNText style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>{f.stepsTitle}</RNText>
-          {canOrder && (
-            <Pressable
-              onPress={handleOpenOrdenar}
-              accessibilityRole="button"
-              accessibilityLabel="Ordenar pasos"
-              hitSlop={8}
-            >
-              <MaterialCommunityIcons name={mci('swap_vert')} size={s(22)} color={sereneColors.primary} />
-            </Pressable>
-          )}
-        </View>
+        <RNText style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>{f.stepsTitle}</RNText>
 
         <AiStepsPanel status={aiStatus} onSuggest={handleSuggest} onRetry={handleSuggest} title={f.ai.title} cta={f.ai.cta} hint={f.ai.hint} loadingMessage={f.ai.loadingMessage} readyMessage={f.ai.readyMessage} errorMessage={f.ai.errorMessage} offlineMessage={f.ai.offlineMessage} />
 
@@ -369,26 +359,48 @@ export default function TareaAForm({ mode }: TareaAFormProps) {
         )}
 
         {!addOpen ? (
-          <Pressable
-            onPress={() => setAddOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={f.addManualLabel}
-            style={({ pressed }) => ({
-              alignSelf: 'flex-start',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: sereneSpacing['space-sm'],
-              minHeight: s(44),
-              paddingHorizontal: sereneSpacing['space-md'],
-              paddingVertical: sereneSpacing['space-sm'],
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: sereneColors['surface-container-high'],
-              opacity: pressed ? 0.85 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name={mci('add')} size={s(18)} color={sereneColors['on-surface']} />
-            <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>{f.addManualLabel}</RNText>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
+            {canOrder && (
+              <Pressable
+                onPress={handleOpenOrdenar}
+                accessibilityRole="button"
+                accessibilityLabel="Ordenar pasos"
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: sereneSpacing['space-sm'],
+                  minHeight: s(44),
+                  paddingHorizontal: sereneSpacing['space-md'],
+                  paddingVertical: sereneSpacing['space-sm'],
+                  borderRadius: sereneBorderRadius.full,
+                  backgroundColor: sereneColors['surface-container-high'],
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <MaterialCommunityIcons name={mci('swap_vert')} size={s(18)} color={sereneColors['on-surface']} />
+                <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>Ordenar</RNText>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={() => setAddOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Añadir paso"
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: sereneSpacing['space-sm'],
+                minHeight: s(44),
+                paddingHorizontal: sereneSpacing['space-md'],
+                paddingVertical: sereneSpacing['space-sm'],
+                borderRadius: sereneBorderRadius.full,
+                backgroundColor: sereneColors['surface-container-high'],
+                opacity: pressed ? 0.85 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name={mci('add')} size={s(18)} color={sereneColors['on-surface']} />
+              <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>{f.addManualLabel}</RNText>
+            </Pressable>
+          </View>
         ) : (
           <AddMicroStepInline visible={addOpen} suggestedMinutes={f.addInline.suggestedMinutes} maxMinutes={f.addInline.maxMinutes} heading={f.addInline.heading} placeholder={f.addInline.placeholder} onClose={() => setAddOpen(false)} onSave={handleAddManual} />
         )}

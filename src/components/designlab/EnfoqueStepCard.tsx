@@ -30,8 +30,8 @@ export interface EnfoqueStepCardProps {
   description?: string;
   /** Callback al iniciar el foco */
   onStart: () => void;
-  /** Callback al posponer el paso */
-  onPostpone?: () => void;
+  /** Callback al tocar el atajo de ordenar pasos (lleva a Editar tarea). */
+  onReorder?: () => void;
 }
 
 /**
@@ -46,7 +46,7 @@ export default function EnfoqueStepCard({
   title,
   description,
   onStart,
-  onPostpone,
+  onReorder,
 }: EnfoqueStepCardProps) {
   const { scale: s } = useResponsive();
   const completed = totalSteps > 0 ? (currentIndex - 1) / totalSteps : 0;
@@ -226,11 +226,11 @@ export default function EnfoqueStepCard({
           </RNText>
         </Pressable>
 
-        {onPostpone ? (
+        {onReorder ? (
           <Pressable
-            onPress={onPostpone}
+            onPress={onReorder}
             accessibilityRole="button"
-            accessibilityLabel="Posponer paso"
+            accessibilityLabel="Ordenar pasos"
             style={({ pressed }) => ({
               width: s(64),
               height: s(64),
