@@ -97,7 +97,7 @@ Deberías ver:
 ```
 Database schema is up to date.
 
-4 migrations found in prisma/migrations
+6 migrations found in prisma/migrations
 ```
 
 ---
