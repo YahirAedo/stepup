@@ -41,19 +41,39 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Tres pestañas: Foco, Tareas y Perfil | Decisión | 1 | pendiente |
-| Sin `GlassTabBar` y sin pestaña Historial | `src/components/GlassTabBar.tsx` | 1 | pendiente |
+| Tres pestañas: Foco, Tareas y Perfil | Decisión | 1 | en curso |
+| Sin `GlassTabBar` y sin pestaña Historial | `src/components/GlassTabBar.tsx` | 1 | en curso |
 | "Completadas" dentro de Tareas (sin pestaña propia) | Decisión | 1 | pendiente |
 
-### Propuesta de estructura (pendiente de mi OK)
+### Avance en la rama `migracion/serene` (sin mergear)
+
+- Navegador nuevo `src/navigation/AppTabs.tsx` con 3 pestañas (`Focus`, `Tasks`,
+  `Profile`, mismos nombres de ruta que hoy para no romper los `navigate`
+  existentes) y la barra `src/components/ui/SereneTabBar.tsx`. Se elige con
+  `migrationFlags.tabs` (`src/navigation/tabs.ts`): en `false` se sigue montando
+  `MainTabs` con `GlassTabBar`, así que la app queda igual que hoy.
+- Las stacks de Foco, Tareas y Perfil se **duplican** dentro de `AppTabs` para no
+  tocar `GlassTabBar.tsx`. Mientras convivan los dos navegadores, una pantalla
+  nueva se registra en los dos archivos; se unifican cuando el viejo se borre.
+- `tabBarHideOnKeyboard` **no funciona con una barra propia**: la opción la lee
+  `BottomTabBar` (`@react-navigation/bottom-tabs`), que queda reemplazado. La
+  barra nueva se oculta con un listener de teclado, con la misma semántica.
+- Con `migrationFlags.tabs = true`, **Historial queda inaccesible** hasta la
+  Fase 3, cuando "Completadas" viva dentro de Tareas. `HistoryScreen` sigue en el
+  repo y vuelve con su fase.
+- `src/theme/serene` pasa a ser la entrada oficial de las pantallas nuevas (ya no
+  es exclusivo de las previews). `src/theme/themeMix.test.ts` falla si un mismo
+  archivo importa Zenith y Serene; `layout` y `responsive` son neutrales.
+
+### Estructura aprobada
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Componentes compartidos del Lab en `src/components/ui/` | Propuesta | 1 | pendiente de mi OK |
-| Cada área en `src/features/<área>/` (`tasks`, `focus`, `profile`, `auth`) con la pantalla real (contenedor), su vista (solo props, sin datos) y su hook de datos | Propuesta | 1 | pendiente de mi OK |
-| El Design Lab pasa a importar las vistas desde `src/features/` | Propuesta | 1 | pendiente de mi OK |
-| Promover `src/theme/serene` (hoy `src/theme/serene/index.ts:2-6` lo declara de uso exclusivo de las previews) | Propuesta | 1 | pendiente de mi OK |
-| Regla que impida que una misma pantalla importe Zenith y Serene a la vez (ESLint `no-restricted-imports` o un test) | Propuesta | 1 | pendiente de mi OK |
+| Componentes compartidos del Lab en `src/components/ui/` | Decisión | 1 | en curso |
+| Cada área en `src/features/<área>/` (`tasks`, `focus`, `profile`, `auth`) con la pantalla real (contenedor), su vista (solo props, sin datos) y su hook de datos | Decisión | 1 | en curso |
+| El Design Lab pasa a importar las vistas desde `src/features/` | Decisión | 1 | pendiente (se hace cuando cada área se mueva) |
+| Promover `src/theme/serene` como entrada oficial de las pantallas nuevas | Decisión | 1 | en curso |
+| Regla que impida que un mismo archivo importe Zenith y Serene a la vez (test) | Decisión | 1 | en curso |
 
 ## Fase 2 — Servicios
 

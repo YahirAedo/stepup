@@ -35,6 +35,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import { colors } from './src/theme';
 import { MainTabs } from './src/components/GlassTabBar';
+import AppTabs from './src/navigation/AppTabs';
+import { TABS_VARIANT } from './src/navigation/tabs';
 import { FloatingActionButton } from './src/components/FloatingActionButton';
 
 SplashScreen.preventAutoHideAsync();
@@ -62,7 +64,7 @@ function AppContent() {
 
   return (
     <>
-      <MainTabs />
+      {TABS_VARIANT === 'serene' ? <AppTabs /> : <MainTabs />}
       {showFAB && (
         <FloatingActionButton
           onPress={() => {
