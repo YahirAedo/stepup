@@ -1,13 +1,18 @@
 /**
- * Theme "Serene Focus" — Design Lab, AISLADO del theme de produccion.
+ * Theme "Serene Focus" — entrada oficial del rediseño durante la migración.
  *
- * Uso exclusivo de las previews bajo `src/screens/designlab/`. No se reexporta
- * desde `src/theme/index.ts` a proposito: mantenerlo separado permite que la
- * migracion pantalla por pantalla (epico posterior a #295) borre o promueva
- * este folder en un solo commit sin tocar el barrel compartido.
+ * Las pantallas nuevas (rediseño Serene) importan de aquí. Las pantallas viejas
+ * siguen en el theme de producción (`src/theme/index.ts`, Zenith). Un archivo
+ * importa uno u otro, nunca los dos: lo verifica `src/theme/themeMix.test.ts`.
+ * Los módulos neutrales `../layout` y `../responsive` (medidas y escala, sin
+ * tokens visuales) están permitidos en ambos lados.
+ *
+ * Sigue sin reexportarse desde `src/theme/index.ts` a propósito: mantenerlo
+ * separado permite que la Fase 7 borre Zenith o Serene en un solo commit sin
+ * tocar el barrel compartido.
  *
  * `scale` / `useResponsive` se reexportan desde el theme padre para que las
- * previews no tengan que importar de dos lugares distintos.
+ * pantallas nuevas no tengan que importar de dos lugares distintos.
  *
  * Issue: #295.
  */
