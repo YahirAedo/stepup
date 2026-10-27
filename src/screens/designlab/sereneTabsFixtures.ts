@@ -1,4 +1,4 @@
-import type { SereneTabKey } from '../../components/designlab/SereneTabBarPreview';
+import type { SereneTabKey } from '../../components/ui/SereneTabBar';
 
 export interface SereneTabPreviewCopy {
   key: SereneTabKey;

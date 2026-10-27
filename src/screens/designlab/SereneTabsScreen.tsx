@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text as RNText, View, type TextStyle } from 'react-native';
 import ScreenHeader from '../../components/designlab/ScreenHeader';
-import SereneTabBarPreview, {
+import SereneTabBar, {
   type SereneTabKey,
-} from '../../components/designlab/SereneTabBarPreview';
+} from '../../components/ui/SereneTabBar';
 import { sereneTabsFixtures, sereneTabsNote } from './sereneTabsFixtures';
 import {
   sereneColors,
@@ -101,7 +101,7 @@ export default function SereneTabsScreen() {
         </Pressable>
       </View>
 
-      <SereneTabBarPreview active={active} onSelect={setActive} />
+      <SereneTabBar active={active} onSelect={setActive} />
     </View>
   );
 }

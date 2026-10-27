@@ -19,7 +19,7 @@ export interface SereneTabItem {
   icon: MciName;
 }
 
-export interface SereneTabBarPreviewProps {
+export interface SereneTabBarProps {
   active: SereneTabKey;
   onSelect: (key: SereneTabKey) => void;
   items?: SereneTabItem[];
@@ -32,15 +32,18 @@ const DEFAULT_ITEMS: SereneTabItem[] = [
 ];
 
 /**
- * Barra de 3 tabs del rediseno, DENTRO del layout (no `position: absolute`).
- * Etiquetas SIEMPRE visibles. Existe para previsualizar Foco/Tareas/Perfil con
- * la barra puesta y detectar botones tapados. No toca `GlassTabBar` real.
+ * Barra de 3 tabs del rediseno (Foco / Tareas / Perfil), DENTRO del layout (no
+ * `position: absolute`). Etiquetas SIEMPRE visibles.
+ *
+ * Vive en `components/ui/` porque la usan tanto la preview del Design Lab
+ * (`SereneTabsScreen`) como el navegador real (`navigation/AppTabs`). Es
+ * puramente presentacional: no conoce la navegacion, recibe `active`/`onSelect`.
  */
-export default function SereneTabBarPreview({
+export default function SereneTabBar({
   active,
   onSelect,
   items = DEFAULT_ITEMS,
-}: SereneTabBarPreviewProps) {
+}: SereneTabBarProps) {
   const insets = useSafeAreaInsets();
   const { scale: s } = useResponsive();
 
