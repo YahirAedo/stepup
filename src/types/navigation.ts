@@ -51,6 +51,14 @@ export type ProfileStackParamList = {
   LogrosA: undefined;
   /** Flujo Perfil Variante A — Conflictos de sincronización (rediseño Serene). */
   ConflictosA: undefined;
+  /** Onboarding rediseñado — Paso 1: el problema. */
+  Onboarding1A: undefined;
+  /** Onboarding rediseñado — Paso 2: la solución. */
+  Onboarding2A: undefined;
+  /** Login rediseñado — 6 estados de demo (Design Lab). */
+  LoginA: undefined;
+  /** Registro rediseñado — 4 estados de demo (Design Lab). */
+  RegistroA: undefined;
 };
 
 export type MainTabParamList = {

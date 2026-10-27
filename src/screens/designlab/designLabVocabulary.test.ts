@@ -7,6 +7,8 @@ import * as perfil from './perfilFixtures';
 import * as logros from './logrosAFixtures';
 import * as conflictos from './conflictosAFixtures';
 import * as sereneTabs from './sereneTabsFixtures';
+import * as onboarding from './onboardingAFixtures';
+import * as auth from './authAFixtures';
 
 /**
  * Guarda de tono del rediseno (Design Lab).
@@ -118,7 +120,7 @@ function stripComments(source: string): string {
 }
 
 describe('vocabulario prohibido en los fixtures del Design Lab', () => {
-  const allTexts = collectAllTexts([flujoA, focus, perfil, logros, conflictos, sereneTabs]);
+  const allTexts = collectAllTexts([flujoA, focus, perfil, logros, conflictos, sereneTabs, onboarding, auth]);
 
   it('recolecta textos de los fixtures', () => {
     expect(allTexts.length).toBeGreaterThan(0);

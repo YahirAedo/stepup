@@ -1,6 +1,6 @@
 import { apiFetch, ENDPOINTS } from './api';
 import { clearSession, getSessionUser, hasSession, saveSession, type SessionUser } from './session';
-import { ensureLocalOwner } from './localOwner';
+import { clearLocalData, ensureLocalOwner } from './localOwner';
 import { SyncService } from './SyncService';
 
 type AuthResponse = {
@@ -35,7 +35,7 @@ export const AuthService = {
   },
 
   async logout(): Promise<void> {
-    // REQUIERE MIGRACIÓN: paso de clearLocalData() a clearSession() solo.
+    await clearLocalData();
     await clearSession();
   },
 

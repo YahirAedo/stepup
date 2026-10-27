@@ -4,8 +4,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
 import { colors, typography, spacing, borderRadius, useResponsive, useBottomLayout } from '../theme';
 import { AuthService } from '../services/AuthService';
-import { hasSession } from '../services/session';
-import ConfirmDialog from '../components/designlab/ConfirmDialog';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileMain'>;
 
@@ -15,9 +13,10 @@ const durations = [
   { label: '15m', value: 15 },
 ];
 
-const baseSettingsRows = [
+const settingsRows = [
   { icon: '🎨', label: 'Tema' },
   { icon: '💬', label: 'Soporte' },
+  { icon: '🚪', label: 'Cerrar sesión' },
 ];
 
 export default function ProfileScreen({ navigation }: Props) {
@@ -25,22 +24,10 @@ export default function ProfileScreen({ navigation }: Props) {
   const { scale: s } = useResponsive();
   const [defaultDuration, setDefaultDuration] = useState(10);
   const [notifications, setNotifications] = useState(true);
-  const [loggedIn] = useState(hasSession());
-  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
-
-  const settingsRows = [
-    ...baseSettingsRows,
-    ...(loggedIn ? [{ icon: '🚪', label: 'Cerrar sesión' }] : []),
-  ];
 
   const handleLogout = async () => {
     await AuthService.logout();
     navigation.getParent()?.getParent()?.reset({ index: 0, routes: [{ name: 'Login' }] });
-  };
-
-  const onConfirmLogout = () => {
-    setLogoutConfirmVisible(false);
-    void handleLogout();
   };
 
   return (
@@ -234,7 +221,7 @@ export default function ProfileScreen({ navigation }: Props) {
                 key={row.label}
                 onPress={() => {
                   if (row.label === 'Cerrar sesión') {
-                    setLogoutConfirmVisible(true);
+                    void handleLogout();
                   }
                 }}
                 accessibilityRole="button"
@@ -340,16 +327,6 @@ export default function ProfileScreen({ navigation }: Props) {
           <Text style={{ fontSize: 20, color: colors['outline'] }}>›</Text>
         </Pressable>
       </ScrollView>
-
-      <ConfirmDialog
-        visible={logoutConfirmVisible}
-        title="Cerrar sesión"
-        body="Tus tareas y pasos siguen en este teléfono. Dejan de sincronizarse hasta que vuelvas a iniciar sesión."
-        confirmLabel="Cerrar sesión"
-        cancelLabel="Cancelar"
-        onConfirm={onConfirmLogout}
-        onClose={() => setLogoutConfirmVisible(false)}
-      />
     </View>
   );
 }

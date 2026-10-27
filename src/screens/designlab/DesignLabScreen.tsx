@@ -31,7 +31,11 @@ type DesignLabTarget =
   | 'PerfilA'
   | 'SereneTabs'
   | 'LogrosA'
-  | 'ConflictosA';
+  | 'ConflictosA'
+  | 'Onboarding1A'
+  | 'Onboarding2A'
+  | 'LoginA'
+  | 'RegistroA';
 
 interface MockupEntry {
   key: string;
@@ -95,6 +99,26 @@ const EMPTY_STATES: MockupEntry[] = [
     description: 'Estado vacío: sin tareas activas y resumen del día',
     icon: 'meditation',
     target: 'FocusSinTareas',
+  },
+];
+
+/**
+ * Onboarding rediseñado: entrada de la app en dos pasos (problema y solución).
+ */
+const ONBOARDING_A: MockupEntry[] = [
+  {
+    key: 'onboarding-1-a',
+    title: 'Onboarding 1 — El problema',
+    description: 'Una tarea grande frente a sus pasos, y por qué cuesta arrancar',
+    icon: 'clock-outline',
+    target: 'Onboarding1A',
+  },
+  {
+    key: 'onboarding-2-a',
+    title: 'Onboarding 2 — La solución',
+    description: 'Tres ventajas del flujo por pasos y el aviso de datos en el teléfono',
+    icon: 'format-list-checks',
+    target: 'Onboarding2A',
   },
 ];
 
@@ -186,6 +210,26 @@ const PERFIL_PANTALLAS: MockupEntry[] = [
     description: 'Un conflicto por item: versiones lado a lado y una acción por lado',
     icon: 'swap-horizontal',
     target: 'ConflictosA',
+  },
+];
+
+/**
+ * Acceso (Login y Registro) — rediseño Serene Focus.
+ */
+const AUTH_A: MockupEntry[] = [
+  {
+    key: 'login-a',
+    title: 'Login A — Iniciar sesión',
+    description: '6 estados: normal, error, cargando, sin conexión, cambio de cuenta (con/sin cambios)',
+    icon: 'login',
+    target: 'LoginA',
+  },
+  {
+    key: 'registro-a',
+    title: 'Registro A — Crear cuenta',
+    description: '4 estados: normal, error (password corta), cargando, sin conexión',
+    icon: 'account-plus-outline',
+    target: 'RegistroA',
   },
 ];
 
@@ -345,6 +389,24 @@ export default function DesignLabScreen({ navigation }: Props) {
             },
           ]}
         >
+          Onboarding — Paso 1 y 2
+        </RNText>
+
+        {ONBOARDING_A.map((m) => (
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
+        ))}
+
+        <RNText
+          style={[
+            sereneTypography['label-sm'] as TextStyle,
+            {
+              color: sereneColors['on-surface-variant'],
+              textTransform: 'uppercase',
+              letterSpacing: 0.8,
+              marginTop: sereneSpacing['space-md'],
+            },
+          ]}
+        >
           Tareas — Variante A · Enfoque
         </RNText>
 
@@ -403,6 +465,24 @@ export default function DesignLabScreen({ navigation }: Props) {
         </RNText>
 
         {PERFIL_PANTALLAS.map((m) => (
+          <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
+        ))}
+
+        <RNText
+          style={[
+            sereneTypography['label-sm'] as TextStyle,
+            {
+              color: sereneColors['on-surface-variant'],
+              textTransform: 'uppercase',
+              letterSpacing: 0.8,
+              marginTop: sereneSpacing['space-md'],
+            },
+          ]}
+        >
+          Acceso — Login y Registro
+        </RNText>
+
+        {AUTH_A.map((m) => (
           <MockupCard key={m.key} entry={m} onPress={() => open(m.target)} />
         ))}
 

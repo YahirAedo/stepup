@@ -52,6 +52,10 @@ const FULLSCREEN_ROUTES = new Set([
   'SereneTabs',
   'LogrosA',
   'ConflictosA',
+  'Onboarding1A',
+  'Onboarding2A',
+  'LoginA',
+  'RegistroA',
 ]);
 
 export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
@@ -195,6 +199,10 @@ import PerfilAVarianteScreen from '../screens/designlab/PerfilAVarianteScreen';
 import SereneTabsScreen from '../screens/designlab/SereneTabsScreen';
 import LogrosAScreen from '../screens/designlab/LogrosAScreen';
 import ConflictosAScreen from '../screens/designlab/ConflictosAScreen';
+import Onboarding1AScreen from '../screens/designlab/Onboarding1AScreen';
+import Onboarding2AScreen from '../screens/designlab/Onboarding2AScreen';
+import LoginAScreen from '../screens/designlab/LoginAScreen';
+import RegistroAScreen from '../screens/designlab/RegistroAScreen';
 
 const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
 const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
@@ -256,6 +264,10 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="SereneTabs" component={SereneTabsScreen} />
       <ProfileStackNav.Screen name="LogrosA" component={LogrosAScreen} />
       <ProfileStackNav.Screen name="ConflictosA" component={ConflictosAScreen} />
+      <ProfileStackNav.Screen name="Onboarding1A" component={Onboarding1AScreen} />
+      <ProfileStackNav.Screen name="Onboarding2A" component={Onboarding2AScreen} />
+      <ProfileStackNav.Screen name="LoginA" component={LoginAScreen} />
+      <ProfileStackNav.Screen name="RegistroA" component={RegistroAScreen} />
     </ProfileStackNav.Navigator>
   );
 }

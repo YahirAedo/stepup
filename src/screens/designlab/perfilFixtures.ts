@@ -185,7 +185,10 @@ export const perfilCopy: PerfilCopy = {
     versionRowLabel: 'Versión de la app',
     logout: 'Cerrar sesión',
     logoutConfirmTitle: '¿Cerrar sesión?',
-    logoutConfirmBody: 'Tus datos locales quedan en este teléfono. Podés volver a entrar cuando quieras.',
+    // REQUIERE MIGRACIÓN: hoy AuthService.logout() llama a clearLocalData() y
+    // borra tareas y pasos del teléfono; debe quedar solo clearSession().
+    logoutConfirmBody:
+      'Tus tareas y pasos siguen en este teléfono. Dejan de sincronizarse hasta que vuelvas a iniciar sesión.',
     logoutConfirmCta: 'Cerrar sesión',
     cancelCta: 'Cancelar',
   },
