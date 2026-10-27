@@ -25,6 +25,16 @@ export async function makeSqlJsDb(): Promise<{ db: MigrationDb; raw: Database }>
       const res = raw.exec('SELECT last_insert_rowid() AS id');
       return { lastInsertRowId: (res[0]?.values[0][0] as number) ?? 0 };
     },
+    withTransactionAsync: async (task: () => Promise<void>) => {
+      raw.run('BEGIN');
+      try {
+        await task();
+        raw.run('COMMIT');
+      } catch (e) {
+        raw.run('ROLLBACK');
+        throw e;
+      }
+    },
   };
   return { db, raw };
 }

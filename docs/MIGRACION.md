@@ -79,12 +79,12 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Helper que recalcula `status` y `completed_at` tras `add`, `addMany`, `delete`, `complete` y `uncomplete` (decisión B: la categoría se deriva en la UI; los servicios mantienen `status` al día) | Decisión B | 2 | pendiente |
-| Reconciliación única de tareas existentes con `status` desincronizado | Decisión B | 2 | pendiente |
-| `StepService.reorder` con orden completo y atómico, y su sync | Decisión | 2 | pendiente |
-| Borrado en lote de pasos marcados al guardar o salir del Detalle | Decisión | 2 | pendiente |
-| `pickFocusTask` ignora tareas sin pasos | `src/utils/designlab/deriveTaskCategory.ts:39` | 2 | pendiente |
-| Reordenar entre tareas exige lógica cross-task (`StepService.reorder` es solo intra-tarea) | `src/screens/designlab/focusFixtures.ts:101` | 2 | pendiente |
+| `pickFocusTask` ignora tareas sin pasos | `src/utils/designlab/deriveTaskCategory.ts:39` | 2 | hecho |
+| Borrado en lote de pasos marcados al guardar o salir del Detalle | Decisión | 2 | hecho |
+| `StepService.reorder` con orden completo y atómico, y su sync | Decisión | 2 | hecho |
+| Reconciliación única de tareas existentes con `status` desincronizado | Decisión B | 2 | hecho |
+| Helper que recalcula `status` y `completed_at` tras `add`, `addMany`, `delete`, `complete` y `uncomplete` (decisión B) | Decisión B | 2 | hecho |
+| // REQUIERE MIGRACIÓN: paso borrado offline con `server_id` puede reaparecer en el siguiente pull (`upsertServerStep` inserta si no encuentra fila local) | Sync offline | 2 | pendiente |
 
 ## Fase 3 — Tareas
 

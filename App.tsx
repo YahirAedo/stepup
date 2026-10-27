@@ -84,6 +84,10 @@ function AppContent() {
   );
 }
 
+import { StepService } from './src/services/StepService';
+
+let reconcileDone = false;
+
 export default function App() {
   const [fontsLoaded, fontsError] = useFonts({
     Manrope_800ExtraBold,
@@ -105,7 +109,19 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      await loadSession();
+      try {
+        await loadSession();
+      } catch (e) {
+        console.error('[App] loadSession failed', e);
+      }
+      if (!reconcileDone) {
+        reconcileDone = true;
+        try {
+          await StepService.reconcileAllTasks();
+        } catch (e) {
+          console.error('[App] reconcileAllTasks failed', e);
+        }
+      }
       const hasSeenOnboarding = await storage.getItem(ONBOARDING_KEY);
       if (!mounted) return;
       if (hasSession()) {

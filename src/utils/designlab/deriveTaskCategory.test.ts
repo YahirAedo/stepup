@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveTaskCategory, pickFocusTask } from './deriveTaskCategory';
+import { deriveTaskCategory, pickFocusTask, type FocusCandidate } from './deriveTaskCategory';
 
 const pending = { status: 'pending' as const };
 const done = { status: 'completed' as const };
@@ -29,6 +29,18 @@ describe('deriveTaskCategory', () => {
 });
 
 describe('pickFocusTask', () => {
+  it('sin pasos + con pasos → elige la que tiene pasos', () => {
+    const empty = { steps: [] as FocusCandidate['steps'] };
+    const withSteps = { steps: [{ status: 'pending' as const }] };
+    expect(pickFocusTask([empty, withSteps])).toBe(1);
+  });
+
+  it('solo sin pasos → null', () => {
+    const empty1 = { steps: [] as FocusCandidate['steps'] };
+    const empty2 = { steps: [] as FocusCandidate['steps'] };
+    expect(pickFocusTask([empty1, empty2])).toBeNull();
+  });
+
   it('elige la En curso con el paso completado mas reciente', () => {
     const candidates = [
       { steps: [completedAt('2026-10-10T10:00:00Z'), waiting] },

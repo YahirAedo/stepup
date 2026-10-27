@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runMigrations, type MigrationDb } from '../database/migrations';
 import { makeSqlJsDb } from '../database/testDb';
+import type { SqlParam } from '../database/migrations';
 
 const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
@@ -121,6 +122,375 @@ describe('StepService', () => {
       expect(created).toEqual([]);
       expect(mocks.syncNow).not.toHaveBeenCalled();
     });
+  });
+
+  it('reconcileTaskStatus: delete [completed, pending] borrando pendiente → completed', async () => {
+    const taskId = await insertTask();
+    const done = await insertStep(taskId, 'Hecho', 0);
+    await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', done]);
+    const pend = await insertStep(taskId, 'Pendiente', 1);
+
+    await StepService.delete(pend);
+
+    const [task] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(task.status).toBe('completed');
+    expect(task.completed_at).toBe('2026-10-20T10:00:00Z');
+  });
+
+  it('reconcileTaskStatus: delete único paso borrado → active, NULL', async () => {
+    const taskId = await insertTask();
+    const s = await insertStep(taskId, 'Solo', 0);
+
+    await StepService.delete(s);
+
+    const [task] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(task.status).toBe('active');
+    expect(task.completed_at).toBeNull();
+  });
+
+  it('reconcileTaskStatus: add a tarea completed → vuelve a active', async () => {
+    const taskId = await insertTask();
+    const s = await insertStep(taskId, 'Solo', 0);
+    await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`,
+      ['2026-10-20T10:00:00Z', s]);
+    await db.runAsync(`UPDATE tasks SET status = 'completed', completed_at = ? WHERE id = ?`,
+      ['2026-10-20T10:00:00Z', taskId]);
+
+    await StepService.add({ task_id: taskId, name: 'Nuevo paso', duration_min: 5 });
+
+    const [task] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(task.status).toBe('active');
+    expect(task.completed_at).toBeNull();
+  });
+
+  it('reconcileTaskStatus: complete último paso → completed; uncomplete → active NULL', async () => {
+    const taskId = await insertTask();
+    const s = await insertStep(taskId, 'Solo', 0);
+    await StepService.complete(s);
+    const [t1] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(t1.status).toBe('completed');
+    expect(t1.completed_at).not.toBeNull();
+
+    await StepService.uncomplete(s);
+    const [t2] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(t2.status).toBe('active');
+    expect(t2.completed_at).toBeNull();
+  });
+
+  it('reconcileTaskStatus: idempotencia syncTaskStatus no cambia updated_at segunda vez', async () => {
+    const taskId = await insertTask();
+    const s = await insertStep(taskId, 'Uno', 0);
+    await StepService.complete(s);
+    const [t1] = await db.getAllAsync<{ updated_at: string }>(
+      `SELECT updated_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    // Llamar syncTaskStatus de nuevo (simulado por complete de nuevo sin cambio de paso)
+    await db.runAsync(`UPDATE steps SET completed_at = ? WHERE id = ?`, [t1.updated_at, s]);
+    await StepService.complete(s); // idempotente, paso ya completo
+    const [t2] = await db.getAllAsync<{ updated_at: string }>(
+      `SELECT updated_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(t2.updated_at).toBe(t1.updated_at);
+  });
+
+  it('reconcileTaskStatus: idempotencia syncTaskStatus no cambia updated_at segunda vez', async () => {
+    const taskId = await insertTask();
+    const s = await insertStep(taskId, 'Uno', 0);
+    await StepService.complete(s);
+    const [t1] = await db.getAllAsync<{ updated_at: string }>(
+      `SELECT updated_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    // Llamar syncTaskStatus de nuevo (simulado por complete de nuevo sin cambio de paso)
+    await db.runAsync(`UPDATE steps SET completed_at = ? WHERE id = ?`, [t1.updated_at, s]);
+    await StepService.complete(s); // idempotente, paso ya completo
+    const [t2] = await db.getAllAsync<{ updated_at: string }>(
+      `SELECT updated_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(t2.updated_at).toBe(t1.updated_at);
+  });
+
+  describe('reconcileState con datos desincronizados (Lote 2)', () => {
+    it('tarea completed con pasos pending → corrige a active/NULL', async () => {
+      const taskId = await insertTask();
+      const s = await insertStep(taskId, 'Solo', 0);
+      await db.runAsync(`UPDATE steps SET status = 'pending', completed_at = NULL WHERE id = ?`, [s]);
+      await db.runAsync(`UPDATE tasks SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', taskId]);
+
+      await StepService.reconcileState(taskId);
+
+      const [t] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+        `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+      );
+      expect(t.status).toBe('active');
+      expect(t.completed_at).toBeNull();
+    });
+
+    it('tarea active con todos pasos completed → corrige a completed/max', async () => {
+      const taskId = await insertTask();
+      const s = await insertStep(taskId, 'Solo', 0);
+      await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T12:00:00Z', s]);
+      await db.runAsync(`UPDATE tasks SET status = 'active', completed_at = NULL WHERE id = ?`, [taskId]);
+
+      await StepService.reconcileState(taskId);
+
+      const [t] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+        `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+      );
+      expect(t.status).toBe('completed');
+      expect(t.completed_at).toBe('2026-10-20T12:00:00Z');
+    });
+
+    it('tarea completed sin pasos → active/NULL', async () => {
+      const taskId = await insertTask();
+      await db.runAsync(`UPDATE tasks SET status = 'completed', completed_at = ? WHERE id = ?`,
+        ['2026-10-20T10:00:00Z', taskId]);
+
+      await StepService.reconcileState(taskId);
+
+      const [t] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+        `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+      );
+      expect(t.status).toBe('active');
+      expect(t.completed_at).toBeNull();
+    });
+
+    it('idempotente: reconcileState dos veces no cambia updated_at', async () => {
+      const taskId = await insertTask();
+      const s = await insertStep(taskId, 'Solo', 0);
+      await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', s]);
+
+      await StepService.reconcileState(taskId);
+      const [t1] = await db.getAllAsync<{ updated_at: string }>(
+        `SELECT updated_at FROM tasks WHERE id = ?`, [taskId],
+      );
+
+      await StepService.reconcileState(taskId);
+      const [t2] = await db.getAllAsync<{ updated_at: string }>(
+        `SELECT updated_at FROM tasks WHERE id = ?`, [taskId],
+      );
+      expect(t2.updated_at).toBe(t1.updated_at);
+    });
+  });
+
+  it('reorder: orden resultante y completados anclados', async () => {
+    const taskId = await insertTask();
+    const a = await insertStep(taskId, 'A', 0);
+    const b = await insertStep(taskId, 'B', 1);
+    const c = await insertStep(taskId, 'C', 2);
+    await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', b]);
+
+    await StepService.reorder(taskId, [c, a, b]);
+
+    const steps = await db.getAllAsync<{ id: number; order_index: number; status: string }>(
+      `SELECT id, order_index, status FROM steps ORDER BY order_index ASC`,
+      [],
+    );
+    expect(steps.map((s) => s.id)).toEqual([c, a, b]);
+    expect(steps.map((s) => s.order_index)).toEqual([0, 1, 2]);
+    // completado (b) queda en su posición
+    expect(steps.find((s) => s.id === b)?.status).toBe('completed');
+  });
+
+  it('reorder: lista vacía no cambia nada', async () => {
+    const taskId = await insertTask();
+    const a = await insertStep(taskId, 'A', 0);
+
+    await StepService.reorder(taskId, []);
+
+    const steps = await db.getAllAsync<{ id: number; order_index: number }>(
+      `SELECT id, order_index FROM steps`,
+      [],
+    );
+    expect(steps).toEqual([{ id: a, order_index: 0 }]);
+  });
+
+  it('deleteBatch: 2 pasos de una tarea → restantes reordenados + estado recalculado', async () => {
+    const taskId = await insertTask();
+    const s1 = await insertStep(taskId, 'Uno', 0);
+    const s2 = await insertStep(taskId, 'Dos', 1);
+    const s3 = await insertStep(taskId, 'Tres', 2);
+    await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', s1]);
+
+    await StepService.deleteBatch([s2, s3]);
+
+    const remaining = await db.getAllAsync<{ id: number; order_index: number }>(
+      `SELECT id, order_index FROM steps ORDER BY order_index ASC`,
+      [],
+    );
+    expect(remaining).toEqual([{ id: s1, order_index: 0 }]);
+
+    const [task] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [taskId],
+    );
+    expect(task.status).toBe('completed');
+    expect(task.completed_at).toBe('2026-10-20T10:00:00Z');
+  });
+
+  it('deleteBatch: ids de varias tareas → recalcula cada tarea', async () => {
+    const t1 = await insertTask();
+    const t2 = await insertTask();
+    const s1 = await insertStep(t1, 'A', 0);
+    const s2 = await insertStep(t2, 'B', 0);
+    await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', s1]);
+
+    await StepService.deleteBatch([s1, s2]);
+
+    const [task1] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [t1],
+    );
+    const [task2] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+      `SELECT status, completed_at FROM tasks WHERE id = ?`, [t2],
+    );
+    expect(task1.status).toBe('active');
+    expect(task1.completed_at).toBeNull();
+    expect(task2.status).toBe('active');
+    expect(task2.completed_at).toBeNull();
+  });
+
+  it('deleteBatch: lista vacía no hace nada', async () => {
+    await StepService.deleteBatch([]);
+    expect(mocks.syncNow).not.toHaveBeenCalled();
+  });
+
+  it('withTransactionAsync mock: ROLLBACK cuando el callback lanza', async () => {
+    const { db: testDb } = await makeSqlJsDb();
+    await testDb.execAsync('CREATE TABLE t (v INTEGER)');
+    await testDb.runAsync('INSERT INTO t (v) VALUES (?)', [1]);
+
+    await expect(
+      testDb.withTransactionAsync!(async () => {
+        await testDb.runAsync('INSERT INTO t (v) VALUES (?)', [2]);
+        throw new Error('boom');
+      }),
+    ).rejects.toThrow('boom');
+
+    const rows = await testDb.getAllAsync<{ v: number }>('SELECT v FROM t', []);
+    expect(rows).toEqual([{ v: 1 }]); // rollback: no se insertó el 2
+  });
+
+  describe('reconcileAllTasks', () => {
+    it('corrige tareas desincronizadas y cuenta', async () => {
+      const t1 = await insertTask();
+      const s1 = await insertStep(t1, 'A', 0);
+      await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', s1]);
+      await db.runAsync(`UPDATE tasks SET status = 'active', completed_at = NULL WHERE id = ?`, [t1]);
+
+      const t2 = await insertTask();
+      await db.runAsync(`UPDATE tasks SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', t2]);
+
+      const corrected = await StepService.reconcileAllTasks();
+      expect(corrected).toBe(2);
+
+      const [task1] = await db.getAllAsync<{ status: string }>(`SELECT status FROM tasks WHERE id = ?`, [t1]);
+      const [task2] = await db.getAllAsync<{ status: string }>(`SELECT status FROM tasks WHERE id = ?`, [t2]);
+      expect(task1.status).toBe('completed');
+      expect(task2.status).toBe('active');
+    });
+
+    it('idempotencia: segunda llamada no cambia updated_at', async () => {
+      const t1 = await insertTask();
+      const s1 = await insertStep(t1, 'A', 0);
+      await db.runAsync(`UPDATE steps SET status = 'completed', completed_at = ? WHERE id = ?`, ['2026-10-20T10:00:00Z', s1]);
+      await db.runAsync(`UPDATE tasks SET status = 'active', completed_at = NULL WHERE id = ?`, [t1]);
+
+      await StepService.reconcileAllTasks();
+      const [t1a] = await db.getAllAsync<{ updated_at: string }>(`SELECT updated_at FROM tasks WHERE id = ?`, [t1]);
+
+      await StepService.reconcileAllTasks();
+      const [t1b] = await db.getAllAsync<{ updated_at: string }>(`SELECT updated_at FROM tasks WHERE id = ?`, [t1]);
+
+      expect(t1b.updated_at).toBe(t1a.updated_at);
+    });
+
+    it('tarea active sin pasos no cambia', async () => {
+      const t1 = await insertTask();
+      const [before] = await db.getAllAsync<{ status: string; completed_at: string | null; updated_at: string }>(
+        `SELECT status, completed_at, updated_at FROM tasks WHERE id = ?`, [t1],
+      );
+
+      const corrected = await StepService.reconcileAllTasks();
+      expect(corrected).toBe(0);
+
+      const [after] = await db.getAllAsync<{ status: string; completed_at: string | null; updated_at: string }>(
+        `SELECT status, completed_at, updated_at FROM tasks WHERE id = ?`, [t1],
+      );
+      expect(after.status).toBe(before.status);
+      expect(after.completed_at).toBe(before.completed_at);
+      expect(after.updated_at).toBe(before.updated_at);
+    });
+
+    it('syncNow no se llama si no hubo correcciones', async () => {
+      mocks.syncNow.mockReset();
+      await StepService.reconcileAllTasks();
+      expect(mocks.syncNow).not.toHaveBeenCalled();
+    });
+  });
+
+  it('reorder: si un UPDATE falla a mitad, rollback deja el orden intacto', async () => {
+    const taskId = await insertTask();
+    const a = await insertStep(taskId, 'A', 0);
+    const b = await insertStep(taskId, 'B', 1);
+
+    const origRunAsync = db.runAsync.bind(db);
+    let callCount = 0;
+    db.runAsync = async (sql: string, params: SqlParam[] = []) => {
+      callCount++;
+      if (callCount === 2) throw new Error('boom');
+      return origRunAsync(sql, params);
+    };
+
+    await expect(StepService.reorder(taskId, [b, a])).rejects.toThrow('boom');
+
+    db.runAsync = origRunAsync;
+
+    const steps = await db.getAllAsync<{ id: number; order_index: number }>(
+      `SELECT id, order_index FROM steps ORDER BY id ASC`, [],
+    );
+    expect(steps).toEqual([
+      { id: a, order_index: 0 },
+      { id: b, order_index: 1 },
+    ]);
+  });
+
+  it('deleteBatch: tras éxito, apiFetch se llama con los server_id correctos', async () => {
+    const taskId = await insertTask();
+    const s1 = await insertStep(taskId, 'Uno', 0);
+    const s2 = await insertStep(taskId, 'Dos', 1);
+    await db.runAsync(`UPDATE steps SET server_id = 'uuid-1' WHERE id = ?`, [s1]);
+    await db.runAsync(`UPDATE steps SET server_id = 'uuid-2' WHERE id = ?`, [s2]);
+    mocks.hasSession.mockReturnValue(true);
+    mocks.apiFetch.mockResolvedValue(undefined);
+
+    await StepService.deleteBatch([s1, s2]);
+
+    expect(mocks.apiFetch).toHaveBeenCalledWith('/api/steps/uuid-1', expect.objectContaining({ method: 'DELETE' }));
+    expect(mocks.apiFetch).toHaveBeenCalledWith('/api/steps/uuid-2', expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('deleteBatch: si la transacción lanza, no se llama a apiFetch', async () => {
+    const taskId = await insertTask();
+    const s1 = await insertStep(taskId, 'Uno', 0);
+    await db.runAsync(`UPDATE steps SET server_id = 'uuid-1' WHERE id = ?`, [s1]);
+    mocks.hasSession.mockReturnValue(true);
+    mocks.apiFetch.mockReset();
+
+    const origWithTx = db.withTransactionAsync!.bind(db);
+    db.withTransactionAsync = async () => { throw new Error('tx boom'); };
+
+    await expect(StepService.deleteBatch([s1])).rejects.toThrow('tx boom');
+    expect(mocks.apiFetch).not.toHaveBeenCalled();
+
+    db.withTransactionAsync = origWithTx;
   });
 
   it('getNextPending devuelve el primero pendiente', async () => {

@@ -27,7 +27,7 @@ type FocusStep = {
   completed_at?: Step['completed_at'];
 };
 
-type FocusCandidate = {
+export type FocusCandidate = {
   steps: ReadonlyArray<FocusStep>;
 };
 
@@ -42,6 +42,7 @@ export function pickFocusTask(candidates: ReadonlyArray<FocusCandidate>): number
   let firstNotStarted: number | null = null;
 
   candidates.forEach((candidate, index) => {
+    if (candidate.steps.length === 0) return; // ignora tareas sin pasos
     const category = deriveTaskCategory(candidate.steps);
     if (category === 'inProgress') {
       const latest = candidate.steps.reduce((acc, step) => {

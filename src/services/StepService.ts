@@ -6,6 +6,7 @@ import { ApiError, apiFetch } from './api';
 import { hasSession } from './session';
 import { syncNow } from './SyncService';
 import { getLocalDate } from '../utils/date';
+import { reconcileTaskStatus } from './reconcileTaskStatus';
 
 function toStep(row: Record<string, unknown>): Step {
   return {
@@ -27,6 +28,35 @@ function todayStr(): string {
   return getLocalDate();
 }
 
+async function syncTaskStatus(taskId: number): Promise<void> {
+  const db = await getDb();
+  const now = nowIso();
+  const steps = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+    `SELECT status, completed_at FROM steps WHERE task_id = ?`,
+    [taskId],
+  );
+  const result = reconcileTaskStatus(
+    steps.map((s) => ({
+      status: s.status as 'pending' | 'completed',
+      completed_at: s.completed_at !== null ? s.completed_at : undefined,
+    })),
+  );
+  const [current] = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+    `SELECT status, completed_at FROM tasks WHERE id = ?`,
+    [taskId],
+  );
+  if (!current ||
+      current.status !== result.status ||
+      (current.completed_at !== null && current.completed_at !== undefined &&
+       current.completed_at !== result.completed_at)) {
+    await db.runAsync(
+      `UPDATE tasks SET status = ?, completed_at = ?, dirty = 1, updated_at = ? WHERE id = ?`,
+      [result.status, result.completed_at, now, taskId],
+    );
+    void syncNow();
+  }
+}
+
 export const StepService = {
   async add(input: CreateStepInput): Promise<Step> {
     const db = await getDb();
@@ -46,6 +76,7 @@ export const StepService = {
       `SELECT * FROM steps WHERE id = ?`,
       [id],
     );
+    await syncTaskStatus(input.task_id);
     void syncNow();
     return toStep(step);
   },
@@ -76,6 +107,7 @@ export const StepService = {
       created.push(toStep(row));
       orderIndex += 1;
     }
+    await syncTaskStatus(task_id);
     // Un solo sync para el lote (issue #157): pasos agregados a una tarea existente.
     void syncNow();
     return created;
@@ -114,6 +146,50 @@ export const StepService = {
     void syncNow();
   },
 
+  async deleteBatch(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    const db = await getDb();
+    const taskIds = new Set<number>();
+    const serverIds: string[] = [];
+    await db.withTransactionAsync(async () => {
+      for (const id of ids) {
+        const rows = await db.getAllAsync<{ task_id: number; server_id: string | null }>(
+          `SELECT task_id, server_id FROM steps WHERE id = ?`,
+          [id],
+        );
+        const step = rows[0];
+        if (!step) continue;
+        taskIds.add(step.task_id);
+        if (step.server_id) serverIds.push(step.server_id);
+        await db.runAsync(`DELETE FROM steps WHERE id = ?`, [id]);
+      }
+      for (const taskId of taskIds) {
+        const remaining = await db.getAllAsync<{ id: number }>(
+          `SELECT id FROM steps WHERE task_id = ? ORDER BY order_index ASC, id ASC`,
+          [taskId],
+        );
+        for (let i = 0; i < remaining.length; i++) {
+          await db.runAsync(
+            `UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`,
+            [i, nowIso(), remaining[i].id],
+          );
+        }
+        await syncTaskStatus(taskId);
+      }
+    });
+    // REQUIERE MIGRACIÓN: los pasos borrados offline con server_id pueden reaparecer en el siguiente pull
+    // (upsertServerStep inserta si no encuentra fila local por server_id).
+    if (hasSession()) {
+      for (const sid of serverIds) {
+        try {
+          await apiFetch(`/api/steps/${sid}`, { method: 'DELETE' });
+        } catch {
+          // offline: el servidor lo reconcilia en el próximo pull
+        }
+      }
+    }
+    void syncNow();
+  },
   async delete(id: number): Promise<void> {
     const db = await getDb();
     const rows = await db.getAllAsync<{ task_id: number; server_id: string | null }>(
@@ -133,6 +209,9 @@ export const StepService = {
         [i, nowIso(), remaining[i].id],
       );
     }
+    await syncTaskStatus(step.task_id);
+    // REQUIERE MIGRACIÓN: un paso borrado offline con server_id puede reaparecer en el siguiente pull,
+    // porque upsertServerStep busca por server_id y si no encuentra fila local, inserta una nueva.
     if (hasSession() && step.server_id) {
       try {
         await apiFetch(`/api/steps/${step.server_id}`, { method: 'DELETE' });
@@ -152,12 +231,15 @@ export const StepService = {
 
   async reorder(task_id: number, orderedIds: number[]): Promise<void> {
     const db = await getDb();
-    for (let i = 0; i < orderedIds.length; i++) {
-      await db.runAsync(
-        `UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`,
-        [i, nowIso(), orderedIds[i]],
-      );
-    }
+    await db.withTransactionAsync(async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        await db.runAsync(
+          `UPDATE steps SET order_index = ?, dirty = 1, updated_at = ? WHERE id = ?`,
+          [i, nowIso(), orderedIds[i]],
+        );
+      }
+      await syncTaskStatus(task_id);
+    });
     void syncNow();
   },
 
@@ -202,17 +284,9 @@ export const StepService = {
       [step.task_id],
     );
     const nextStep = pending.length > 0 ? toStep(pending[0]) : null;
+    const taskCompleted = !nextStep;
 
-    let taskCompleted = false;
-    if (!nextStep) {
-      await db.runAsync(
-        `UPDATE tasks SET status = 'completed', completed_at = ?, dirty = 1, updated_at = ?
-         WHERE id = ?`,
-        [now, now, step.task_id],
-      );
-      taskCompleted = true;
-    }
-
+    await syncTaskStatus(step.task_id);
     void syncNow();
     return { nextStep, taskCompleted };
   },
@@ -255,6 +329,35 @@ export const StepService = {
     return this.reconcileState(step.task_id);
   },
 
+  async reconcileAllTasks(): Promise<number> {
+    const db = await getDb();
+    const tasks = await db.getAllAsync<{ id: number }>(`SELECT id FROM tasks`, []);
+    let corrected = 0;
+    for (const t of tasks) {
+      const before = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+        `SELECT status, completed_at FROM tasks WHERE id = ?`,
+        [t.id],
+      );
+      await syncTaskStatus(t.id);
+      const after = await db.getAllAsync<{ status: string; completed_at: string | null }>(
+        `SELECT status, completed_at FROM tasks WHERE id = ?`,
+        [t.id],
+      );
+      if (before[0]?.status !== after[0]?.status || before[0]?.completed_at !== after[0]?.completed_at) {
+        corrected += 1;
+        if (process.env.NODE_ENV !== 'production') {
+              console.log(`[reconcileAllTasks] tarea ${t.id}: ${before[0]?.status}/${before[0]?.completed_at} → ${after[0]?.status}/${after[0]?.completed_at}`);
+        }
+      }
+    }
+    if (corrected > 0) {
+      void syncNow();
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[reconcileAllTasks] ${corrected} tareas corregidas de ${tasks.length}`);
+    }
+    return corrected;
+  },
   async reconcileState(taskId: number): Promise<{ nextStep: Step | null; taskCompleted: boolean }> {
     const db = await getDb();
     const pending = await db.getAllAsync<Record<string, unknown>>(
@@ -262,6 +365,7 @@ export const StepService = {
       [taskId],
     );
     const nextStep = pending.length > 0 ? toStep(pending[0]) : null;
+    await syncTaskStatus(taskId); // Lote 2: corrige tareas desincronizadas
     return { nextStep, taskCompleted: !nextStep };
   },
 };
