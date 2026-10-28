@@ -65,6 +65,7 @@ export const mciIconMap = {
   target: 'target',
   done: 'check',
   check_circle: 'check-circle-outline',
+  database: 'database',
   drag_handle: 'drag-horizontal-variant',
   swap_vert: 'swap-vertical',
   content_copy: 'content-copy',

@@ -4,6 +4,7 @@ import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigat
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { colors } from '../theme';
+import { migrationFlags } from '../config/migration';
 import SereneTabBar, { type SereneTabKey } from '../components/ui/SereneTabBar';
 import { TAB_KEY_BY_ROUTE, TAB_ROUTES, isFullscreenRoute, type TabRouteName } from './tabs';
 import type {
@@ -15,7 +16,10 @@ import type {
 
 import FocusScreen from '../screens/FocusScreen';
 import TaskListScreen from '../screens/TaskListScreen';
-import TaskDetailScreen from '../screens/TaskDetailScreen';
+import TasksListScreen from '../features/tasks/TasksListScreen';
+import TaskDetailScreen from '../features/tasks/TaskDetailScreen';
+import TaskOrderScreen from '../features/tasks/TaskOrderScreen';
+import LegacyTaskDetailScreen from '../screens/TaskDetailScreen';
 import TaskFormScreen from '../screens/TaskFormScreen';
 import StepFormScreen from '../screens/StepFormScreen';
 import StepCompleteScreen from '../screens/StepCompleteScreen';
@@ -76,8 +80,19 @@ function FocusStack() {
 function TasksStack() {
   return (
     <TasksStackNav.Navigator screenOptions={screenOpts}>
-      <TasksStackNav.Screen name="TaskList" component={TaskListScreen} options={{ title: 'Tareas' }} />
-      <TasksStackNav.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Detalle' }} />
+      <TasksStackNav.Screen
+        name="TaskList"
+        component={migrationFlags.tasks ? TasksListScreen : TaskListScreen}
+        options={{ title: 'Tareas' }}
+      />
+      <TasksStackNav.Screen
+        name="TaskDetail"
+        component={migrationFlags.tasks ? TaskDetailScreen : LegacyTaskDetailScreen}
+        options={{ title: 'Detalle' }}
+      />
+      {migrationFlags.tasks && (
+        <TasksStackNav.Screen name="TaskOrder" component={TaskOrderScreen} options={{ title: 'Ordenar' }} />
+      )}
       <TasksStackNav.Screen name="TaskForm" component={TaskFormScreen} options={{ title: 'Nueva tarea' }} />
       <TasksStackNav.Screen name="StepForm" component={StepFormScreen} options={{ title: 'Nuevo paso' }} />
       <TasksStackNav.Screen name="StepComplete" component={StepCompleteScreen} options={{ title: 'Progreso', headerShown: false }} />

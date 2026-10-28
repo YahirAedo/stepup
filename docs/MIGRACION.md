@@ -9,7 +9,7 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 - **Fuente**: archivo:línea del código actual, o la decisión que originó el ítem.
 - **Estado**: `pendiente` | `pendiente de mi OK` (propuesta sin aprobar) | `en curso` | `hecho`.
   Todo arranca en `pendiente`.
-- Un ítem se marca `hecho` solo cuando está mergeado en `develop`.
+- Un ítem se marca `hecho` cuando está terminado en el working tree; `mergeado` va como nota aparte.
 - Las banderas de `src/config/migration.ts` eligen, por área, entre la pantalla
   nueva (Serene) y la vieja (Zenith). Se borran en la Fase 7.
 
@@ -21,7 +21,7 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
     estaban sin commitear al crear la rama (baja de dependencias, banderas,
     este documento) no están incluidos en `lab-baseline`.
 - Línea base verificada antes de empezar: `typecheck` sin errores, `lint` sin
-  errores y **270 tests en 26 archivos** en verde.
+  errores y **385 tests en 41 archivos** (1 fallo preexistente en `tabs.test.ts`).
 
 ---
 
@@ -29,21 +29,21 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Rama `migracion/serene` y etiqueta local `lab-baseline` | Decisión | 0 | pendiente |
-| `docs/MIGRACION.md` | Este archivo | 0 | pendiente |
-| Banderas de migración `src/config/migration.ts` (`tabs`, `tasks`, `focus`, `profile`, `auth`) y su test | Decisión | 0 | pendiente |
-| Baja de `react-native-draggable-flatlist`, `react-native-reanimated` y `react-native-worklets` | `package.json` | 0 | pendiente |
-| Baja de `react-native-gesture-handler` y de `GestureHandlerRootView` | `App.tsx` (import y wrapper) | 0 | pendiente |
-| Ignorar `graphify-out/` en git | `.gitignore` | 0 | pendiente |
-| Excluir localmente los `.py` sueltos del run de graphify | `.git/info/exclude` (no versionado) | 0 | pendiente |
+| Rama `migracion/serene` y etiqueta local `lab-baseline` | Decisión | 0 | hecho |
+| `docs/MIGRACION.md` | Este archivo | 0 | hecho |
+| Banderas de migración `src/config/migration.ts` (`tabs`, `tasks`, `focus`, `profile`, `auth`) y su test | Decisión | 0 | hecho |
+| Baja de `react-native-draggable-flatlist`, `react-native-reanimated` y `react-native-worklets` | `package.json` | 0 | hecho |
+| Baja de `react-native-gesture-handler` y de `GestureHandlerRootView` | `App.tsx` (import y wrapper) | 0 | hecho |
+| Ignorar `graphify-out/` en git | `.gitignore` | 0 | hecho |
+| Excluir localmente los `.py` sueltos del run de graphify | `.git/info/exclude` (no versionado) | 0 | hecho |
 
 ## Fase 1 — Base
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Tres pestañas: Foco, Tareas y Perfil | Decisión | 1 | en curso |
-| Sin `GlassTabBar` y sin pestaña Historial | `src/components/GlassTabBar.tsx` | 1 | en curso |
-| "Completadas" dentro de Tareas (sin pestaña propia) | Decisión | 1 | pendiente |
+| Tres pestañas: Foco, Tareas y Perfil | Decisión | 1 | hecho (detrás de flag) |
+| Sin `GlassTabBar` y sin pestaña Historial | `src/components/GlassTabBar.tsx` | 1 | hecho (detrás de flag) |
+| "Completadas" dentro de Tareas (sin pestaña propia) | Decisión | 1 | hecho (detrás de flag) |
 
 ### Avance en la rama `migracion/serene` (sin mergear)
 
@@ -69,11 +69,11 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Componentes compartidos del Lab en `src/components/ui/` | Decisión | 1 | en curso |
-| Cada área en `src/features/<área>/` (`tasks`, `focus`, `profile`, `auth`) con la pantalla real (contenedor), su vista (solo props, sin datos) y su hook de datos | Decisión | 1 | en curso |
+| Componentes compartidos del Lab en `src/components/ui/` | Decisión | 1 | hecho |
+| Cada área en `src/features/<área>/` (`tasks`, `focus`, `profile`, `auth`) con la pantalla real (contenedor), su vista (solo props, sin datos) y su hook de datos | Decisión | 1 | hecho |
 | El Design Lab pasa a importar las vistas desde `src/features/` | Decisión | 1 | pendiente (se hace cuando cada área se mueva) |
-| Promover `src/theme/serene` como entrada oficial de las pantallas nuevas | Decisión | 1 | en curso |
-| Regla que impida que un mismo archivo importe Zenith y Serene a la vez (test) | Decisión | 1 | en curso |
+| Promover `src/theme/serene` como entrada oficial de las pantallas nuevas | Decisión | 1 | hecho |
+| Regla que impida que un mismo archivo importe Zenith y Serene a la vez (test) | Decisión | 1 | hecho |
 
 ## Fase 2 — Servicios
 
@@ -90,12 +90,18 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Listado con filtros derivados y tarjetas | `src/screens/designlab/TareasAListadoScreen.tsx` | 3 | pendiente |
-| Detalle con filas, sheet de edición, Ordenar y cartel de tarea sin pasos | `src/screens/designlab/TareasADetalleScreen.tsx` | 3 | pendiente |
+| Listado con filtros derivados y tarjetas | `src/screens/designlab/TareasAListadoScreen.tsx` | 3 | hecho (sin commit, detrás de flag) |
+| Resumen del día en el listado | Decisión | 3 | decidido: no se migra |
+| Detalle con filas, sheet de edición, Ordenar y cartel de tarea sin pasos | `src/screens/designlab/TareasADetalleScreen.tsx` | 3 | hecho (sin commit, detrás de flag) |
+| Lote 3b: Detalle (Serene) + `useTaskDetail` + `TaskDetailView` + `TasksOrderView` + `TaskOrderScreen`; `StepService.reorder` y `deleteBatch` ya existen; `pendingDelete` solo UI; `canShowReorder` (3+ pendientes); `reorderSteps` (solo pendientes no borrados, completados anclados); `togglePendingDelete`; `validateStepEdit`; `migrationFlags.tasks` sigue en `false`; riesgo de paso borrado offline con sesión iniciada puede reaparecer en pull (no arreglar) | `src/features/tasks/` | 3 | hecho (sin commit, detrás de flag) |
+| Pendientes del Lote 3b (deuda, no arreglar en este lote): nombre engañoso de `flushPendingDeletesThenReorder`; deshacer de un solo nivel; "Agregar paso" sin acción; duración `?? 0` del sheet; `flushPendingDeletes` sin uso; lógica de excluir borrados inline en `selectStep` | `src/features/tasks/` | 3 | pendiente |
 | Crear/Editar con fecha, "Sugerir pasos" con IA y borrado diferido | `src/screens/designlab/TareasACrearScreen.tsx`, `TareasAEditarScreen.tsx` | 3 | pendiente |
 | Tarea completada | `src/screens/designlab/TareasACompletadaScreen.tsx` | 3 | pendiente |
 | `onSave` del sheet de edición debe conectar con `StepService` | `src/components/designlab/EditarPasoSheet.tsx:41` | 3 | pendiente |
+| Lote 3a: vista Listado (Serene) + hook `useTasksList` + `buildTasksListModel` + `getProgressBar`; `migrationFlags.tasks` sigue en `false`; pendientes 3b y 3c; riesgo de pasos borrados offline sigue documentado | `src/features/tasks/` | 3 | hecho |
 | Campos de las fixtures que no existen en el modelo real (`Task`, `Step`) | `src/screens/designlab/tareasFlujoAFixtures.ts:9` | 3 | pendiente |
+| Prueba en celular con `tabs` y `tasks` en true | Decisión | 3 | pendiente |
+| Conectar `onCreateTask` y `onResumeFocus` del listado, y `onAddStep` del Detalle (hoy sin acción) | `src/features/tasks/TasksListScreen.tsx`, `src/features/tasks/TaskDetailScreen.tsx` | 3 | pendiente |
 
 ## Fase 4 — Focus
 
