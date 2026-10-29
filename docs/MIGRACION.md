@@ -90,18 +90,20 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Listado con filtros derivados y tarjetas | `src/screens/designlab/TareasAListadoScreen.tsx` | 3 | hecho (sin commit, detrás de flag) |
+| Listado con filtros derivados y tarjetas | `src/screens/designlab/TareasAListadoScreen.tsx` | 3 | hecho (detrás de flag) |
 | Resumen del día en el listado | Decisión | 3 | decidido: no se migra |
-| Detalle con filas, sheet de edición, Ordenar y cartel de tarea sin pasos | `src/screens/designlab/TareasADetalleScreen.tsx` | 3 | hecho (sin commit, detrás de flag) |
-| Lote 3b: Detalle (Serene) + `useTaskDetail` + `TaskDetailView` + `TasksOrderView` + `TaskOrderScreen`; `StepService.reorder` y `deleteBatch` ya existen; `pendingDelete` solo UI; `canShowReorder` (3+ pendientes); `reorderSteps` (solo pendientes no borrados, completados anclados); `togglePendingDelete`; `validateStepEdit`; `migrationFlags.tasks` sigue en `false`; riesgo de paso borrado offline con sesión iniciada puede reaparecer en pull (no arreglar) | `src/features/tasks/` | 3 | hecho (sin commit, detrás de flag) |
+| Detalle con filas, sheet de edición, Ordenar y cartel de tarea sin pasos | `src/screens/designlab/TareasADetalleScreen.tsx` | 3 | hecho (detrás de flag) |
+| Lote 3b: Detalle (Serene) + `useTaskDetail` + `TaskDetailView` + `TasksOrderView` + `TaskOrderScreen`; `StepService.reorder` y `deleteBatch` ya existen; `pendingDelete` solo UI; `canShowReorder` (3+ pendientes); `reorderSteps` (solo pendientes no borrados, completados anclados); `togglePendingDelete`; `validateStepEdit`; `migrationFlags.tasks` sigue en `false`; riesgo de paso borrado offline con sesión iniciada puede reaparecer en pull (no arreglar) | `src/features/tasks/` | 3 | hecho (detrás de flag) |
+| Lote 3c-1: pantalla Editar (`TaskEdit`, `useTaskEdit`, `TaskEditView`) con borrador local y Guardar por plan (`buildEditPlan`), borrado diferido, Ordenar como panel inferior, un solo `EditarPasoSheet` con `mode` para añadir y editar paso, aviso al salir sin guardar (`shouldBlockLeave`), Borrar tarea solo en Editar; Detalle de solo lectura con lápiz en el header; se eliminó la ruta `TaskOrder`; `migrationFlags.tasks` sigue en `false` | `src/features/tasks/` | 3 | hecho (detrás de flag) |
+| Sheet de paso en modo crear: 'Secuencia · Paso X de Y' no suma el paso nuevo (con 6 pasos dice 'Paso 6 de 6' y debería decir 'Paso 7 de 7'). `getStepSheetPosition` calcula n+1 y tiene tests; no se encontró la causa en el código; se reproduce en el celular | `src/features/tasks/logic/stepSheetResult.ts` y `src/components/ui/EditarPasoSheet.tsx` | 3 | pendiente (baja prioridad, revisar mucho después) |
 | Pendientes del Lote 3b (deuda, no arreglar en este lote): nombre engañoso de `flushPendingDeletesThenReorder`; deshacer de un solo nivel; "Agregar paso" sin acción; duración `?? 0` del sheet; `flushPendingDeletes` sin uso; lógica de excluir borrados inline en `selectStep` | `src/features/tasks/` | 3 | pendiente |
-| Crear/Editar con fecha, "Sugerir pasos" con IA y borrado diferido | `src/screens/designlab/TareasACrearScreen.tsx`, `TareasAEditarScreen.tsx` | 3 | pendiente |
+| Crear/Editar con fecha, "Sugerir pasos" con IA y borrado diferido | `src/screens/designlab/TareasACrearScreen.tsx`, `TareasAEditarScreen.tsx` | 3 | Editar con fecha y borrado diferido: hecho en 3c-1; falta Sugerir pasos con IA y Crear |
 | Tarea completada | `src/screens/designlab/TareasACompletadaScreen.tsx` | 3 | pendiente |
-| `onSave` del sheet de edición debe conectar con `StepService` | `src/components/designlab/EditarPasoSheet.tsx:41` | 3 | pendiente |
+| `onSave` del sheet de edición debe conectar con `StepService` | `src/components/designlab/EditarPasoSheet.tsx:41` | 3 | hecho en 3c-1 (un solo sheet para añadir y editar paso) |
 | Lote 3a: vista Listado (Serene) + hook `useTasksList` + `buildTasksListModel` + `getProgressBar`; `migrationFlags.tasks` sigue en `false`; pendientes 3b y 3c; riesgo de pasos borrados offline sigue documentado | `src/features/tasks/` | 3 | hecho |
 | Campos de las fixtures que no existen en el modelo real (`Task`, `Step`) | `src/screens/designlab/tareasFlujoAFixtures.ts:9` | 3 | pendiente |
 | Prueba en celular con `tabs` y `tasks` en true | Decisión | 3 | pendiente |
-| Conectar `onCreateTask` y `onResumeFocus` del listado, y `onAddStep` del Detalle (hoy sin acción) | `src/features/tasks/TasksListScreen.tsx`, `src/features/tasks/TaskDetailScreen.tsx` | 3 | pendiente |
+| Conectar `onCreateTask` y `onResumeFocus` del listado, y `onAddStep` del Detalle (hoy sin acción) | `src/features/tasks/TasksListScreen.tsx`, `src/features/tasks/TaskDetailScreen.tsx` | 3 | `onAddStep` del Detalle ya abre Editar; faltan `onCreateTask` y `onResumeFocus` |
 
 ## Fase 4 — Focus
 

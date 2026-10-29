@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, ScrollView, Text as RNText, Pressable, type TextStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useBottomLayout } from '../../../theme/layout';
 import {
   sereneColors,
   sereneTypography,
@@ -38,7 +37,6 @@ export default function TasksListView({
   onOpenTask,
   onResumeFocus,
 }: TasksListViewProps) {
-  const { contentPaddingBottom } = useBottomLayout();
   const { scale: s } = useResponsive();
 
   const { counts } = model;
@@ -89,7 +87,7 @@ export default function TasksListView({
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: sereneSpacing.margin,
-          paddingBottom: contentPaddingBottom,
+          paddingBottom: sereneSpacing['space-lg'],
           gap: sereneSpacing['space-lg'],
         }}
         showsVerticalScrollIndicator={false}

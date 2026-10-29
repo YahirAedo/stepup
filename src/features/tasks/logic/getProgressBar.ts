@@ -12,7 +12,9 @@ export function getProgressBar(
   if (total <= 8) {
     return {
       kind: 'segments',
-      statuses: steps.map((step) => (step.status === 'completed' ? 'done' : 'pending')),
+      // Los 'done' son los primeros N (N = cantidad de completados),
+      // sin importar en qué posición esté el paso completado.
+      statuses: steps.map((_, i) => (i < completed ? 'done' : 'pending')),
     };
   }
   return { kind: 'continuous', proportion };

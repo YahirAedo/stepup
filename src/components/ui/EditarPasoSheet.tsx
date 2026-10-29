@@ -30,6 +30,8 @@ export interface EditarPasoSheetProps {
   position: number;
   total: number;
   error?: string | null;
+  /** Modo del sheet: 'edit' (default) o 'create'. */
+  mode?: 'create' | 'edit';
 }
 
 /**
@@ -52,6 +54,7 @@ export default function EditarPasoSheet({
   position,
   total,
   error,
+  mode = 'edit',
 }: EditarPasoSheetProps) {
   const { scale: s } = useResponsive();
   const [title, setTitle] = useState(initialTitle);
@@ -87,7 +90,7 @@ export default function EditarPasoSheet({
             {`Tarea activa · ${taskTitle}`}
           </RNText>
           <RNText style={[sereneTypography['headline-sm'] as TextStyle, { color: sereneColors['on-surface'] }]}>
-            Editar paso
+            {mode === 'create' ? 'Nuevo paso' : 'Editar paso'}
           </RNText>
         </View>
 
@@ -177,7 +180,7 @@ export default function EditarPasoSheet({
       <Pressable
         onPress={handleSave}
         accessibilityRole="button"
-        accessibilityLabel="Guardar paso"
+        accessibilityLabel={mode === 'create' ? 'Añadir paso' : 'Guardar paso'}
         style={({ pressed }) => ({
           minHeight: s(48),
           borderRadius: sereneBorderRadius.lg,
@@ -189,7 +192,7 @@ export default function EditarPasoSheet({
       >
         <MaterialCommunityIcons name={mci('check')} size={s(18)} color={sereneColors['on-primary']} />
         <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-          Guardar paso
+          {mode === 'create' ? 'Añadir paso' : 'Guardar paso'}
         </RNText>
       </Pressable>
     </BottomSheet>

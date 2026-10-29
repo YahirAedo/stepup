@@ -18,6 +18,8 @@ export interface StepRowProps {
   completed: boolean;
   /** Paso marcado para borrado visual: atenuado, nombre tachado. */
   pendingDelete: boolean;
+  /** Modo solo lectura: sin tacho, sin tap. */
+  readOnly?: boolean;
   /** Fila seleccionada en modo ordenar: resaltada con color de acento. */
   selected?: boolean;
   /** Abre el sheet de edición del paso. Opcional: si no se pasa, tocar la fila no hace nada. */
@@ -42,13 +44,14 @@ export default function StepRow({
   durationMin,
   completed,
   pendingDelete,
+  readOnly,
   selected,
   onPress,
   onDelete,
   onUndoDelete,
 }: StepRowProps) {
   const { scale: s } = useResponsive();
-  const disabled = completed || pendingDelete;
+  const disabled = readOnly ? true : (completed || pendingDelete);
   // Tachado SOLO para el paso marcado para borrado. Los completados se atenuan pero no se tachan.
   const struck = pendingDelete ? 'line-through' : 'none';
   const textColor = disabled ? sereneColors['on-surface-variant'] : sereneColors['on-surface'];
@@ -56,13 +59,13 @@ export default function StepRow({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
       <Pressable
-        onPress={disabled ? undefined : onPress}
-        disabled={disabled}
+        onPress={readOnly ? undefined : (disabled ? undefined : onPress)}
+        disabled={readOnly ? true : disabled}
         accessibilityRole="button"
         accessibilityLabel={
           pendingDelete ? `${name}, marcado para borrar` : name
         }
-        accessibilityState={{ disabled }}
+        accessibilityState={{ disabled: readOnly ? true : disabled }}
         style={({ pressed }) => ({
           flex: 1,
           flexDirection: 'row',

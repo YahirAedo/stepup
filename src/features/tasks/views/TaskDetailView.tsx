@@ -25,12 +25,6 @@ import type { ProgressBarResult } from '../../../features/tasks/logic/getProgres
 export interface TaskDetailViewProps {
   task?: Task;
   steps: ReadonlyArray<Step>;
-  pendingDeleteIds: ReadonlyArray<number>;
-  canShowReorder: boolean;
-  onDeleteStep: (stepId: number) => void;
-  onUndoDelete: (stepId: number) => void;
-  onOpenEditSheet: (step: Step) => void;
-  onOrderSteps: () => void;
   onAddStep: () => void;
   error: string | null;
   onRetry: () => void;
@@ -39,12 +33,6 @@ export interface TaskDetailViewProps {
 export default function TaskDetailView({
   task,
   steps,
-  pendingDeleteIds,
-  canShowReorder,
-  onDeleteStep,
-  onUndoDelete,
-  onOpenEditSheet,
-  onOrderSteps,
   onAddStep,
   error,
   onRetry,
@@ -54,12 +42,6 @@ export default function TaskDetailView({
   const completedCount = steps.filter((step) => step.status === 'completed').length;
   const totalCount = steps.length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
-  const hasPending = steps.some(
-    (step) => step.status === 'pending' && !pendingDeleteIds.includes(step.id),
-  );
-  const deletedSteps = steps.filter((step) => pendingDeleteIds.includes(step.id));
-
-  const isDeleted = (stepId: number) => pendingDeleteIds.includes(stepId);
 
   const progressResult: ProgressBarResult = getProgressBar(steps);
 
@@ -293,93 +275,40 @@ export default function TaskDetailView({
                   name={step.name}
                   durationMin={step.duration_min ?? null}
                   completed={step.status === 'completed'}
-                  pendingDelete={isDeleted(step.id)}
-                  onPress={() => onOpenEditSheet(step)}
-                  onDelete={() => onDeleteStep(step.id)}
-                  onUndoDelete={() => onUndoDelete(step.id)}
+                  pendingDelete={false}
                 />
               ))}
-              {deletedSteps.length > 0 && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: s(6),
-                    marginTop: sereneSpacing['space-xs'],
-                    paddingHorizontal: sereneSpacing['space-sm'],
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name={mci('delete')}
-                    size={s(14)}
-                    color={sereneColors['on-surface-variant']}
-                  />
-                  <RNText
-                    style={[
-                      sereneTypography['caption'] as TextStyle,
-                      { color: sereneColors['on-surface-variant'] },
-                    ]}
-                  >
-                    {deletedSteps.length} paso(s) marcado(s) para borrado. Se aplicará al salir.
-                  </RNText>
-                </View>
-              )}
             </View>
           )}
 
-          {hasPending && canShowReorder && (
+          {totalCount === 0 && (
             <Pressable
-              onPress={onOrderSteps}
+              onPress={onAddStep}
               accessibilityRole="button"
-              accessibilityLabel="Ordenar pasos"
+              accessibilityLabel="Agregar primer paso"
               style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: s(6),
-                minHeight: s(48),
                 marginTop: sereneSpacing['space-sm'],
+                minHeight: s(48),
                 borderRadius: sereneBorderRadius.lg,
-                backgroundColor: sereneColors['surface-container-high'],
-                opacity: pressed ? 0.85 : 1,
+                borderWidth: 1,
+                borderColor: sereneColors.outline,
+                backgroundColor: sereneColors.surface,
+                opacity: pressed ? 0.9 : 1,
                 paddingHorizontal: sereneSpacing['space-sm'],
               })}
             >
-              <MaterialCommunityIcons name={mci('swap_vert')} size={s(18)} color={sereneColors.primary} />
+              <MaterialCommunityIcons name={mci('add')} size={s(20)} color={sereneColors.primary} />
               <RNText
                 style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}
               >
-                Ordenar pasos
+                Agregar primer paso
               </RNText>
             </Pressable>
           )}
-
-          <Pressable
-            onPress={onAddStep}
-            accessibilityRole="button"
-            accessibilityLabel="Agregar paso"
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: s(6),
-              marginTop: sereneSpacing['space-sm'],
-              minHeight: s(48),
-              borderRadius: sereneBorderRadius.lg,
-              borderWidth: 1,
-              borderColor: sereneColors.outline,
-              backgroundColor: sereneColors.surface,
-              opacity: pressed ? 0.9 : 1,
-              paddingHorizontal: sereneSpacing['space-sm'],
-            })}
-          >
-            <MaterialCommunityIcons name={mci('add')} size={s(20)} color={sereneColors.primary} />
-            <RNText
-              style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}
-            >
-              Agregar paso
-            </RNText>
-          </Pressable>
         </View>
       </ScrollView>
     </View>

@@ -8,7 +8,7 @@ export type FocusStackParamList = {
 export type TasksStackParamList = {
   TaskList: undefined;
   TaskDetail: { taskId: number };
-  TaskOrder: { taskId: number; pendingDeleteIds?: ReadonlyArray<number> };
+  TaskEdit: { taskId: number };
   TaskForm: { task?: Task };
   StepForm: { taskId: number; stepId?: number };
   StepComplete: { stepName: string; stepDuration?: number; nextStepName?: string };
