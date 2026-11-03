@@ -6,25 +6,14 @@ import { buildEditPlan, hasUnsavedChanges, validateTaskEdit } from '../logic/bui
 import { validateStepEdit } from '../logic/validateStepEdit';
 import { applyStepSheetResult } from '../logic/stepSheetResult';
 import { resolveStepIds } from '../logic/resolveStepIds';
-import { useIsOnline } from '../../../hooks/useIsOnline';
-import { hasSession } from '../../../services/session';
-import { AIService, aiErrorMessage } from '../../../services/AIService';
-import { getAiAvailability } from '../logic/getAiAvailability';
-import { mergeSuggestedSteps } from '../logic/mergeSuggestedSteps';
-import { buildNewDraftSteps } from '../logic/buildNewDraftSteps';
-import { buildAiDescription } from '../logic/buildAiDescription';
-import { appendProposedNames } from '../logic/appendProposedNames';
-import { taskEditCopy } from '../logic/taskEditCopy';
+import { reorderByKeys } from '../logic/reorderByKeys';
+import { canOrderSteps } from '../logic/canOrderSteps';
+import { isLongTitle as isLongTitleFn } from '../../../utils/microplan';
+
+import type { DraftStep } from './draftStep';
+import { useAiSteps } from './useAiSteps';
 import type { SuggestedStep } from '../../../types';
 import type { AiStatus } from '../../../components/ui/AiStepsPanel';
-
-export interface DraftStep {
-  key: string;
-  id: number | null;
-  name: string;
-  duration_min: number | null;
-  status: 'pending' | 'completed';
-}
 
 export interface UseTaskEditResult {
   task: Task | null;
@@ -96,12 +85,6 @@ export function useTaskEdit(taskId: number): UseTaskEditResult {
   const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [steps, setSteps] = useState<DraftStep[]>([]);
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
-  const [aiStatus, setAiStatus] = useState<AiStatus>('idle');
-  const [aiSuggestions, setAiSuggestions] = useState<SuggestedStep[] | null>(null);
-  const [aiMessage, setAiMessage] = useState<string | null>(null);
-  const isOnline = useIsOnline();
-  const requestRef = useRef(0);
-  const proposedRef = useRef<string[]>([]);
   const [originalName, setOriginalName] = useState('');
   const [originalDesc, setOriginalDesc] = useState<string | null>(null);
   const [originalDueDate, setOriginalDueDate] = useState<string | null>(null);
@@ -163,9 +146,9 @@ export function useTaskEdit(taskId: number): UseTaskEditResult {
     pendingDeletes,
   };
   const hasUnsaved = hasUnsavedChanges(original, draft);
-  const isLongTitle = title.trim().length > 25;
+  const isLongTitle = isLongTitleFn(title);
   const pendingStepsCount = steps.filter((st) => !pendingDeletes.has(st.key)).length;
-  const canOrder = pendingStepsCount >= 3;
+  const canOrder = canOrderSteps(pendingStepsCount);
 
   const editingStep = stepSheet?.mode === 'edit'
     ? (steps.find((st) => st.key === stepSheet.key) ?? null)
@@ -213,98 +196,23 @@ export function useTaskEdit(taskId: number): UseTaskEditResult {
   }, []);
 
   const handleOrdenarDone = useCallback((orderedKeys: string[]) => {
-    const byKey = new Map(steps.map((st) => [st.key, st]));
-    const nextSteps = orderedKeys
-      .map((key) => byKey.get(key))
-      .filter((st): st is DraftStep => st !== undefined);
-    const remaining = steps.filter((st) => !orderedKeys.includes(st.key));
-    setSteps([...nextSteps, ...remaining]);
+    setSteps(reorderByKeys(steps, orderedKeys));
     setOrdenarVisible(false);
   }, [steps]);
 
-  const suggestSteps = useCallback(async () => {
-    if (aiStatus === 'loading') return;
-    const availability = getAiAvailability({ isOnline, hasSession: hasSession(), title: title.trim() });
-    if (availability === 'needs-title') {
-      setAiStatus('error');
-      setAiMessage(taskEditCopy.ai.needsTitle);
-      setAiSuggestions(null);
-      return;
-    }
-    if (availability === 'no-session') {
-      setAiStatus('offline');
-      setAiMessage(taskEditCopy.ai.noSession);
-      setAiSuggestions(null);
-      return;
-    }
-    if (availability === 'offline') {
-      setAiStatus('offline');
-      setAiMessage(taskEditCopy.ai.offline);
-      setAiSuggestions(null);
-      return;
-    }
-    const req = ++requestRef.current;
-    setAiStatus('loading');
-    setAiMessage(null);
-    setAiSuggestions(null);
-        try {
-      const existingNames = steps
-        .filter((st) => !pendingDeletes.has(st.key))
-        .map((st) => st.name);
-      const aiDesc = buildAiDescription(notes.trim(), existingNames, 900, proposedRef.current);
-      const result = await AIService.suggestSteps(title.trim(), aiDesc);
-      // Agregar los nombres al historial de propuestos (más viejos descartados, últimos 24)
-      proposedRef.current = appendProposedNames(proposedRef.current, result.map((s) => s.name));
-      if (req !== requestRef.current) return;
-      const merged = mergeSuggestedSteps(existingNames, result);
-      if (merged.steps.length === 0) {
-        setAiStatus('idle');
-        setAiSuggestions(null);
-        setAiMessage(taskEditCopy.ai.allDuplicated);
-      } else {
-        setAiSuggestions(merged.steps.map((s) => ({ name: s.name, duration_min: s.duration })));
-        setAiStatus('ready');
-        setAiMessage(taskEditCopy.ai.ready);
-      }
-    } catch (err) {
-      if (req === requestRef.current) {
-        setAiStatus('error');
-        setAiMessage(aiErrorMessage(err));
-        setAiSuggestions(null);
-      }
-    }
-  }, [aiStatus, isOnline, title, notes, steps, pendingDeletes]);
-
-  const acceptAiSteps = useCallback(() => {
-    if (!aiSuggestions || aiSuggestions.length === 0) {
-      setAiStatus('idle');
-      setAiMessage(taskEditCopy.ai.allDuplicated);
-      setAiSuggestions(null);
-      return;
-    }
-    const existingNames = steps
+  const aiHook = useAiSteps({
+    title,
+    notes,
+    getVisibleStepNames: () => steps
       .filter((st) => !pendingDeletes.has(st.key))
-      .map((st) => st.name);
-    const merged = mergeSuggestedSteps(existingNames, aiSuggestions);
-    if (merged.steps.length === 0) {
-      setAiStatus('idle');
-      setAiSuggestions(null);
-      setAiMessage(taskEditCopy.ai.allDuplicated);
-      return;
-    }
-    const built = buildNewDraftSteps(stepSeq.current, merged.steps.map((s) => ({ name: s.name, duration: s.duration })));
-    stepSeq.current = built.nextSeq;
-    setSteps((prev) => [...prev, ...built.steps]);
-    setAiSuggestions(null);
-    setAiStatus('idle');
-    setAiMessage(merged.skipped > 0 ? taskEditCopy.ai.allDuplicated : null);
-  }, [aiSuggestions, steps, pendingDeletes]);
-
-  const discardAiSteps = useCallback(() => {
-    setAiSuggestions(null);
-    setAiStatus('idle');
-    setAiMessage(null);
-  }, []);
+      .map((st) => st.name),
+    getSeq: () => stepSeq.current,
+    onAppend: (nextSteps, nextSeq) => {
+      stepSeq.current = nextSeq;
+      setSteps((prev) => [...prev, ...nextSteps]);
+    },
+  });
+  const { aiStatus, aiSuggestions, aiMessage, suggestSteps, acceptAiSteps, discardAiSteps } = aiHook;
 
   const save = useCallback(async (): Promise<boolean> => {
     if (!task) return false;
