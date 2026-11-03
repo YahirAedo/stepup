@@ -3,6 +3,7 @@ export interface DraftStep {
   id: number | null;
   name: string;
   duration_min: number | null;
+  status: 'pending' | 'completed';
 }
 
 export type StepSheetTarget = null | { mode: 'create' } | { mode: 'edit'; key: string };
@@ -10,6 +11,7 @@ export type StepSheetTarget = null | { mode: 'create' } | { mode: 'edit'; key: s
 export interface StepSheetValues {
   title: string;
   duration: number;
+  status?: 'pending' | 'completed';
 }
 
 export interface StepSheetPosition {
@@ -26,6 +28,7 @@ export interface StepSheetPosition {
  * - key inexistente: devuelve la lista sin cambios.
  * - No muta la entrada.
  * - El nombre se guarda recortado.
+ * - El estado usa values.status si viene; si no, 'pending' al crear o se conserva al editar.
  */
 export function applyStepSheetResult(
   steps: ReadonlyArray<DraftStep>,
@@ -43,6 +46,7 @@ export function applyStepSheetResult(
         id: null,
         name: values.title.trim(),
         duration_min: values.duration,
+        status: values.status ?? 'pending',
       },
     ];
   }
@@ -50,7 +54,12 @@ export function applyStepSheetResult(
   // mode 'edit'
   return steps.map((step) =>
     step.key === target.key
-      ? { ...step, name: values.title.trim(), duration_min: values.duration }
+      ? {
+          ...step,
+          name: values.title.trim(),
+          duration_min: values.duration,
+          status: values.status ?? step.status,
+        }
       : step,
   );
 }

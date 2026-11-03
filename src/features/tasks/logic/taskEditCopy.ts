@@ -18,6 +18,7 @@ export const taskEditCopy = {
   dueNone: 'Sin fecha meta',
   dueClear: 'Quitar fecha meta',
   dueA11y: 'Fecha meta',
+  stepStatus: { label: 'Estado del paso', pending: 'Por hacer', completed: 'Hecho' },
   saveLabel: 'Guardar',
   deleteLabel: 'Borrar',
   deleteDialog: {
@@ -31,5 +32,19 @@ export const taskEditCopy = {
     body: 'Los cambios que hiciste no se van a guardar.',
     cancel: 'Seguir editando',
     confirm: 'Salir sin guardar',
+  },
+  ai: {
+    title: 'Sugerir pasos con IA',
+    cta: 'Sugerir pasos',
+    hint: 'La IA propone pasos cortos. Después los podés editar o quitar.',
+    loading: 'Preparando pasos…',
+    ready: 'Revisá los pasos propuestos.',
+    offline: 'Estás sin conexión. Podés cargar los pasos a mano.',
+    noSession: 'Iniciá sesión para sugerir pasos con IA.',
+    needsTitle: 'Poné un nombre a la tarea para sugerir pasos.',
+    add: 'Agregar pasos',
+    discard: 'Descartar',
+    allDuplicated: 'Esos pasos ya estaban en la tarea.',
+    minutes: (n: number) => `${n} min`,
   },
 };

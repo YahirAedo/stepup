@@ -49,6 +49,12 @@ export default function TaskEditScreen({ navigation, route }: Props) {
     save,
     deleteTask,
     discardChanges,
+    aiStatus,
+    aiSuggestions,
+    aiMessage,
+    suggestSteps,
+    acceptAiSteps,
+    discardAiSteps,
   } = useTaskEdit(taskId);
 
   const handleSave = useCallback(async () => {
@@ -126,6 +132,12 @@ export default function TaskEditScreen({ navigation, route }: Props) {
         onDiscardClose={() => setDiscardOpen(false)}
         saveError={saveError}
         stepSheetError={stepSheetError}
+        aiStatus={aiStatus}
+        aiSuggestions={aiSuggestions}
+        aiMessage={aiMessage}
+        onSuggestSteps={suggestSteps}
+        onAcceptAiSteps={acceptAiSteps}
+        onDiscardAiSteps={discardAiSteps}
       />
     </View>
   );

@@ -26,6 +26,9 @@ import DueDateField from '../../../components/ui/DueDateField';
 import OrdenarPaso from '../../../components/ui/OrdenarPaso';
 import EditarPasoSheet from '../../../components/ui/EditarPasoSheet';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import AiStepsPanel from '../../../components/ui/AiStepsPanel';
+import type { SuggestedStep } from '../../../types';
+import type { AiStatus } from '../../../components/ui/AiStepsPanel';
 import { getStepSheetPosition } from '../logic/stepSheetResult';
 import { taskEditCopy as f } from '../logic/taskEditCopy';
 
@@ -34,7 +37,7 @@ export interface TaskEditViewProps {
   notes: string;
   notesOpen: boolean;
   dueDate: string | undefined;
-  steps: Array<{ key: string; id: number | null; name: string; duration_min: number | null }>;
+  steps: Array<{ key: string; id: number | null; name: string; duration_min: number | null; status: 'pending' | 'completed' }>;
   pendingDeletes: Set<string>;
   hasUnsaved: boolean;
   isLongTitle: boolean;
@@ -49,7 +52,7 @@ export interface TaskEditViewProps {
   onNotesToggle: () => void;
   onDueDateChange: (v: string | undefined) => void;
   onOpenEditSheet: (key: string) => void;
-  onSaveEditStep: (values: { title: string; duration: number }) => void;
+  onSaveEditStep: (values: { title: string; duration: number; status: 'pending' | 'completed' }) => void;
   onCloseEditSheet: () => void;
   onToggleDelete: (key: string) => void;
   onOpenCreateSheet: () => void;
@@ -61,6 +64,12 @@ export interface TaskEditViewProps {
   onDiscardConfirm: () => void;
   onDiscardClose: () => void;
   saveError: string | null;
+  aiStatus: AiStatus;
+  aiSuggestions: SuggestedStep[] | null;
+  aiMessage: string | null;
+  onSuggestSteps: () => void;
+  onAcceptAiSteps: () => void;
+  onDiscardAiSteps: () => void;
 }
 
 export default function TaskEditView({
@@ -95,6 +104,12 @@ export default function TaskEditView({
   onDiscardConfirm,
   onDiscardClose,
   saveError,
+  aiStatus,
+  aiSuggestions,
+  aiMessage,
+  onSuggestSteps,
+  onAcceptAiSteps,
+  onDiscardAiSteps,
 }: TaskEditViewProps) {
   const { scale: s } = useResponsive();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -119,6 +134,7 @@ export default function TaskEditView({
 
   const stepSheetInitialTitle = stepSheet?.mode === 'edit' ? (editStep?.name ?? '') : '';
   const stepSheetInitialDuration = stepSheet?.mode === 'edit' ? (editStep?.duration_min ?? 3) : f.addInline.suggestedMinutes;
+  const stepSheetInitialStatus = stepSheet?.mode === 'edit' ? (editStep?.status ?? 'pending') : 'pending';
   const stepSheetPosition = getStepSheetPosition(steps, pendingDeletes, stepSheet);
 
   return (
@@ -243,7 +259,7 @@ export default function TaskEditView({
                     key={step.key}
                     name={step.name}
                     durationMin={step.duration_min}
-                    completed={false}
+                    completed={step.status === 'completed'}
                     pendingDelete={pendingDeletes.has(step.key)}
                     onPress={() => onOpenEditSheet(step.key)}
                     onDelete={() => onToggleDelete(step.key)}
@@ -321,6 +337,107 @@ export default function TaskEditView({
               </Pressable>
             </View>
           </View>
+
+          {/* Panel IA */}
+          <AiStepsPanel
+            status={aiStatus}
+            onSuggest={onSuggestSteps}
+            onRetry={onSuggestSteps}
+            title={f.ai.title}
+            cta={f.ai.cta}
+            hint={f.ai.hint}
+            loadingMessage={f.ai.loading}
+            readyMessage={f.ai.ready}
+            errorMessage={aiMessage ?? f.ai.offline}
+            offlineMessage={f.ai.offline}
+          />
+
+          {aiStatus === 'ready' && aiSuggestions && aiSuggestions.length > 0 && (
+            <View style={{ gap: sereneSpacing['space-sm'], paddingTop: sereneSpacing['space-xs'] }}>
+              {aiSuggestions.map((suggest, idx) => (
+                <View
+                  key={idx}
+                  accessible={true}
+                  accessibilityLabel={`${suggest.name}, ${f.ai.minutes(suggest.duration_min)} minutos`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: sereneSpacing['space-sm'],
+                    paddingHorizontal: sereneSpacing['space-sm'],
+                    paddingVertical: sereneSpacing['space-sm'],
+                    borderRadius: sereneBorderRadius.lg,
+                    backgroundColor: sereneColors['surface-container-low'],
+                    minHeight: s(48),
+                  }}
+                >
+                  <MaterialCommunityIcons name={mci('check')} size={s(16)} color={sereneColors['primary']} />
+                  <View style={{ flex: 1 }}>
+                    <RNText style={[sereneTypography['body-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>
+                      {suggest.name}
+                    </RNText>
+                    <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>
+                      {f.ai.minutes(suggest.duration_min)}
+                    </RNText>
+                  </View>
+                </View>
+              ))}
+              <View style={{ flexDirection: 'row', gap: sereneSpacing['space-sm'], flexWrap: 'wrap' }}>
+                <Pressable
+                  onPress={onAcceptAiSteps}
+                  accessibilityRole="button"
+                  accessibilityLabel={f.ai.add}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: s(48),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: s(6),
+                    borderRadius: sereneBorderRadius.lg,
+                    backgroundColor: sereneColors.primary,
+                    opacity: pressed ? 0.9 : 1,
+                    paddingHorizontal: sereneSpacing['space-sm'],
+                  })}
+                >
+                  <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+                    {f.ai.add}
+                  </RNText>
+                </Pressable>
+                <Pressable
+                  onPress={onDiscardAiSteps}
+                  accessibilityRole="button"
+                  accessibilityLabel={f.ai.discard}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: s(48),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: s(6),
+                    borderRadius: sereneBorderRadius.lg,
+                    borderWidth: 1,
+                    borderColor: sereneColors.outline,
+                    backgroundColor: sereneColors.surface,
+                    opacity: pressed ? 0.9 : 1,
+                    paddingHorizontal: sereneSpacing['space-sm'],
+                  })}
+                >
+                  <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>
+                    {f.ai.discard}
+                  </RNText>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          {aiMessage != null && aiStatus === 'idle' && (
+            <RNText
+              accessibilityLiveRegion="polite"
+              style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+            >
+              {aiMessage}
+            </RNText>
+          )}
 
           {!keyboardVisible && (
           <View
@@ -410,7 +527,7 @@ export default function TaskEditView({
             const byKey = new Map(steps.map((st) => [st.key, st]));
             const nextSteps = orderedKeys
               .map((key) => byKey.get(key))
-              .filter((st): st is { key: string; id: number | null; name: string; duration_min: number | null } => st !== undefined);
+              .filter((st): st is { key: string; id: number | null; name: string; duration_min: number | null; status: 'pending' | 'completed' } => st !== undefined);
             const remaining = steps.filter((st) => !orderedKeys.includes(st.key));
             onOrdenarDone([...nextSteps, ...remaining].map((st) => st.key));
           }}
@@ -425,6 +542,7 @@ export default function TaskEditView({
           taskTitle={title || 'Tarea'}
           initialTitle={stepSheetInitialTitle}
           initialDuration={stepSheetInitialDuration}
+          initialStatus={stepSheetInitialStatus}
           position={stepSheetPosition.position}
           total={stepSheetPosition.total}
           error={stepSheetError}

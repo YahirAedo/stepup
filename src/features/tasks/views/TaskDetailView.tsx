@@ -7,6 +7,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { useResponsive } from '../../../theme/serene';
 import {
   sereneColors,
@@ -17,7 +18,11 @@ import {
 import { mci } from '../../../components/designlab/mciIconMap';
 import StepRow from '../../../components/ui/StepRow';
 import TaskProgressBar from '../../../components/ui/TaskProgressBar';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { getTaskDetailDateLabel } from '../../../features/tasks/logic/getTaskDetailDateLabel';
+import { getDetailFooterMode } from '../../../features/tasks/logic/getDetailFooterMode';
+import { getCompleteAllPlan } from '../../../features/tasks/logic/getCompleteAllPlan';
+import { taskDetailCopy } from '../../../features/tasks/logic/taskDetailCopy';
 import type { Task, Step } from '../../../types';
 import { getProgressBar } from '../../../features/tasks/logic/getProgressBar';
 import type { ProgressBarResult } from '../../../features/tasks/logic/getProgressBar';
@@ -28,6 +33,12 @@ export interface TaskDetailViewProps {
   onAddStep: () => void;
   error: string | null;
   onRetry: () => void;
+  onContinue: () => void;
+  onCompleteAll: () => Promise<void>;
+  onReopenAll: () => Promise<void>;
+  isBusy: boolean;
+  actionError: string | null;
+  onDismissActionError: () => void;
 }
 
 export default function TaskDetailView({
@@ -36,6 +47,12 @@ export default function TaskDetailView({
   onAddStep,
   error,
   onRetry,
+  onContinue,
+  onCompleteAll,
+  onReopenAll,
+  isBusy,
+  actionError,
+  onDismissActionError,
 }: TaskDetailViewProps) {
   const { scale: s } = useResponsive();
 
@@ -44,6 +61,11 @@ export default function TaskDetailView({
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
 
   const progressResult: ProgressBarResult = getProgressBar(steps);
+  const footerMode = getDetailFooterMode(steps);
+  const pendingCount = getCompleteAllPlan(steps).pendingCount;
+
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [reopenOpen, setReopenOpen] = useState(false);
 
   if (!task) {
     if (error) {
@@ -54,6 +76,7 @@ export default function TaskDetailView({
             alignItems: 'center',
             justifyContent: 'center',
             paddingHorizontal: sereneSpacing.margin,
+            paddingBottom: sereneSpacing['space-lg'],
           }}
         >
           <View style={{ alignItems: 'center' }}>
@@ -101,6 +124,7 @@ export default function TaskDetailView({
           alignItems: 'center',
           justifyContent: 'center',
           paddingHorizontal: sereneSpacing.margin,
+          paddingBottom: sereneSpacing['space-lg'],
         }}
       >
         <View style={{ alignItems: 'center' }}>
@@ -137,6 +161,24 @@ export default function TaskDetailView({
       </View>
     );
   }
+
+  const handleCompletePress = () => {
+    setCompleteOpen(true);
+  };
+
+  const handleReopenPress = () => {
+    setReopenOpen(true);
+  };
+
+  const handleCompleteConfirm = () => {
+    setCompleteOpen(false);
+    void onCompleteAll();
+  };
+
+  const handleReopenConfirm = () => {
+    setReopenOpen(false);
+    void onReopenAll();
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
@@ -244,7 +286,7 @@ export default function TaskDetailView({
               <Pressable
                 onPress={onAddStep}
                 accessibilityRole="button"
-                accessibilityLabel="Agregar primer paso"
+                accessibilityLabel={taskDetailCopy.addFirstStep.trim()}
                 style={({ pressed }) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -263,7 +305,7 @@ export default function TaskDetailView({
                 <RNText
                   style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}
                 >
-                  Agregar paso
+                  {taskDetailCopy.addFirstStep.trim()}
                 </RNText>
               </Pressable>
             </View>
@@ -280,37 +322,170 @@ export default function TaskDetailView({
               ))}
             </View>
           )}
+        </View>
+      </ScrollView>
 
-          {totalCount === 0 && (
+      {/* Error de acción */}
+      {actionError != null && (
+        <View style={{ paddingHorizontal: sereneSpacing.margin, gap: sereneSpacing['space-xs'] }}>
+          <View style={{ gap: sereneSpacing['space-xs'] }}>
+            <RNText
+              style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors.error }]}
+              accessibilityLiveRegion="polite"
+            >
+              {actionError}
+            </RNText>
+          </View>
+          <Pressable
+            onPress={onDismissActionError}
+            accessibilityRole="button"
+            accessibilityLabel="Eliminar error"
+            style={({ pressed }) => ({
+              minHeight: s(48),
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: sereneSpacing['space-sm'],
+              borderRadius: sereneBorderRadius.lg,
+              borderWidth: 1,
+              borderColor: sereneColors.outline,
+              backgroundColor: sereneColors.surface,
+              opacity: pressed ? 0.9 : 1,
+              paddingHorizontal: sereneSpacing['space-sm'],
+            })}
+          >
+            <RNText
+              style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+            >
+              {taskDetailCopy.dismissError.trim()}
+            </RNText>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Pie de acciones */}
+      {footerMode !== 'none' && (
+        <View
+          style={{
+            paddingHorizontal: sereneSpacing.margin,
+            paddingTop: sereneSpacing['space-sm'],
+            paddingBottom: sereneSpacing['space-lg'],
+            gap: sereneSpacing['space-sm'],
+            backgroundColor: sereneColors.surface,
+          }}
+        >
+          {footerMode === 'active' && (
             <Pressable
-              onPress={onAddStep}
+              onPress={isBusy ? undefined : onContinue}
+              disabled={isBusy}
               accessibilityRole="button"
-              accessibilityLabel="Agregar primer paso"
+              accessibilityLabel={taskDetailCopy.footer.continue}
+              accessibilityState={{ disabled: isBusy }}
               style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: s(6),
-                marginTop: sereneSpacing['space-sm'],
                 minHeight: s(48),
                 borderRadius: sereneBorderRadius.lg,
-                borderWidth: 1,
-                borderColor: sereneColors.outline,
-                backgroundColor: sereneColors.surface,
-                opacity: pressed ? 0.9 : 1,
+                backgroundColor: sereneColors.primary,
+                opacity: isBusy ? 0.5 : pressed ? 0.9 : 1,
                 paddingHorizontal: sereneSpacing['space-sm'],
               })}
             >
-              <MaterialCommunityIcons name={mci('add')} size={s(20)} color={sereneColors.primary} />
               <RNText
-                style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}
+                style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-primary'] }]}
               >
-                Agregar primer paso
+                {taskDetailCopy.footer.continue}
               </RNText>
             </Pressable>
           )}
+
+          {(footerMode === 'active' || footerMode === 'completed') && (
+            <>
+              {footerMode === 'active' ? (
+                <Pressable
+                  onPress={isBusy ? undefined : handleCompletePress}
+                  disabled={isBusy}
+                  accessibilityRole="button"
+                  accessibilityLabel={taskDetailCopy.footer.completeAll}
+                  accessibilityState={{ disabled: isBusy }}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: s(6),
+                    minHeight: s(48),
+                    borderRadius: sereneBorderRadius.lg,
+                    borderWidth: 1,
+                    borderColor: sereneColors.outline,
+                    backgroundColor: sereneColors.surface,
+                    opacity: isBusy ? 0.5 : pressed ? 0.9 : 1,
+                    paddingHorizontal: sereneSpacing['space-sm'],
+                  })}
+                >
+                  <MaterialCommunityIcons name={mci('check')} size={s(20)} color={sereneColors.primary} />
+                  <RNText
+                    style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}
+                  >
+                    {taskDetailCopy.footer.completeAll}
+                  </RNText>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={isBusy ? undefined : handleReopenPress}
+                  disabled={isBusy}
+                  accessibilityRole="button"
+                  accessibilityLabel={taskDetailCopy.footer.reopen}
+                  accessibilityState={{ disabled: isBusy }}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: s(6),
+                    minHeight: s(48),
+                    borderRadius: sereneBorderRadius.lg,
+                    borderWidth: 1,
+                    borderColor: sereneColors.outline,
+                    backgroundColor: sereneColors.surface,
+                    opacity: isBusy ? 0.5 : pressed ? 0.9 : 1,
+                    paddingHorizontal: sereneSpacing['space-sm'],
+                  })}
+                >
+                  <MaterialCommunityIcons name={mci('undo')} size={s(20)} color={sereneColors.primary} />
+                  <RNText
+                    style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors.primary }]}
+                  >
+                    {taskDetailCopy.footer.reopen}
+                  </RNText>
+                </Pressable>
+              )}
+            </>
+          )}
         </View>
-      </ScrollView>
+      )}
+
+      {/* Diálogos */}
+      <ConfirmDialog
+        visible={completeOpen}
+        title={taskDetailCopy.completeDialog.title}
+        body={taskDetailCopy.getCompleteDialogBody(pendingCount)}
+        confirmLabel={taskDetailCopy.completeDialog.confirm.trim()}
+        cancelLabel={taskDetailCopy.completeDialog.cancel.trim()}
+        destructive={false}
+        onConfirm={handleCompleteConfirm}
+        onClose={() => setCompleteOpen(false)}
+      />
+      <ConfirmDialog
+        visible={reopenOpen}
+        title={taskDetailCopy.reopenDialog.title}
+        body={taskDetailCopy.reopenDialog.body}
+        confirmLabel={taskDetailCopy.reopenDialog.confirm.trim()}
+        cancelLabel={taskDetailCopy.reopenDialog.cancel.trim()}
+        destructive={false}
+        onConfirm={handleReopenConfirm}
+        onClose={() => setReopenOpen(false)}
+      />
     </View>
   );
 }

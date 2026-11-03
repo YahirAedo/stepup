@@ -10,11 +10,12 @@ import {
   sereneShadows,
   useResponsive,
 } from '../../theme/serene';
+import { getStepRowState } from './stepRowState';
 
 export interface StepRowProps {
   name: string;
   durationMin: number | null;
-  /** Paso completado: sin tacho, atenuado, tap no-op. */
+  /** Paso completado: sin tacho, atenuado si no es interactivo. */
   completed: boolean;
   /** Paso marcado para borrado visual: atenuado, nombre tachado. */
   pendingDelete: boolean;
@@ -33,10 +34,11 @@ export interface StepRowProps {
 /**
  * Fila compartida de paso para Crear, Editar y Detalle.
  *
- * Detalle: solo nombre + duración (con onDelete para marcar borrado pendiente).
+ * Detalle: solo nombre + duración (sin onPress → completado no interactivo).
  * Editar/Crear: suma el tacho/deshacer a la derecha (con onDelete).
  *
- * Paso completado: atenuado, SIN tacho, no seleccionable.
+ * Paso completado: atenuado solo si no es interactivo (sin onPress); con onPress
+ * (Editar) es tocable, fondo surface-container-low, texto atenuado, sin sombra.
  * Paso borrado: tachado, atenuado, no seleccionable.
  */
 export default function StepRow({
@@ -51,23 +53,31 @@ export default function StepRow({
   onUndoDelete,
 }: StepRowProps) {
   const { scale: s } = useResponsive();
-  const disabled = readOnly ? true : (completed || pendingDelete);
-  // Tachado SOLO para el paso marcado para borrado. Los completados se atenuan pero no se tachan.
+  const hasOnPress = typeof onPress === 'function';
+  const state = getStepRowState({
+    name,
+    completed,
+    pendingDelete,
+    readOnly: !!readOnly,
+    hasOnPress,
+  });
+
   const struck = pendingDelete ? 'line-through' : 'none';
-  const textColor = disabled ? sereneColors['on-surface-variant'] : sereneColors['on-surface'];
+  const textColor = completed || state.disabled ? sereneColors['on-surface-variant'] : sereneColors['on-surface'];
+
+  const interactiveCompleted = completed && hasOnPress && !state.disabled;
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
       <Pressable
-        onPress={readOnly ? undefined : (disabled ? undefined : onPress)}
-        disabled={readOnly ? true : disabled}
+        onPress={state.disabled ? undefined : onPress}
+        disabled={state.disabled}
         accessibilityRole="button"
-        accessibilityLabel={
-          pendingDelete ? `${name}, marcado para borrar` : name
-        }
-        accessibilityState={{ disabled: readOnly ? true : disabled }}
+        accessibilityLabel={state.a11yLabel}
+        accessibilityState={{ disabled: state.disabled }}
         style={({ pressed }) => ({
           flex: 1,
+          minHeight: s(48),
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -77,13 +87,24 @@ export default function StepRow({
           borderRadius: sereneBorderRadius.lg,
           backgroundColor: selected
             ? sereneColors['primary-container']
-            : disabled
+            : state.dimmed
               ? sereneColors['surface-container-low']
-              : sereneColors['surface-container-lowest'],
-          opacity: disabled ? 0.6 : pressed ? 0.92 : 1,
-          ...(!disabled ? sereneShadows.card : {}),
+              : completed && hasOnPress
+                ? sereneColors['surface-container-low']
+                : sereneColors['surface-container-lowest'],
+          opacity: state.dimmed ? 0.6 : pressed ? 0.92 : 1,
+          ...(state.dimmed || interactiveCompleted ? {} : sereneShadows.card),
         })}
       >
+        {state.showCheck && (
+          <View importantForAccessibility="no-hide-descendants" accessible={false}>
+            <MaterialCommunityIcons
+              name={mci('check')}
+              size={s(18)}
+              color={sereneColors['on-surface-variant']}
+            />
+          </View>
+        )}
         <View style={{ flex: 1, minWidth: 0 }}>
           <RNText
             numberOfLines={1}

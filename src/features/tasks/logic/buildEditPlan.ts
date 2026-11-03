@@ -3,6 +3,7 @@ export interface DraftStep {
   id: number | null;
   name: string;
   duration_min: number | null;
+  status: 'pending' | 'completed';
 }
 
 export interface OriginalStep {
@@ -10,6 +11,7 @@ export interface OriginalStep {
   id: number;
   name: string;
   duration_min: number | null;
+  status: 'pending' | 'completed';
 }
 
 export interface OriginalState {
@@ -33,6 +35,7 @@ export interface EditPlan {
   stepDeletes: number[];
   stepAdds: Array<{ name: string; duration_min: number | null }>;
   finalOrder: string[];
+  stepStatusChanges: Array<{ key: string; id: number | null; to: 'pending' | 'completed' }>;
 }
 
 export function buildEditPlan(
@@ -54,6 +57,7 @@ export function buildEditPlan(
   const stepUpdates: EditPlan['stepUpdates'] = [];
   const stepDeletes: number[] = [];
   const stepAdds: EditPlan['stepAdds'] = [];
+  const statusChangeMap = new Map<string, { key: string; id: number | null; to: 'pending' | 'completed' }>();
 
   for (const origStep of original.steps) {
     if (draft.pendingDeletes.has(origStep.key)) {
@@ -71,6 +75,13 @@ export function buildEditPlan(
             duration_min: draftStep.duration_min,
           });
         }
+        if (origStep.status !== draftStep.status) {
+          statusChangeMap.set(origStep.key, {
+            key: origStep.key,
+            id: origStep.id,
+            to: draftStep.status,
+          });
+        }
       }
     }
   }
@@ -81,6 +92,13 @@ export function buildEditPlan(
         name: draftStep.name.trim(),
         duration_min: draftStep.duration_min,
       });
+      if (draftStep.status === 'completed') {
+        statusChangeMap.set(draftStep.key, {
+          key: draftStep.key,
+          id: null,
+          to: 'completed',
+        });
+      }
     }
   }
 
@@ -88,7 +106,12 @@ export function buildEditPlan(
     .filter((s) => !draft.pendingDeletes.has(s.key))
     .map((s) => s.key);
 
-  return { taskPatch, stepUpdates, stepDeletes, stepAdds, finalOrder };
+  const stepStatusChanges = draft.steps
+    .filter((s) => !draft.pendingDeletes.has(s.key))
+    .map((s) => statusChangeMap.get(s.key))
+    .filter((entry): entry is { key: string; id: number | null; to: 'pending' | 'completed' } => entry !== undefined);
+
+  return { taskPatch, stepUpdates, stepDeletes, stepAdds, finalOrder, stepStatusChanges };
 }
 
 export function hasUnsavedChanges(
@@ -101,6 +124,7 @@ export function hasUnsavedChanges(
     plan.stepUpdates.length > 0 ||
     plan.stepDeletes.length > 0 ||
     plan.stepAdds.length > 0 ||
+    plan.stepStatusChanges.length > 0 ||
     plan.finalOrder.join(',') !== original.steps.map((s) => s.key).join(',')
   );
 }

@@ -2,11 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { applyStepSheetResult, getStepSheetPosition } from './stepSheetResult';
 import type { DraftStep } from './stepSheetResult';
 
-const step = (key: string, name: string, duration_min: number | null = 3): DraftStep => ({
+const step = (key: string, name: string, duration_min: number | null = 3, status: 'pending' | 'completed' = 'pending'): DraftStep => ({
   key,
   id: key.startsWith('manual') ? null : parseInt(key.replace('s', ''), 10) || null,
   name,
   duration_min,
+  status,
 });
 
 describe('applyStepSheetResult', () => {
@@ -14,9 +15,9 @@ describe('applyStepSheetResult', () => {
     const steps = [step('s1', 'Paso uno', 3), step('s2', 'Paso dos', 5)];
     const result = applyStepSheetResult(steps, { mode: 'create' }, { title: 'Nuevo paso', duration: 4 }, 'manual-1');
     expect(result).toEqual([
-      { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-      { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-      { key: 'manual-1', id: null, name: 'Nuevo paso', duration_min: 4 },
+      { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' },
+      { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' },
+      { key: 'manual-1', id: null, name: 'Nuevo paso', duration_min: 4, status: 'pending' },
     ]);
   });
 
@@ -24,8 +25,8 @@ describe('applyStepSheetResult', () => {
     const steps = [step('s1', 'Paso uno', 3), step('s2', 'Paso dos', 5)];
     const result = applyStepSheetResult(steps, { mode: 'edit', key: 's1' }, { title: 'Paso uno editado', duration: 10 }, 'manual-1');
     expect(result).toEqual([
-      { key: 's1', id: 1, name: 'Paso uno editado', duration_min: 10 },
-      { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
+      { key: 's1', id: 1, name: 'Paso uno editado', duration_min: 10, status: 'pending' },
+      { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' },
     ]);
   });
 
@@ -53,6 +54,37 @@ describe('applyStepSheetResult', () => {
     const result = applyStepSheetResult(steps, null, { title: 'X', duration: 1 }, 'manual-1');
     expect(result).toEqual(steps);
     expect(result).not.toBe(steps);
+  });
+
+  it('create con status explícito → usa ese status', () => {
+    const steps = [step('s1', 'Paso uno', 3)];
+    const result = applyStepSheetResult(steps, { mode: 'create' }, { title: 'Nuevo', duration: 2, status: 'completed' }, 'manual-2');
+    expect(result[1].status).toBe('completed');
+  });
+
+  it('create sin status → pending', () => {
+    const steps = [step('s1', 'Paso uno', 3)];
+    const result = applyStepSheetResult(steps, { mode: 'create' }, { title: 'Nuevo', duration: 2 }, 'manual-2');
+    expect(result[1].status).toBe('pending');
+  });
+
+  it('edit con status explícito → cambia el status', () => {
+    const steps = [step('s1', 'Paso uno', 3, 'pending')];
+    const result = applyStepSheetResult(steps, { mode: 'edit', key: 's1' }, { title: 'Paso uno', duration: 3, status: 'completed' }, 'manual-1');
+    expect(result[0].status).toBe('completed');
+  });
+
+  it('edit sin status → conserva el status actual', () => {
+    const steps = [step('s1', 'Paso uno', 3, 'completed')];
+    const result = applyStepSheetResult(steps, { mode: 'edit', key: 's1' }, { title: 'Paso uno editado', duration: 3 }, 'manual-1');
+    expect(result[0].status).toBe('completed');
+  });
+
+  it('no muta la entrada al cambiar status', () => {
+    const steps = [step('s1', 'Paso uno', 3, 'pending')];
+    const original = [...steps];
+    applyStepSheetResult(steps, { mode: 'edit', key: 's1' }, { title: 'X', duration: 1, status: 'completed' }, 'manual-1');
+    expect(steps).toEqual(original);
   });
 });
 

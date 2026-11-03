@@ -6,9 +6,9 @@ const original = {
   description: 'Descripción original',
   due_date: '2026-10-20',
   steps: [
-    { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-    { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-    { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+    { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+    { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+    { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
   ],
 };
 
@@ -19,9 +19,9 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -87,9 +87,9 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's1', id: 1, name: 'Paso uno editado', duration_min: 3 },
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+        { key: 's1', id: 1, name: 'Paso uno editado', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -103,9 +103,9 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 10 },
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 10, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -119,8 +119,8 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
       ],
       pendingDeletes: new Set(['s3']),
     };
@@ -135,10 +135,10 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
-        { key: 'new-1', id: null, name: 'Paso nuevo', duration_min: 4 },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
+        { key: 'new-1', id: null, name: 'Paso nuevo', duration_min: 4, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -153,9 +153,9 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -169,8 +169,8 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
       ],
       pendingDeletes: new Set(['s3']),
     };
@@ -185,10 +185,10 @@ describe('buildEditPlan', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 'new-1', id: null, name: 'Paso nuevo', duration_min: 4 },
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+        { key: 'new-1', id: null, name: 'Paso nuevo', duration_min: 4, status: 'pending' as const },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -227,9 +227,9 @@ describe('hasUnsavedChanges', () => {
       description: 'Descripción original',
       due_date: '2026-10-20',
       steps: [
-        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5 },
-        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3 },
-        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2 },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's3', id: 3, name: 'Paso tres', duration_min: 2, status: 'pending' as const },
       ],
       pendingDeletes: new Set<string>(),
     };
@@ -258,5 +258,138 @@ describe('validateTaskEdit', () => {
   it('nombre de 120 caracteres → ok', () => {
     const name = 'a'.repeat(120);
     expect(validateTaskEdit(name)).toEqual({ ok: true });
+  });
+});
+
+describe('buildEditPlan - cambios de estado', () => {
+  const originalWithStatus = {
+    name: 'Tarea original',
+    description: 'Descripción original',
+    due_date: '2026-10-20',
+    steps: [
+      { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+      { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'completed' as const },
+    ],
+  };
+
+  it('pending → completed en paso original', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'completed' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'completed' as const },
+      ],
+      pendingDeletes: new Set<string>(),
+    };
+    const plan = buildEditPlan(originalWithStatus, draft);
+    expect(plan.stepStatusChanges).toEqual([{ key: 's1', id: 1, to: 'completed' }]);
+  });
+
+  it('completed → pending en paso original', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'pending' as const },
+      ],
+      pendingDeletes: new Set<string>(),
+    };
+    const plan = buildEditPlan(originalWithStatus, draft);
+    expect(plan.stepStatusChanges).toEqual([{ key: 's2', id: 2, to: 'pending' }]);
+  });
+
+  it('paso nuevo en completed genera cambio', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'completed' as const },
+        { key: 'new-1', id: null, name: 'Paso nuevo', duration_min: 4, status: 'completed' as const },
+      ],
+      pendingDeletes: new Set<string>(),
+    };
+    const plan = buildEditPlan(originalWithStatus, draft);
+    expect(plan.stepStatusChanges).toContainEqual({ key: 'new-1', id: null, to: 'completed' });
+  });
+
+  it('paso nuevo en pending no genera cambio', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const },
+        { key: 's2', id: 2, name: 'Paso dos', duration_min: 5, status: 'completed' as const },
+        { key: 'new-1', id: null, name: 'Paso nuevo', duration_min: 4, status: 'pending' as const },
+      ],
+      pendingDeletes: new Set<string>(),
+    };
+    const plan = buildEditPlan(originalWithStatus, draft);
+    expect(plan.stepStatusChanges.find((c) => c.key === 'new-1')).toBeUndefined();
+  });
+
+  it('paso borrado con status distinto no genera cambio', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [
+        { key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'completed' as const },
+      ],
+      pendingDeletes: new Set(['s2']),
+    };
+    const plan = buildEditPlan(originalWithStatus, draft);
+    expect(plan.stepStatusChanges.find((c) => c.key === 's2')).toBeUndefined();
+  });
+
+  it('sin cambios → stepStatusChanges vacío', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: originalWithStatus.steps.map((s) => ({ ...s })),
+      pendingDeletes: new Set<string>(),
+    };
+    const plan = buildEditPlan(originalWithStatus, draft);
+    expect(plan.stepStatusChanges).toEqual([]);
+  });
+});
+
+describe('hasUnsavedChanges - estado', () => {
+  const original = {
+    name: 'Tarea original',
+    description: 'Descripción original',
+    due_date: '2026-10-20',
+    steps: [{ key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const }],
+  };
+
+  it('solo cambio de estado → true', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [{ key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'completed' as const }],
+      pendingDeletes: new Set<string>(),
+    };
+    expect(hasUnsavedChanges(original, draft)).toBe(true);
+  });
+
+  it('cambiar a completed y volver a pending → sin cambios', () => {
+    const draft = {
+      name: 'Tarea original',
+      description: 'Descripción original',
+      due_date: '2026-10-20',
+      steps: [{ key: 's1', id: 1, name: 'Paso uno', duration_min: 3, status: 'pending' as const }],
+      pendingDeletes: new Set<string>(),
+    };
+    const plan = buildEditPlan(original, draft);
+    expect(plan.stepStatusChanges).toEqual([]);
+    expect(hasUnsavedChanges(original, draft)).toBe(false);
   });
 });

@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import BottomSheet from '../../components/designlab/BottomSheet';
 import { mci } from '../designlab/mciIconMap';
+import { taskEditCopy as f } from '../../features/tasks/logic/taskEditCopy';
 import {
   sereneColors,
   sereneTypography,
@@ -21,12 +22,14 @@ import {
 export interface EditarPasoSheetProps {
   visible: boolean;
   onClose: () => void;
-  /** Recibe el nombre y la duración editados (duración en minutos, número). */
-  onSave: (values: { title: string; duration: number }) => void;
+  /** Recibe el nombre, la duración y el estado editados. */
+  onSave: (values: { title: string; duration: number; status: 'pending' | 'completed' }) => void;
   /** Título de la tarea en contexto (no editable acá). */
   taskTitle: string;
   initialTitle: string;
   initialDuration: number;
+  /** Estado inicial del paso. */
+  initialStatus?: 'pending' | 'completed';
   position: number;
   total: number;
   error?: string | null;
@@ -36,8 +39,8 @@ export interface EditarPasoSheetProps {
 
 /**
  * Única propuesta de "Editar paso" como bottom sheet (compartida por las 3
- * variantes). Solo nombre y duración. Sin nota, sin papelera, sin +/- en la
- * duración (se escribe directamente), sin subir/bajar, con el mínimo de pasos.
+ * variantes). Nombre, duración y estado del paso. Sin nota, sin papelera, sin +/-
+ * en la duración (se escribe directamente), sin subir/bajar, con el mínimo de pasos.
  *
  * Es presentacional sobre props: la pantalla host persiste el resultado.
  *
@@ -51,6 +54,7 @@ export default function EditarPasoSheet({
   taskTitle,
   initialTitle,
   initialDuration,
+  initialStatus = 'pending',
   position,
   total,
   error,
@@ -59,17 +63,19 @@ export default function EditarPasoSheet({
   const { scale: s } = useResponsive();
   const [title, setTitle] = useState(initialTitle);
   const [duration, setDuration] = useState(String(initialDuration));
+  const [status, setStatus] = useState<'pending' | 'completed'>(initialStatus);
 
   useEffect(() => {
     if (visible) {
       setTitle(initialTitle);
       setDuration(String(initialDuration));
+      setStatus(initialStatus);
     }
-  }, [visible, initialTitle, initialDuration]);
+  }, [visible, initialTitle, initialDuration, initialStatus]);
 
   const handleSave = () => {
     const nextDuration = Math.max(1, Number(duration) || 1);
-    onSave({ title: title.trim(), duration: nextDuration });
+    onSave({ title: title.trim(), duration: nextDuration, status });
   };
 
   return (
@@ -151,6 +157,67 @@ export default function EditarPasoSheet({
               },
             ]}
           />
+        </View>
+
+        <View style={{ gap: sereneSpacing['space-xs'] }}>
+          <RNText
+            style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+          >
+            {f.stepStatus.label}
+          </RNText>
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel={f.stepStatus.label}
+            style={{ flexDirection: 'row', gap: sereneSpacing['space-sm'] }}
+          >
+            {(['pending', 'completed'] as const).map((opt) => {
+              const checked = status === opt;
+              const label = opt === 'pending' ? f.stepStatus.pending : f.stepStatus.completed;
+              return (
+                <Pressable
+                  key={opt}
+                  onPress={() => setStatus(opt)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked }}
+                  accessibilityLabel={label}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: s(48),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: sereneSpacing['space-sm'],
+                    paddingHorizontal: sereneSpacing['space-sm'],
+                    paddingVertical: sereneSpacing['space-sm'],
+                    borderRadius: sereneBorderRadius.lg,
+                    backgroundColor: checked
+                      ? sereneColors['primary-container']
+                      : sereneColors['surface-container-high'],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  {checked && (
+                    <MaterialCommunityIcons
+                      name={mci('check')}
+                      size={s(18)}
+                      color={checked ? sereneColors['on-primary'] : sereneColors['on-surface']}
+                    />
+                  )}
+                  <RNText
+                    style={[
+                      sereneTypography['label-md'] as TextStyle,
+                      {
+                        color: checked ? sereneColors['on-primary'] : sereneColors['on-surface'],
+                        fontWeight: checked ? '700' : '400',
+                      },
+                    ]}
+                  >
+                    {label}
+                  </RNText>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         {error && (

@@ -19,7 +19,17 @@ type Props = CompositeScreenProps<
 
 export default function TaskDetailScreen({ navigation, route }: Props) {
   const { taskId } = route.params;
-  const { task, steps, loadError, loadData } = useTaskDetail(taskId);
+  const {
+    task,
+    steps,
+    loadError,
+    loadData,
+    completeAll,
+    reopenAll,
+    isBusy,
+    actionError,
+    clearActionError,
+  } = useTaskDetail(taskId);
 
   const handleOpenEdit = useCallback(() => {
     navigation.navigate('TaskEdit', { taskId });
@@ -54,6 +64,11 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
     navigation.navigate('TaskEdit', { taskId });
   }, [navigation, taskId]);
 
+  // REQUIERE MIGRACIÓN: pantalla Foco queda para su fase
+  const onContinue = useCallback(() => {
+    // no-op
+  }, []);
+
   if (!task && !loadError) {
     return null;
   }
@@ -68,6 +83,12 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
         onRetry={() => {
           void loadData();
         }}
+        onContinue={onContinue}
+        onCompleteAll={completeAll}
+        onReopenAll={reopenAll}
+        isBusy={isBusy}
+        actionError={actionError}
+        onDismissActionError={clearActionError}
       />
     </View>
   );
