@@ -41,6 +41,10 @@ export default function TasksListScreen() {
     navigation.navigate('TaskDetail', { taskId });
   }, [navigation]);
 
+  const handleCreateTask = useCallback(() => {
+    navigation.navigate('TaskCreate');
+  }, [navigation]);
+
   if (error) {
     const { scale: s } = useResponsive();
     return (
@@ -94,9 +98,7 @@ export default function TasksListScreen() {
       model={model}
       activeFilter={activeFilter}
       onFilterChange={(key) => setActiveFilter(key)}
-      onCreateTask={() => {
-        // REQUIERE MIGRACIÓN: pantalla Crear/Editar es 3c
-      }}
+      onCreateTask={handleCreateTask}
       onOpenTask={handleOpenTask}
       onResumeFocus={() => {
         // REQUIERE MIGRACIÓN: pantalla Foco queda para su fase

@@ -19,6 +19,7 @@ import TaskListScreen from '../screens/TaskListScreen';
 import TasksListScreen from '../features/tasks/TasksListScreen';
 import TaskDetailScreen from '../features/tasks/TaskDetailScreen';
 import TaskEditScreen from '../features/tasks/TaskEditScreen';
+import TaskCreateScreen from '../features/tasks/TaskCreateScreen';
 import LegacyTaskDetailScreen from '../screens/TaskDetailScreen';
 import TaskFormScreen from '../screens/TaskFormScreen';
 import StepFormScreen from '../screens/StepFormScreen';
@@ -91,7 +92,10 @@ function TasksStack() {
         options={{ title: 'Detalle' }}
       />
       {migrationFlags.tasks && (
-        <TasksStackNav.Screen name="TaskEdit" component={TaskEditScreen} options={{ title: 'Editar tarea' }} />
+        <>
+          <TasksStackNav.Screen name="TaskEdit" component={TaskEditScreen} options={{ title: 'Editar tarea' }} />
+          <TasksStackNav.Screen name="TaskCreate" component={TaskCreateScreen} options={{ title: 'Nueva tarea' }} />
+        </>
       )}
       <TasksStackNav.Screen name="TaskForm" component={TaskFormScreen} options={{ title: 'Nueva tarea' }} />
       <TasksStackNav.Screen name="StepForm" component={StepFormScreen} options={{ title: 'Nuevo paso' }} />
