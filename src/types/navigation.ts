@@ -9,6 +9,7 @@ export type TasksStackParamList = {
   TaskList: undefined;
   TaskDetail: { taskId: number };
   TaskEdit: { taskId: number };
+  TaskCreate: undefined;
   TaskForm: { task?: Task };
   StepForm: { taskId: number; stepId?: number };
   StepComplete: { stepName: string; stepDuration?: number; nextStepName?: string };

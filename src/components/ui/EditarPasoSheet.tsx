@@ -35,6 +35,8 @@ export interface EditarPasoSheetProps {
   error?: string | null;
   /** Modo del sheet: 'edit' (default) o 'create'. */
   mode?: 'create' | 'edit';
+  /** Si es true, no se muestra el selector de estado y onSave devuelve initialStatus. */
+  hideStatus?: boolean;
 }
 
 /**
@@ -59,6 +61,7 @@ export default function EditarPasoSheet({
   total,
   error,
   mode = 'edit',
+  hideStatus = false,
 }: EditarPasoSheetProps) {
   const { scale: s } = useResponsive();
   const [title, setTitle] = useState(initialTitle);
@@ -75,7 +78,7 @@ export default function EditarPasoSheet({
 
   const handleSave = () => {
     const nextDuration = Math.max(1, Number(duration) || 1);
-    onSave({ title: title.trim(), duration: nextDuration, status });
+    onSave({ title: title.trim(), duration: nextDuration, status: hideStatus ? initialStatus : status });
   };
 
   return (
@@ -159,6 +162,7 @@ export default function EditarPasoSheet({
           />
         </View>
 
+        {!hideStatus && (
         <View style={{ gap: sereneSpacing['space-xs'] }}>
           <RNText
             style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
@@ -219,6 +223,7 @@ export default function EditarPasoSheet({
             })}
           </View>
         </View>
+        )}
 
         {error && (
           <RNText
