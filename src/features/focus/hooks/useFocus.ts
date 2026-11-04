@@ -6,6 +6,7 @@ import { ProgressService } from '../../../services/ProgressService';
 import { TimerService } from '../../../services/TimerService';
 import { buildFocusModel } from '../logic/buildFocusModel';
 import { getTimerAction } from '../logic/getTimerAction';
+import { resolveStepMinutes, shouldKeepTimer, EXTEND_SECONDS } from '../logic/stepTimer';
 import { focusCopy } from '../logic/focusCopy';
 import {
   getManualTaskId,
@@ -17,32 +18,49 @@ import type { Task, Step } from '../../../types';
 
 export type FocusModel = NonNullable<ReturnType<typeof buildFocusModel<Task, Step>>>;
 
+export interface FocusTimer {
+  display: string;
+  seconds: number;
+  totalSeconds: number;
+  started: boolean;
+  running: boolean;
+  finished: boolean;
+}
+
 export interface UseFocusResult {
   status: 'loading' | 'ready' | 'empty' | 'error';
   model: FocusModel | null;
   stepsToday: number;
-  timer: { display: string; started: boolean; running: boolean; finished: boolean };
+  timer: FocusTimer;
   completing: boolean;
   errorMessage: string | null;
   toggleTimer: () => void;
+  extend: () => void;
+  cancelTimer: () => void;
   completeStep: () => Promise<{ taskId: number; taskCompleted: boolean } | null>;
   postpone: () => void;
   selectTask: (taskId: number) => void;
   reload: () => void;
 }
 
-const initialTimer = (model: FocusModel | null) => {
-  const current = model?.current ?? null;
-  const display =
-    current && current.duration_min ? TimerService.format(current.duration_min * 60) : '00:00';
-  return { display, started: false, running: false, finished: false };
+const initialTimer = (model: FocusModel | null): FocusTimer => {
+  const minutes = model?.current ? resolveStepMinutes(model.current.duration_min) : 0;
+  const seconds = minutes * 60;
+  return {
+    display: TimerService.format(seconds),
+    seconds,
+    totalSeconds: seconds,
+    started: false,
+    running: false,
+    finished: false,
+  };
 };
 
 export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?: () => void }): UseFocusResult {
   const [status, setStatus] = useState<UseFocusResult['status']>('loading');
   const [model, setModel] = useState<FocusModel | null>(null);
   const [stepsToday, setStepsToday] = useState(0);
-  const [timer, setTimer] = useState({ display: '00:00', started: false, running: false, finished: false });
+  const [timer, setTimer] = useState<FocusTimer>({ display: '00:00', seconds: 0, totalSeconds: 0, started: false, running: false, finished: false });
   const [completing, setCompleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -57,10 +75,14 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
+  const timerRef = useRef(timer);
+  timerRef.current = timer;
+
   const onTick = useCallback((s: { seconds: number; running: boolean; finished: boolean }) => {
     setTimer((t) => ({
       ...t,
       display: TimerService.format(s.seconds),
+      seconds: s.seconds,
       running: s.running,
       finished: s.finished,
     }));
@@ -94,8 +116,19 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
 
       candidatesRef.current = candidates;
       const nextModel = buildFocusModel(candidates, getManualTaskId(), getPostponedIds());
+
+      const prevId = modelRef.current?.current?.id ?? null;
+      const keep = shouldKeepTimer({
+        started: timerRef.current.started,
+        prevStepId: prevId,
+        nextStepId: nextModel?.current?.id ?? null,
+      });
+
       setModel(nextModel);
-      setTimer(initialTimer(nextModel));
+      if (!keep) {
+        TimerService.stop();
+        setTimer(initialTimer(nextModel));
+      }
 
       const today = await ProgressService.getToday();
       if (reqId !== requestIdRef.current) return;
@@ -115,8 +148,16 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
     useCallback(() => {
       void load();
       return () => {
-        TimerService.stop();
-        setTimer(initialTimer(modelRef.current));
+        const t = timerRef.current;
+        if (t.started && !t.finished) {
+          TimerService.pause();
+          setTimer((prev) => ({ ...prev, running: false }));
+        } else if (t.finished) {
+          // conservar el estado "tiempo cumplido"
+        } else {
+          TimerService.stop();
+          setTimer(initialTimer(modelRef.current));
+        }
       };
     }, [load]),
   );
@@ -127,7 +168,7 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
     const action = getTimerAction({ started: timer.started, running: timer.running, finished: timer.finished });
     if (action === 'start') {
       setTimer((t) => ({ ...t, started: true }));
-      TimerService.start(model.current.duration_min, onTick, onFinish);
+      TimerService.start(resolveStepMinutes(model.current.duration_min), onTick, onFinish);
     } else if (action === 'pause') {
       TimerService.pause();
       setTimer((t) => ({ ...t, running: false }));
@@ -136,6 +177,30 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
       setTimer((t) => ({ ...t, running: true }));
     }
   }, [model, timer, onTick, onFinish]);
+
+  const extend = useCallback(() => {
+    if (!timerRef.current.started) return;
+    if (timerRef.current.finished) {
+      TimerService.start(EXTEND_SECONDS / 60, onTick, onFinish);
+      setTimer((t) => ({
+        ...t,
+        running: true,
+        finished: false,
+        seconds: EXTEND_SECONDS,
+        totalSeconds: EXTEND_SECONDS,
+        display: TimerService.format(EXTEND_SECONDS),
+      }));
+    } else {
+      TimerService.addSeconds(EXTEND_SECONDS);
+      setTimer((t) => ({ ...t, totalSeconds: t.totalSeconds + EXTEND_SECONDS }));
+    }
+  }, [onTick, onFinish]);
+
+  const cancelTimer = useCallback(() => {
+    TimerService.stop();
+    setTimer(initialTimer(modelRef.current));
+    setErrorMessage(null);
+  }, []);
 
   const selectTask = useCallback(
     (taskId: number) => {
@@ -205,6 +270,8 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
     completing,
     errorMessage,
     toggleTimer,
+    extend,
+    cancelTimer,
     completeStep,
     postpone,
     selectTask,
