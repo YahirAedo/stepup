@@ -11,7 +11,7 @@ import { canPostpone } from './postponeStep';
  */
 export function buildFocusModel<
   T extends { id: number; name: string },
-  S extends { id: number; status: 'pending' | 'completed'; order_index: number },
+  S extends { id: number; name: string; duration_min: number | null; status: 'pending' | 'completed'; order_index: number },
 >(
   candidates: Array<{ task: T; steps: S[] }>,
   manualTaskId: number | null,
@@ -21,7 +21,19 @@ export function buildFocusModel<
   current: S;
   upcoming: S[];
   canPostpone: boolean;
-  switcher: Array<{ taskId: number; name: string; pendingCount: number; isActive: boolean }>;
+  pendingCount: number;
+  totalSteps: number;
+  stepIndex: number;
+  switcher: Array<{
+    taskId: number;
+    name: string;
+    pendingCount: number;
+    isActive: boolean;
+    stepName: string;
+    stepMinutes: number | null;
+    stepIndex: number;
+    totalSteps: number;
+  }>;
 } | null {
   const picked = pickFocusTask(candidates, manualTaskId);
   if (picked === null) return null;
@@ -30,21 +42,37 @@ export function buildFocusModel<
   if (queue.current === null) return null;
 
   const pendingCount = picked.steps.filter((step) => step.status === 'pending').length;
+  const totalSteps = picked.steps.length;
+  const stepIndex = picked.steps.filter((step) => step.status === 'completed').length + 1;
 
   const switcher = candidates
     .filter((candidate) => candidate.steps.some((step) => step.status === 'pending'))
-    .map((candidate) => ({
-      taskId: candidate.task.id,
-      name: candidate.task.name,
-      pendingCount: candidate.steps.filter((step) => step.status === 'pending').length,
-      isActive: candidate.task.id === picked.task.id,
-    }));
+    .map((candidate) => {
+      const candidatePending = candidate.steps.filter((step) => step.status === 'pending').length;
+      const candidateTotal = candidate.steps.length;
+      const candidateStepIndex =
+        candidate.steps.filter((step) => step.status === 'completed').length + 1;
+      const candidateQueue = buildFocusQueue(candidate.steps, postponedIds);
+      return {
+        taskId: candidate.task.id,
+        name: candidate.task.name,
+        pendingCount: candidatePending,
+        isActive: candidate.task.id === picked.task.id,
+        stepName: candidateQueue.current?.name ?? '',
+        stepMinutes: candidateQueue.current?.duration_min ?? null,
+        stepIndex: candidateStepIndex,
+        totalSteps: candidateTotal,
+      };
+    });
 
   return {
     task: picked.task,
     current: queue.current,
     upcoming: queue.upcoming,
     canPostpone: canPostpone(pendingCount),
+    pendingCount,
+    totalSteps,
+    stepIndex,
     switcher,
   };
 }
