@@ -100,10 +100,14 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
 
     try {
       const opts = optionsRef.current;
-      if (opts?.routeTaskId !== undefined && consumedRouteTaskRef.current !== opts.routeTaskId) {
-        setManualTaskId(opts.routeTaskId);
-        consumedRouteTaskRef.current = opts.routeTaskId;
-        opts.onRouteTaskConsumed?.();
+      if (opts?.routeTaskId !== undefined) {
+        if (consumedRouteTaskRef.current !== opts.routeTaskId) {
+          setManualTaskId(opts.routeTaskId);
+          consumedRouteTaskRef.current = opts.routeTaskId;
+          opts.onRouteTaskConsumed?.();
+        }
+      } else {
+        consumedRouteTaskRef.current = undefined;
       }
 
       const tasks = await TaskService.getAll();
