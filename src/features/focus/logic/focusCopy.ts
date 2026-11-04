@@ -9,6 +9,13 @@ export const focusCopy = {
     primaryCta: 'Crear tarea',
     secondaryCta: 'Ver completadas',
   },
+  completed: {
+    headline: 'Paso completado',
+    recapLabel: 'Este paso',
+    nextLabel: 'A continuación',
+    continueCta: 'Seguir con el siguiente paso',
+    goTasksCta: 'Ir a Tareas',
+  },
   running: {
     pause: 'Pausar',
     resume: 'Reanudar',
