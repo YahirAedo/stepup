@@ -27,13 +27,13 @@ export interface FocusQueueItem {
 
 export interface FocusQueueProps {
   items: FocusQueueItem[];
-  onAdd?: () => void;
+  onEdit?: () => void;
   expandedByDefault?: boolean;
 }
 
 export default function FocusQueue({
   items,
-  onAdd,
+  onEdit,
   expandedByDefault = false,
 }: FocusQueueProps) {
   const { scale: s } = useResponsive();
@@ -120,14 +120,14 @@ export default function FocusQueue({
           ) : null}
         </View>
 
-        {onAdd ? (
+        {onEdit ? (
           <Pressable
             onPress={(event: GestureResponderEvent) => {
               event.stopPropagation();
-              onAdd();
+              onEdit();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Agregar paso"
+            accessibilityLabel="Editar tarea"
             hitSlop={s(8)}
             style={({ pressed }) => ({
               minWidth: s(48),
@@ -139,7 +139,7 @@ export default function FocusQueue({
               opacity: pressed ? 0.85 : 1,
             })}
           >
-            <MaterialCommunityIcons name={mci('add')} size={s(18)} color={sereneColors.primary} />
+            <MaterialCommunityIcons name={mci('edit')} size={s(18)} color={sereneColors.primary} />
           </Pressable>
         ) : null}
 

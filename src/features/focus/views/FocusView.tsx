@@ -33,7 +33,7 @@ export interface FocusViewProps {
   onOpenCompleted: () => void;
   onStart: () => void;
   onPostpone: () => void;
-  onAddStep: () => void;
+  onEditTask: () => void;
   onSelectTask: (taskId: number) => void;
 }
 
@@ -46,7 +46,7 @@ export default function FocusView({
   onOpenCompleted,
   onStart,
   onPostpone,
-  onAddStep,
+  onEditTask,
   onSelectTask,
 }: FocusViewProps) {
   const { scale: s } = useResponsive();
@@ -212,6 +212,19 @@ export default function FocusView({
         }}
         showsVerticalScrollIndicator={false}
       >
+        <FocusStepCard
+          stepIndex={step.stepIndex}
+          totalSteps={step.totalSteps}
+          minutes={step.minutes}
+          title={step.title}
+          taskName={viewModel.taskName}
+          progress={buildStepProgress(step.stepIndex, step.totalSteps)}
+          onStart={onStart}
+          onPostpone={viewModel.canPostpone ? onPostpone : undefined}
+        />
+
+        <FocusQueue items={viewModel.queue} onEdit={onEditTask} />
+
         {switcher.show ? (
           <FocusTaskSwitcher
             active={switcher.active!}
@@ -220,18 +233,6 @@ export default function FocusView({
             onSelect={onSelectTask}
           />
         ) : null}
-
-        <FocusStepCard
-          stepIndex={step.stepIndex}
-          totalSteps={step.totalSteps}
-          minutes={step.minutes}
-          title={step.title}
-          progress={buildStepProgress(step.stepIndex, step.totalSteps)}
-          onStart={onStart}
-          onPostpone={viewModel.canPostpone ? onPostpone : undefined}
-        />
-
-        <FocusQueue items={viewModel.queue} onAdd={onAddStep} />
       </ScrollView>
     </View>
   );

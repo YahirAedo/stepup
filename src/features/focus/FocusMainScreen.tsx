@@ -31,7 +31,7 @@ export default function FocusMainScreen({ navigation }: Props) {
     // REQUIERE MIGRACIÓN: abrir el listado ya filtrado en Completadas
   }, [navigation]);
 
-  const handleAddStep = useCallback(() => {
+  const handleEditTask = useCallback(() => {
     if (!viewModel) return;
     navigation.navigate('Tasks', { screen: 'TaskEdit', params: { taskId: viewModel.taskId }, initial: false });
   }, [navigation, viewModel]);
@@ -62,7 +62,7 @@ export default function FocusMainScreen({ navigation }: Props) {
       onOpenCompleted={handleOpenCompleted}
       onStart={handleStart}
       onPostpone={handlePostpone}
-      onAddStep={handleAddStep}
+      onEditTask={handleEditTask}
       onSelectTask={handleSelectTask}
     />
   );

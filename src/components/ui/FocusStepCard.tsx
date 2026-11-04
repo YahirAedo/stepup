@@ -25,6 +25,7 @@ export interface FocusStepCardProps {
   totalSteps: number;
   minutes: number | null;
   title: string;
+  taskName: string;
   progress: ProgressBarResult;
   onStart: () => void;
   onPostpone?: () => void;
@@ -35,6 +36,7 @@ export default function FocusStepCard({
   totalSteps,
   minutes,
   title,
+  taskName,
   progress,
   onStart,
   onPostpone,
@@ -151,6 +153,13 @@ export default function FocusStepCard({
         }}
       >
         <RNText
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}
+        >
+          {taskName}
+        </RNText>
+        <RNText
           numberOfLines={3}
           style={[
             sereneTypography['headline-lg-mobile'] as TextStyle,
@@ -215,7 +224,7 @@ export default function FocusStepCard({
             })}
           >
             <MaterialCommunityIcons
-              name={mci('hourglass_empty')}
+              name={mci('schedule')}
               size={s(22)}
               color={sereneColors.secondary}
             />
