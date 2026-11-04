@@ -24,7 +24,7 @@ export interface TasksListViewProps {
   onFilterChange: (key: TaskCategory) => void;
   onCreateTask: () => void;
   onOpenTask: (taskId: number) => void;
-  onResumeFocus: () => void;
+  onResumeFocus: (taskId: number) => void;
 }
 
 const CATEGORY_ORDER: TaskCategory[] = ['inProgress', 'notStarted', 'completed'];

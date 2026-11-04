@@ -33,7 +33,7 @@ export interface FocusTaskCardProps {
   taskId?: number;
   onOpenTask?: (taskId: number) => void;
   dueLabel?: string;
-  onResume?: () => void;
+  onResume?: (taskId: number) => void;
 }
 
 export default function FocusTaskCard({
@@ -196,7 +196,11 @@ export default function FocusTaskCard({
 
         <View style={{ gap: s(8) }}>
           <Pressable
-            onPress={onResume}
+            onPress={() => {
+              if (taskId !== undefined && onResume) {
+                onResume(taskId);
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel={primaryCta}
             style={({ pressed }) => ({

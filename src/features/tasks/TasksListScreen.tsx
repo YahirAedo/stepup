@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { View, Text as RNText, Pressable, type TextStyle } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import {
   sereneColors,
   sereneTypography,
@@ -12,10 +14,15 @@ import {
 import { useTasksList } from './hooks/useTasksList';
 import TasksListView from './views/TasksListView';
 import type { TaskListModel } from './logic/buildTasksListModel';
-import type { TasksStackParamList } from '../../types/navigation';
+import type { TasksStackParamList, MainTabParamList } from '../../types/navigation';
 
 export default function TasksListScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
+  const navigation = useNavigation<
+    CompositeScreenProps<
+      NativeStackScreenProps<TasksStackParamList, 'TaskList'>,
+      BottomTabScreenProps<MainTabParamList>
+    >['navigation']
+  >();
   const [activeFilter, setActiveFilter] = useState<'inProgress' | 'notStarted' | 'completed'>('inProgress');
   const { refresh } = useTasksList();
   const [model, setModel] = useState<TaskListModel | null>(null);
@@ -100,8 +107,8 @@ export default function TasksListScreen() {
       onFilterChange={(key) => setActiveFilter(key)}
       onCreateTask={handleCreateTask}
       onOpenTask={handleOpenTask}
-      onResumeFocus={() => {
-        // REQUIERE MIGRACIÓN: pantalla Foco queda para su fase
+      onResumeFocus={(taskId) => {
+        navigation.navigate('Focus', { screen: 'FocusMain', params: { taskId }, initial: false });
       }}
     />
   );

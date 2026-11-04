@@ -64,9 +64,8 @@ export default function TaskCreateScreen({ navigation }: Props) {
     const created = await save();
     if (created) {
       skipGuardRef.current = true;
-      // REQUIERE MIGRACIÓN: FocusMain debería aceptar taskId.
       navigation.popToTop();
-      navigation.navigate('Focus');
+      navigation.navigate('Focus', { screen: 'FocusMain', params: { taskId: created.id }, initial: false });
     }
   }, [save, navigation, skipGuardRef]);
 

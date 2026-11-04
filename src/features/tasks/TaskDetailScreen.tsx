@@ -72,10 +72,9 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
     return ok;
   }, [completeAll, navigation, taskId]);
 
-  // REQUIERE MIGRACIÓN: pantalla Foco queda para su fase
   const onContinue = useCallback(() => {
-    // no-op
-  }, []);
+    navigation.navigate('Focus', { screen: 'FocusMain', params: { taskId }, initial: false });
+  }, [navigation, taskId]);
 
   if (!task && !loadError) {
     return null;
