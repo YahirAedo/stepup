@@ -15,6 +15,7 @@ import type {
 } from '../types/navigation';
 
 import FocusScreen from '../screens/FocusScreen';
+import FocusMainScreen from '../features/focus/FocusMainScreen';
 import TaskListScreen from '../screens/TaskListScreen';
 import TasksListScreen from '../features/tasks/TasksListScreen';
 import TaskDetailScreen from '../features/tasks/TaskDetailScreen';
@@ -74,7 +75,11 @@ const screenOpts = {
 function FocusStack() {
   return (
     <FocusStackNav.Navigator screenOptions={screenOpts}>
-      <FocusStackNav.Screen name="FocusMain" component={FocusScreen} options={{ title: 'Ahora' }} />
+      <FocusStackNav.Screen
+        name="FocusMain"
+        component={migrationFlags.focus ? FocusMainScreen : FocusScreen}
+        options={{ title: 'Ahora' }}
+      />
     </FocusStackNav.Navigator>
   );
 }
