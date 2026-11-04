@@ -44,6 +44,8 @@ export default function TaskCompletedView({
   if (loading) {
     return (
       <View
+        accessible
+        accessibilityLabel={taskCompletedCopy.loading}
         style={{
           flex: 1,
           alignItems: 'center',
@@ -51,7 +53,11 @@ export default function TaskCompletedView({
           backgroundColor: sereneColors.surface,
         }}
       >
-        <ActivityIndicator color={sereneColors.primary} />
+        <ActivityIndicator
+          color={sereneColors.primary}
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden
+        />
         <RNText
           style={[sereneTypography['body-md'] as TextStyle, { color: sereneColors['on-surface-variant'], marginTop: sereneSpacing['space-sm'] }]}
         >

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyStepSheetResult, getStepSheetPosition } from './stepSheetResult';
-import type { DraftStep } from './stepSheetResult';
+import type { DraftStep } from '../hooks/draftStep';
 
 const step = (key: string, name: string, duration_min: number | null = 3, status: 'pending' | 'completed' = 'pending'): DraftStep => ({
   key,
