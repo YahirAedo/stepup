@@ -9,4 +9,18 @@ export const focusCopy = {
     primaryCta: 'Crear tarea',
     secondaryCta: 'Ver completadas',
   },
+  running: {
+    pause: 'Pausar',
+    resume: 'Reanudar',
+    extend: '+2 min',
+    markDone: 'Marcar paso hecho',
+    back: 'Volver',
+    paused: 'Pausado',
+    expired: {
+      headline: 'Tiempo cumplido',
+      subtitle: 'Podés marcar el paso o sumar dos minutos más.',
+      primaryCta: 'Marcar paso hecho',
+      secondaryCta: '+2 min',
+    },
+  },
 } as const;
