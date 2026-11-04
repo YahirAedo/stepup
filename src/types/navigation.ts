@@ -13,6 +13,7 @@ export type TasksStackParamList = {
   TaskForm: { task?: Task };
   StepForm: { taskId: number; stepId?: number };
   StepComplete: { stepName: string; stepDuration?: number; nextStepName?: string };
+  TaskCompleted: { taskId: number };
 };
 
 export type HistoryStackParamList = {

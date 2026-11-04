@@ -64,6 +64,14 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
     navigation.navigate('TaskEdit', { taskId });
   }, [navigation, taskId]);
 
+  const handleCompleteAll = useCallback(async (): Promise<boolean> => {
+    const ok = await completeAll();
+    if (ok) {
+      navigation.replace('TaskCompleted', { taskId });
+    }
+    return ok;
+  }, [completeAll, navigation, taskId]);
+
   // REQUIERE MIGRACIÓN: pantalla Foco queda para su fase
   const onContinue = useCallback(() => {
     // no-op
@@ -84,7 +92,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           void loadData();
         }}
         onContinue={onContinue}
-        onCompleteAll={completeAll}
+        onCompleteAll={handleCompleteAll}
         onReopenAll={reopenAll}
         isBusy={isBusy}
         actionError={actionError}

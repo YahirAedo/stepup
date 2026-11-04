@@ -34,7 +34,7 @@ export interface TaskDetailViewProps {
   error: string | null;
   onRetry: () => void;
   onContinue: () => void;
-  onCompleteAll: () => Promise<void>;
+  onCompleteAll: () => Promise<boolean>;
   onReopenAll: () => Promise<void>;
   isBusy: boolean;
   actionError: string | null;

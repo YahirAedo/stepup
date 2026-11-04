@@ -11,7 +11,7 @@ export interface UseTaskDetailResult {
   steps: ReadonlyArray<Step>;
   loading: boolean;
   loadError: string | null;
-  completeAll: () => Promise<void>;
+  completeAll: () => Promise<boolean>;
   reopenAll: () => Promise<void>;
   isBusy: boolean;
   actionError: string | null;
@@ -61,16 +61,18 @@ export function useTaskDetail(taskId: number): UseTaskDetailResult {
     setActionError(null);
   }, []);
 
-  const completeAll = useCallback(async () => {
-    if (isBusy) return;
+  const completeAll = useCallback(async (): Promise<boolean> => {
+    if (isBusy) return false;
     setIsBusy(true);
     setActionError(null);
     try {
       await TaskCompletionService.completeAll(taskId);
       await loadData();
+      return true;
     } catch {
       setActionError(taskDetailCopy.actionError);
       await loadData();
+      return false;
     } finally {
       setIsBusy(false);
     }
