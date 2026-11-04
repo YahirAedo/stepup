@@ -2,7 +2,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { Task } from './index';
 
 export type FocusStackParamList = {
-  FocusMain: undefined;
+  FocusMain: { taskId?: number } | undefined;
 };
 
 export type TasksStackParamList = {
