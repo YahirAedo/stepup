@@ -33,6 +33,9 @@ import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import LoginMainScreen from './src/features/auth/LoginMainScreen';
+import RegisterMainScreen from './src/features/auth/RegisterMainScreen';
+import { migrationFlags } from './src/config/migration';
 import { colors } from './src/theme';
 import { MainTabs } from './src/components/GlassTabBar';
 import AppTabs from './src/navigation/AppTabs';
@@ -169,8 +172,8 @@ export default function App() {
           <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
           <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
           <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
-          <RootStack.Screen name="Login" component={LoginScreen} />
-          <RootStack.Screen name="Register" component={RegisterScreen} />
+          <RootStack.Screen name="Login" component={migrationFlags.auth ? LoginMainScreen : LoginScreen} />
+          <RootStack.Screen name="Register" component={migrationFlags.auth ? RegisterMainScreen : RegisterScreen} />
           <RootStack.Screen name="MainTabs" component={AppContent} />
         </RootStack.Navigator>
       </NavigationContainer>
