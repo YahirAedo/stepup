@@ -1,4 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('react-native', () => ({
+  Platform: { OS: 'android' },
+}));
+
+vi.mock('expo-constants', () => ({
+  default: { expoConfig: null },
+}));
+
+vi.mock('../../../services/storage', () => ({
+  storage: {
+    getItem: vi.fn(async () => null),
+    setItem: vi.fn(async () => undefined),
+    removeItem: vi.fn(async () => undefined),
+  },
+}));
+
 import { ApiError } from '../../../services/api';
 import { mapAuthError } from './mapAuthError';
 import { loginCopy, authCopy } from './authCopy';
