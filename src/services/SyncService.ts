@@ -253,6 +253,11 @@ export const SyncService = {
     return getStoredConflicts(db);
   },
 
+  async getLastSyncAt(): Promise<string | null> {
+    const db = await getDb();
+    return getLastSyncAt(db);
+  },
+
   async resolveConflictKeepLocal(conflictId: number): Promise<void> {
     const db = await getDb();
     await resolveLocalConflict(db, conflictId);

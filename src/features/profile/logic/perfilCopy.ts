@@ -31,6 +31,11 @@ export interface PerfilCopy {
     activeDaysNote: string;
   };
 
+  achievements: {
+    title: string;
+    caption: string;
+  };
+
   sync: {
     sectionTitle: string;
     statusRowLabel: string;
@@ -81,6 +86,11 @@ export const perfilCopy: PerfilCopy = {
     stepsTitle: 'Pasos completados',
     stepsCaption: 'En total',
     activeDaysNote: 'Contamos los días en los que completaste al menos un paso.',
+  },
+
+  achievements: {
+    title: 'Logros',
+    caption: 'Lo que fuiste desbloqueando.',
   },
 
   sync: {

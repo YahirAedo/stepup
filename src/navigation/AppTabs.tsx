@@ -27,6 +27,7 @@ import TaskFormScreen from '../screens/TaskFormScreen';
 import StepFormScreen from '../screens/StepFormScreen';
 import StepCompleteScreen from '../screens/StepCompleteScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ProfileMainScreen from '../features/profile/ProfileMainScreen';
 import BadgesScreen from '../screens/BadgesScreen';
 import SyncConflictScreen from '../screens/SyncConflictScreen';
 import DesignLabScreen from '../screens/designlab/DesignLabScreen';
@@ -114,7 +115,10 @@ function TasksStack() {
 function ProfileStack() {
   return (
     <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStackNav.Screen
+        name="ProfileMain"
+        component={migrationFlags.profile ? ProfileMainScreen : ProfileScreen}
+      />
       <ProfileStackNav.Screen name="Badges" component={BadgesScreen} />
       <ProfileStackNav.Screen name="SyncConflict" component={SyncConflictScreen} />
       <ProfileStackNav.Screen name="DesignLab" component={DesignLabScreen} />
