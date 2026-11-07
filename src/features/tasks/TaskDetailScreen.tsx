@@ -53,7 +53,7 @@ export default function TaskDetailScreen({ navigation, route }: Props) {
           <MaterialCommunityIcons
             name={mci('edit')}
             size={24}
-            color={tintColor ?? sereneColors['inverse-on-surface']}
+            color={tintColor ?? sereneColors['on-surface']}
           />
         </Pressable>
       ),

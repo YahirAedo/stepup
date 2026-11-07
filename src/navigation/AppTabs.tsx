@@ -3,8 +3,8 @@ import { Keyboard } from 'react-native';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { colors } from '../theme';
 import { migrationFlags } from '../config/migration';
+import { getStackScreenOptions } from './stackScreenOptions';
 import SereneTabBar, { type SereneTabKey } from '../components/ui/SereneTabBar';
 import { TAB_KEY_BY_ROUTE, TAB_ROUTES, isFullscreenRoute, type TabRouteName } from './tabs';
 import type {
@@ -67,15 +67,10 @@ const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
 const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
 const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
 
-const screenOpts = {
-  headerStyle: { backgroundColor: colors['inverse-surface'] },
-  headerTintColor: colors['inverse-on-surface'],
-  headerTitleStyle: { fontWeight: '600' as const },
-};
 
 function FocusStack() {
   return (
-    <FocusStackNav.Navigator screenOptions={screenOpts}>
+    <FocusStackNav.Navigator screenOptions={getStackScreenOptions(migrationFlags.focus)}>
       <FocusStackNav.Screen
         name="FocusMain"
         component={migrationFlags.focus ? FocusMainScreen : FocusScreen}
@@ -87,7 +82,7 @@ function FocusStack() {
 
 function TasksStack() {
   return (
-    <TasksStackNav.Navigator screenOptions={screenOpts}>
+    <TasksStackNav.Navigator screenOptions={getStackScreenOptions(migrationFlags.tasks)}>
       <TasksStackNav.Screen
         name="TaskList"
         component={migrationFlags.tasks ? TasksListScreen : TaskListScreen}
@@ -121,25 +116,29 @@ function ProfileStack() {
       />
       <ProfileStackNav.Screen name="Badges" component={BadgesScreen} />
       <ProfileStackNav.Screen name="SyncConflict" component={SyncConflictScreen} />
-      <ProfileStackNav.Screen name="DesignLab" component={DesignLabScreen} />
-      <ProfileStackNav.Screen name="CronometroLimpio" component={CronometroLimpioScreen} />
-      <ProfileStackNav.Screen name="FocusCompletado" component={FocusCompletadoScreen} />
-      <ProfileStackNav.Screen name="EnfoqueFocus" component={EnfoqueFocusScreen} />
-      <ProfileStackNav.Screen name="FocusSinTareas" component={FocusSinTareasScreen} />
-      <ProfileStackNav.Screen name="TareasAListado" component={TareasAListadoScreen} />
-      <ProfileStackNav.Screen name="TareasACrear" component={TareasACrearScreen} />
-      <ProfileStackNav.Screen name="TareasADetalle" component={TareasADetalleScreen} />
-      <ProfileStackNav.Screen name="TareasAEditar" component={TareasAEditarScreen} />
-      <ProfileStackNav.Screen name="TareasACompletada" component={TareasACompletadaScreen} />
-      <ProfileStackNav.Screen name="TareasEditarPasoSheet" component={TareasEditarPasoSheetScreen} />
-      <ProfileStackNav.Screen name="PerfilA" component={PerfilAVarianteScreen} />
-      <ProfileStackNav.Screen name="SereneTabs" component={SereneTabsScreen} />
-      <ProfileStackNav.Screen name="LogrosA" component={LogrosAScreen} />
-      <ProfileStackNav.Screen name="ConflictosA" component={ConflictosAScreen} />
-      <ProfileStackNav.Screen name="Onboarding1A" component={Onboarding1AScreen} />
-      <ProfileStackNav.Screen name="Onboarding2A" component={Onboarding2AScreen} />
-      <ProfileStackNav.Screen name="LoginA" component={LoginAScreen} />
-      <ProfileStackNav.Screen name="RegistroA" component={RegistroAScreen} />
+      {__DEV__ && (
+        <>
+          <ProfileStackNav.Screen name="DesignLab" component={DesignLabScreen} />
+          <ProfileStackNav.Screen name="CronometroLimpio" component={CronometroLimpioScreen} />
+          <ProfileStackNav.Screen name="FocusCompletado" component={FocusCompletadoScreen} />
+          <ProfileStackNav.Screen name="EnfoqueFocus" component={EnfoqueFocusScreen} />
+          <ProfileStackNav.Screen name="FocusSinTareas" component={FocusSinTareasScreen} />
+          <ProfileStackNav.Screen name="TareasAListado" component={TareasAListadoScreen} />
+          <ProfileStackNav.Screen name="TareasACrear" component={TareasACrearScreen} />
+          <ProfileStackNav.Screen name="TareasADetalle" component={TareasADetalleScreen} />
+          <ProfileStackNav.Screen name="TareasAEditar" component={TareasAEditarScreen} />
+          <ProfileStackNav.Screen name="TareasACompletada" component={TareasACompletadaScreen} />
+          <ProfileStackNav.Screen name="TareasEditarPasoSheet" component={TareasEditarPasoSheetScreen} />
+          <ProfileStackNav.Screen name="PerfilA" component={PerfilAVarianteScreen} />
+          <ProfileStackNav.Screen name="SereneTabs" component={SereneTabsScreen} />
+          <ProfileStackNav.Screen name="LogrosA" component={LogrosAScreen} />
+          <ProfileStackNav.Screen name="ConflictosA" component={ConflictosAScreen} />
+          <ProfileStackNav.Screen name="Onboarding1A" component={Onboarding1AScreen} />
+          <ProfileStackNav.Screen name="Onboarding2A" component={Onboarding2AScreen} />
+          <ProfileStackNav.Screen name="LoginA" component={LoginAScreen} />
+          <ProfileStackNav.Screen name="RegistroA" component={RegistroAScreen} />
+        </>
+      )}
     </ProfileStackNav.Navigator>
   );
 }

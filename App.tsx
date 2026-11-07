@@ -65,7 +65,7 @@ function AppContent() {
   const tasksStackIndex = activeTabRoute?.state?.index ?? 0;
 
   // Show FAB only on the Tasks tab root screen (TaskList)
-  const showFAB = activeTabName === 'Tasks' && tasksStackIndex === 0;
+  const showFAB = !migrationFlags.tasks && activeTabName === 'Tasks' && tasksStackIndex === 0;
 
   return (
     <>
