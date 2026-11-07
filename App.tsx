@@ -35,6 +35,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import LoginMainScreen from './src/features/auth/LoginMainScreen';
 import RegisterMainScreen from './src/features/auth/RegisterMainScreen';
+import OnboardingProblemScreen from './src/features/auth/OnboardingProblemScreen';
+import OnboardingSolutionScreen from './src/features/auth/OnboardingSolutionScreen';
 import { migrationFlags } from './src/config/migration';
 import { colors } from './src/theme';
 import { MainTabs } from './src/components/GlassTabBar';
@@ -169,8 +171,8 @@ export default function App() {
           initialRouteName={initialRoute}
           screenOptions={{ headerShown: false }}
         >
-          <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
-          <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
+          <RootStack.Screen name="Onboarding1" component={migrationFlags.auth ? OnboardingProblemScreen : OnboardingScreen1} />
+          <RootStack.Screen name="Onboarding2" component={migrationFlags.auth ? OnboardingSolutionScreen : OnboardingScreen2} />
           <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
           <RootStack.Screen name="Login" component={migrationFlags.auth ? LoginMainScreen : LoginScreen} />
           <RootStack.Screen name="Register" component={migrationFlags.auth ? RegisterMainScreen : RegisterScreen} />
