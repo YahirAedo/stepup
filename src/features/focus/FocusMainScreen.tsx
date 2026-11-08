@@ -22,6 +22,7 @@ export default function FocusMainScreen({ navigation }: Props) {
   const {
     status,
     model,
+    emptyState,
     errorMessage,
     reload,
     postpone,
@@ -61,6 +62,17 @@ export default function FocusMainScreen({ navigation }: Props) {
     navigation.navigate('Tasks', { screen: 'TaskList', initial: false });
     // REQUIERE MIGRACIÓN: abrir el listado ya filtrado en Completadas
   }, [navigation]);
+
+  const handleOpenTasks = useCallback(() => {
+    navigation.navigate('Tasks', { screen: 'TaskList', initial: false });
+  }, [navigation]);
+
+  const handleAddSteps = useCallback(
+    (taskId: number) => {
+      navigation.navigate('Tasks', { screen: 'TaskEdit', params: { taskId }, initial: false });
+    },
+    [navigation],
+  );
 
   const handleEditTask = useCallback(() => {
     if (!viewModel) return;
@@ -157,10 +169,13 @@ export default function FocusMainScreen({ navigation }: Props) {
     <FocusView
       status={status}
       viewModel={viewModel}
+      emptyState={emptyState}
       errorMessage={errorMessage}
       onRetry={handleRetry}
       onCreateTask={handleCreateTask}
       onOpenCompleted={handleOpenCompleted}
+      onOpenTasks={handleOpenTasks}
+      onAddSteps={handleAddSteps}
       onStart={handleStart}
       onPostpone={handlePostpone}
       onEditTask={handleEditTask}

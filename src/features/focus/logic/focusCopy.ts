@@ -4,10 +4,31 @@ export const focusCopy = {
   loading: 'Cargando tu foco…',
   retry: 'Reintentar',
   empty: {
-    headline: 'Todo al día',
-    body: 'Cuando quieras, creá una tarea.',
-    primaryCta: 'Crear tarea',
-    secondaryCta: 'Ver completadas',
+    'no-tasks': {
+      headline: 'Empecemos con tu primera tarea',
+      body: 'Anotá algo que tengas pendiente y dividilo en pasos cortos. Acá vas a ver el paso que toca hacer ahora.',
+      primaryCta: 'Crear mi primera tarea',
+    },
+    'needs-steps': {
+      one: {
+        headline: 'Tu tarea todavía no tiene pasos',
+        body: 'Foco te muestra un paso a la vez. Agregale pasos cortos a tu tarea y el primero va a aparecer acá.',
+        primaryCta: 'Agregar pasos',
+        secondaryCta: 'Ver mis tareas',
+      },
+      many: {
+        headline: 'Tus tareas todavía no tienen pasos',
+        body: 'Foco te muestra un paso a la vez. Agregales pasos cortos a tus tareas y el primero va a aparecer acá.',
+        primaryCta: 'Ver mis tareas',
+        secondaryCta: 'Crear tarea',
+      },
+    },
+    'all-done': {
+      headline: 'Todo al día',
+      body: 'Cuando quieras, creá una tarea.',
+      primaryCta: 'Crear tarea',
+      secondaryCta: 'Ver completadas',
+    },
   },
   completed: {
     headline: 'Paso completado',

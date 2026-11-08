@@ -5,6 +5,8 @@ import { StepService } from '../../../services/StepService';
 import { ProgressService } from '../../../services/ProgressService';
 import { TimerService } from '../../../services/TimerService';
 import { buildFocusModel } from '../logic/buildFocusModel';
+import { buildFocusEmptyState } from '../logic/buildFocusEmptyState';
+import type { FocusEmptyState } from '../logic/buildFocusEmptyState';
 import { getTimerAction } from '../logic/getTimerAction';
 import { resolveStepMinutes, shouldKeepTimer, EXTEND_SECONDS } from '../logic/stepTimer';
 import { focusCopy } from '../logic/focusCopy';
@@ -30,6 +32,7 @@ export interface FocusTimer {
 export interface UseFocusResult {
   status: 'loading' | 'ready' | 'empty' | 'error';
   model: FocusModel | null;
+  emptyState: FocusEmptyState | null;
   stepsToday: number;
   timer: FocusTimer;
   completing: boolean;
@@ -59,6 +62,7 @@ const initialTimer = (model: FocusModel | null): FocusTimer => {
 export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?: () => void }): UseFocusResult {
   const [status, setStatus] = useState<UseFocusResult['status']>('loading');
   const [model, setModel] = useState<FocusModel | null>(null);
+  const [emptyState, setEmptyState] = useState<FocusEmptyState | null>(null);
   const [stepsToday, setStepsToday] = useState(0);
   const [timer, setTimer] = useState<FocusTimer>({ display: '00:00', seconds: 0, totalSeconds: 0, started: false, running: false, finished: false });
   const [completing, setCompleting] = useState(false);
@@ -129,6 +133,7 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
       });
 
       setModel(nextModel);
+      setEmptyState(nextModel ? null : buildFocusEmptyState(candidates));
       if (!keep) {
         TimerService.stop();
         setTimer(initialTimer(nextModel));
@@ -215,6 +220,7 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
       if (!candidates) return;
       const nextModel = buildFocusModel(candidates, getManualTaskId(), getPostponedIds());
       setModel(nextModel);
+      setEmptyState(nextModel ? null : buildFocusEmptyState(candidates));
       setTimer(initialTimer(nextModel));
     },
     [],
@@ -229,6 +235,7 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
     if (!candidates) return;
     const nextModel = buildFocusModel(candidates, getManualTaskId(), getPostponedIds());
     setModel(nextModel);
+    setEmptyState(nextModel ? null : buildFocusEmptyState(candidates));
     setTimer(initialTimer(nextModel));
   }, [model]);
 
@@ -269,6 +276,7 @@ export function useFocus(options?: { routeTaskId?: number; onRouteTaskConsumed?:
   return {
     status,
     model,
+    emptyState,
     stepsToday,
     timer,
     completing,

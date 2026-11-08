@@ -7,18 +7,17 @@ import {
   ActivityIndicator,
   type TextStyle,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   sereneColors,
   sereneTypography,
   sereneSpacing,
   sereneBorderRadius,
-  sereneShadows,
   useResponsive,
 } from '../../../theme/serene';
-import { mci } from '../../../components/designlab/mciIconMap';
 import { focusCopy } from '../logic/focusCopy';
 import { buildFocusViewModel } from '../logic/buildFocusViewModel';
+import FocusEmptyView from '../../../components/ui/FocusEmptyView';
+import type { FocusEmptyState } from '../logic/buildFocusEmptyState';
 import { buildStepProgress } from '../logic/buildStepProgress';
 import FocusStepCard from '../../../components/ui/FocusStepCard';
 import FocusQueue from '../../../components/ui/FocusQueue';
@@ -27,10 +26,13 @@ import FocusTaskSwitcher from '../../../components/ui/FocusTaskSwitcher';
 export interface FocusViewProps {
   status: 'loading' | 'ready' | 'empty' | 'error';
   viewModel: ReturnType<typeof buildFocusViewModel> | null;
+  emptyState: FocusEmptyState | null;
   errorMessage: string | null;
   onRetry: () => void;
   onCreateTask: () => void;
   onOpenCompleted: () => void;
+  onOpenTasks: () => void;
+  onAddSteps: (taskId: number) => void;
   onStart: () => void;
   onPostpone: () => void;
   onEditTask: () => void;
@@ -40,10 +42,13 @@ export interface FocusViewProps {
 export default function FocusView({
   status,
   viewModel,
+  emptyState,
   errorMessage,
   onRetry,
   onCreateTask,
   onOpenCompleted,
+  onOpenTasks,
+  onAddSteps,
   onStart,
   onPostpone,
   onEditTask,
@@ -121,81 +126,33 @@ export default function FocusView({
   }
 
   if (status === 'empty' || !viewModel) {
+    const state = emptyState ?? { kind: 'no-tasks' as const, taskIds: [] };
+    const onPrimary = () => {
+      if (state.kind === 'no-tasks' || state.kind === 'all-done') {
+        onCreateTask();
+      } else if (state.kind === 'needs-steps') {
+        if (state.taskIds.length === 1) {
+          onAddSteps(state.taskIds[0]);
+        } else {
+          onOpenTasks();
+        }
+      }
+    };
+    const onSecondary =
+      state.kind === 'no-tasks'
+        ? undefined
+        : state.kind === 'needs-steps'
+          ? state.taskIds.length === 1
+            ? onOpenTasks
+            : onCreateTask
+          : onOpenCompleted;
+
     return (
-      <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: sereneSpacing.margin,
-            paddingBottom: sereneSpacing['space-lg'],
-            gap: sereneSpacing['space-lg'],
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View
-            style={{
-              width: '100%',
-              backgroundColor: sereneColors['surface-container-lowest'],
-              borderRadius: sereneBorderRadius.xl,
-              padding: sereneSpacing['space-lg'],
-              gap: sereneSpacing['space-sm'],
-              ...sereneShadows.card,
-            }}
-          >
-            <RNText style={[sereneTypography['headline-sm'] as TextStyle, { color: sereneColors.primary }]}>
-              {focusCopy.empty.headline}
-            </RNText>
-            <RNText style={[sereneTypography['body-md'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>
-              {focusCopy.empty.body}
-            </RNText>
-
-            <View style={{ width: '100%', gap: sereneSpacing['space-sm'], marginTop: sereneSpacing['space-xs'] }}>
-              <Pressable
-                onPress={onCreateTask}
-                accessibilityRole="button"
-                accessibilityLabel={focusCopy.empty.primaryCta}
-                style={({ pressed }) => ({
-                  minHeight: s(48),
-                  width: '100%',
-                  borderRadius: sereneBorderRadius.lg,
-                  backgroundColor: sereneColors['primary-container'],
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: s(8),
-                  opacity: pressed ? 0.95 : 1,
-                })}
-              >
-                <MaterialCommunityIcons name={mci('add')} size={s(19)} color={sereneColors['on-primary']} />
-                <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-                  {focusCopy.empty.primaryCta}
-                </RNText>
-              </Pressable>
-
-              <Pressable
-                onPress={onOpenCompleted}
-                accessibilityRole="button"
-                accessibilityLabel={focusCopy.empty.secondaryCta}
-                style={({ pressed }) => ({
-                  minHeight: s(48),
-                  width: '100%',
-                  borderRadius: sereneBorderRadius.lg,
-                  backgroundColor: sereneColors['secondary-container'],
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: s(8),
-                  opacity: pressed ? 0.9 : 1,
-                })}
-              >
-                <MaterialCommunityIcons name={mci('history_edu')} size={s(19)} color={sereneColors['on-secondary-container']} />
-                <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-secondary-container'] }]}>
-                  {focusCopy.empty.secondaryCta}
-                </RNText>
-              </Pressable>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
+      <FocusEmptyView
+        emptyState={state}
+        onPrimary={onPrimary}
+        onSecondary={onSecondary}
+      />
     );
   }
 

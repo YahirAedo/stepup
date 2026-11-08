@@ -60,6 +60,59 @@ export default function TasksListView({
     onFilterChange(key);
   }, [onFilterChange]);
 
+  if (model.items.length === 0) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: sereneSpacing.margin,
+          paddingBottom: sereneSpacing['space-lg'],
+          backgroundColor: sereneColors.surface,
+          gap: sereneSpacing['space-lg'],
+        }}
+      >
+        <View style={{ width: '100%', maxWidth: s(360), alignItems: 'center', gap: sereneSpacing['space-sm'] }}>
+          <RNText
+            accessibilityRole="header"
+            style={[sereneTypography['headline-lg-mobile'] as TextStyle, { color: sereneColors.primary, textAlign: 'center' }]}
+          >
+            Todavía no creaste tareas
+          </RNText>
+          <RNText
+            style={[sereneTypography['body-md'] as TextStyle, { color: sereneColors['on-surface-variant'], textAlign: 'center' }]}
+          >
+            Creá la primera y armá sus pasos para empezar.
+          </RNText>
+        </View>
+
+        <Pressable
+          onPress={onCreateTask}
+          accessibilityRole="button"
+          accessibilityLabel="Crear tarea"
+          style={({ pressed }) => ({
+            minHeight: s(48),
+            width: '100%',
+            maxWidth: s(360),
+            borderRadius: sereneBorderRadius.lg,
+            backgroundColor: sereneColors['primary-container'],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: s(8),
+            opacity: pressed ? 0.95 : 1,
+          })}
+        >
+          <MaterialCommunityIcons name={mci('add')} size={s(19)} color={sereneColors['on-primary']} />
+          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
+            Crear tarea
+          </RNText>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: sereneSpacing.margin, paddingTop: sereneSpacing['space-sm'], gap: sereneSpacing['space-sm'] }}>
