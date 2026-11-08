@@ -33,60 +33,46 @@ const step = (overrides: Partial<Step>): Step => ({
 });
 
 describe('getVisibleQueue', () => {
-  it('foco en el filtro activo + tarea en otro filtro: cola vacía, isEmpty=false', () => {
-    const tasks = [
-      task({ id: 1, name: 'En foco' }),
-      task({ id: 2, name: 'También en curso' }),
-    ];
+  it('tarjeta destacada en su filtro: sí', () => {
+    const tasks = [task({ id: 1, name: 'En foco' })];
     const steps = [
-      step({ id: 1, task_id: 1, status: 'completed' }),
+      step({ id: 1, task_id: 1, status: 'completed', completed_at: '2026-01-01T00:00:00Z' }),
       step({ id: 2, task_id: 1, status: 'pending' }),
-      step({ id: 3, task_id: 2, status: 'pending' }),
     ];
-
     const model = buildTasksListModel(tasks, steps);
-
-    const { focusItem, queue, isEmpty } = getVisibleQueue(model, 'inProgress');
-
+    const { focusItem, isEmpty } = getVisibleQueue(model, 'inProgress');
     expect(focusItem?.id).toBe(1);
-    expect(queue.length).toBe(0);
     expect(isEmpty).toBe(false);
   });
 
-  it('foco + tarea en otro filtro: cola del filtro actual tiene 1, isEmpty=false', () => {
-    const tasks = [
-      task({ id: 1, name: 'En foco, inProgress' }),
-      task({ id: 2, name: 'En notStarted' }),
-    ];
+  it('tarjeta destacada en otro filtro: no', () => {
+    const tasks = [task({ id: 1, name: 'En foco' })];
     const steps = [
-      step({ id: 1, task_id: 1, status: 'completed' }),
+      step({ id: 1, task_id: 1, status: 'completed', completed_at: '2026-01-01T00:00:00Z' }),
       step({ id: 2, task_id: 1, status: 'pending' }),
-      step({ id: 3, task_id: 2, status: 'pending' }),
     ];
-
     const model = buildTasksListModel(tasks, steps);
-
-    const { focusItem, queue, isEmpty } = getVisibleQueue(model, 'notStarted');
-
-    expect(focusItem?.id).toBe(1);
-    expect(queue.length).toBe(1);
-    expect(queue[0]?.id).toBe(2);
-    expect(isEmpty).toBe(false);
+    const { focusItem, isEmpty } = getVisibleQueue(model, 'notStarted');
+    expect(focusItem).toBeNull();
+    expect(isEmpty).toBe(true);
   });
 
-  it('sin foco y sin tareas en el filtro: isEmpty=true', () => {
-    const tasks = [task({ id: 1, name: 'Completada' })];
-    const steps = [
-      step({ id: 1, task_id: 1, status: 'completed' }),
-      step({ id: 2, task_id: 1, status: 'completed' }),
-    ];
-
+  it('una sola tarea por empezar con filtro Activas → vacío', () => {
+    const tasks = [task({ id: 1, name: 'Por empezar' })];
+    const steps = [step({ id: 1, task_id: 1, status: 'pending' })];
     const model = buildTasksListModel(tasks, steps);
-
     const { focusItem, queue, isEmpty } = getVisibleQueue(model, 'inProgress');
-
     expect(focusItem).toBeNull();
     expect(queue.length).toBe(0);
     expect(isEmpty).toBe(true);
+  });
+
+  it('una sola tarea por empezar con filtro Pendientes → la tarjeta', () => {
+    const tasks = [task({ id: 1, name: 'Por empezar' })];
+    const steps = [step({ id: 1, task_id: 1, status: 'pending' })];
+    const model = buildTasksListModel(tasks, steps);
+    const { focusItem, isEmpty } = getVisibleQueue(model, 'notStarted');
+    expect(focusItem?.id).toBe(1);
+    expect(isEmpty).toBe(false);
   });
 });

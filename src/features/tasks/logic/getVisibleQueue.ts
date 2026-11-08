@@ -6,10 +6,9 @@ export function getVisibleQueue(
   activeFilter: TaskCategory,
 ): { focusItem: typeof model.items[number] | null; queue: typeof model.items[number][]; isEmpty: boolean } {
   const { items, focusIndex } = model;
-  const focusItem = focusIndex !== null ? items[focusIndex] ?? null : null;
-  const queue = items.filter(
-    (item, index) => index !== focusIndex && item.category === activeFilter,
-  );
-  const isEmpty = queue.length === 0 && focusItem?.category !== activeFilter;
+  const candidate = focusIndex !== null ? items[focusIndex] ?? null : null;
+  const focusItem = candidate !== null && candidate.category === activeFilter ? candidate : null;
+  const queue = items.filter((item) => item !== focusItem && item.category === activeFilter);
+  const isEmpty = queue.length === 0 && focusItem === null;
   return { focusItem, queue, isEmpty };
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { View, Text as RNText, Pressable, type TextStyle } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -14,6 +14,8 @@ import {
 import { useTasksList } from './hooks/useTasksList';
 import TasksListView from './views/TasksListView';
 import type { TaskListModel } from './logic/buildTasksListModel';
+import { getInitialTaskFilter } from './logic/getInitialTaskFilter';
+import type { TaskCategory } from '../../utils/designlab/deriveTaskCategory';
 import type { TasksStackParamList, MainTabParamList } from '../../types/navigation';
 
 export default function TasksListScreen() {
@@ -23,7 +25,8 @@ export default function TasksListScreen() {
       BottomTabScreenProps<MainTabParamList>
     >['navigation']
   >();
-  const [activeFilter, setActiveFilter] = useState<'inProgress' | 'notStarted' | 'completed'>('inProgress');
+  const [activeFilter, setActiveFilter] = useState<TaskCategory>('inProgress');
+  const filterInitialized = useRef(false);
   const { refresh } = useTasksList();
   const [model, setModel] = useState<TaskListModel | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +36,19 @@ export default function TasksListScreen() {
       setError(null);
       const m = await refresh();
       setModel(m);
+      if (!filterInitialized.current) {
+        setActiveFilter(getInitialTaskFilter(m));
+        filterInitialized.current = true;
+      }
     } catch {
       setError('No se pudieron cargar las tareas');
     }
   }, [refresh]);
+
+  const handleFilterChange = useCallback((key: TaskCategory) => {
+    setActiveFilter(key);
+    filterInitialized.current = true;
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -104,7 +116,7 @@ export default function TasksListScreen() {
     <TasksListView
       model={model}
       activeFilter={activeFilter}
-      onFilterChange={(key) => setActiveFilter(key)}
+      onFilterChange={handleFilterChange}
       onCreateTask={handleCreateTask}
       onOpenTask={handleOpenTask}
       onResumeFocus={(taskId) => {
