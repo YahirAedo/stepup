@@ -45,8 +45,8 @@ describe('isFullscreenRoute', () => {
 });
 
 describe('selector del navegador', () => {
-  it('con la bandera apagada se sigue usando el navegador actual', () => {
-    expect(migrationFlags.tabs).toBe(false);
-    expect(TABS_VARIANT).toBe('legacy');
+  it('con la bandera encendida se usa el navegador nuevo', () => {
+    expect(migrationFlags.tabs).toBe(true);
+    expect(TABS_VARIANT).toBe('serene');
   });
 });

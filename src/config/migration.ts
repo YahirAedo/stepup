@@ -7,9 +7,9 @@
  * Ver `docs/MIGRACION.md`.
  */
 export const migrationFlags = {
-  tabs: false,
-  tasks: false,
-  focus: false,
-  profile: false,
-  auth: false,
+  tabs: true,
+  tasks: true,
+  focus: true,
+  profile: true,
+  auth: true,
 };
