@@ -58,4 +58,40 @@ export const ProgressService = {
       stepsTotal: countRows[0]?.n ?? 0,
     };
   },
+
+  async getLogrosStats(): Promise<{
+    stepsTotal: number;
+    tasksCompleted: number;
+    completedDays: string[];
+    completedAtList: string[];
+  }> {
+    const db = await getDb();
+    const stepRows = await db.getAllAsync<{ completed_date: string | null; completed_at: string | null }>(
+      `SELECT completed_date, completed_at FROM steps WHERE status = 'completed'`,
+      [],
+    );
+    const countRows = await db.getAllAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM steps WHERE status = 'completed'`,
+      [],
+    );
+    const taskRows = await db.getAllAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM tasks WHERE status = 'completed'`,
+      [],
+    );
+
+    const completedDaysSet = new Set<string>();
+    const completedAtList: string[] = [];
+    for (const row of stepRows) {
+      const day = resolveCompletedDay(row.completed_date, row.completed_at);
+      if (day !== null) completedDaysSet.add(day);
+      if (row.completed_at !== null) completedAtList.push(row.completed_at);
+    }
+
+    return {
+      stepsTotal: countRows[0]?.n ?? 0,
+      tasksCompleted: taskRows[0]?.n ?? 0,
+      completedDays: Array.from(completedDaysSet),
+      completedAtList,
+    };
+  },
 };
