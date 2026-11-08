@@ -7,7 +7,10 @@ export function getVisibleQueue(
 ): { focusItem: typeof model.items[number] | null; queue: typeof model.items[number][]; isEmpty: boolean } {
   const { items, focusIndex } = model;
   const candidate = focusIndex !== null ? items[focusIndex] ?? null : null;
-  const focusItem = candidate !== null && candidate.category === activeFilter ? candidate : null;
+  const focusItem =
+    activeFilter === 'inProgress' && candidate !== null && candidate.category === 'inProgress'
+      ? candidate
+      : null;
   const queue = items.filter((item) => item !== focusItem && item.category === activeFilter);
   const isEmpty = queue.length === 0 && focusItem === null;
   return { focusItem, queue, isEmpty };
