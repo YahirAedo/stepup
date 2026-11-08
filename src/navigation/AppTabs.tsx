@@ -28,6 +28,7 @@ import StepFormScreen from '../screens/StepFormScreen';
 import StepCompleteScreen from '../screens/StepCompleteScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ProfileMainScreen from '../features/profile/ProfileMainScreen';
+import LogrosMainScreen from '../features/logros/LogrosMainScreen';
 import BadgesScreen from '../screens/BadgesScreen';
 import SyncConflictScreen from '../screens/SyncConflictScreen';
 import DesignLabScreen from '../screens/designlab/DesignLabScreen';
@@ -114,7 +115,7 @@ function ProfileStack() {
         name="ProfileMain"
         component={migrationFlags.profile ? ProfileMainScreen : ProfileScreen}
       />
-      <ProfileStackNav.Screen name="Badges" component={BadgesScreen} />
+      <ProfileStackNav.Screen name="Badges" component={migrationFlags.profile ? LogrosMainScreen : BadgesScreen} />
       <ProfileStackNav.Screen name="SyncConflict" component={SyncConflictScreen} />
       {__DEV__ && (
         <>

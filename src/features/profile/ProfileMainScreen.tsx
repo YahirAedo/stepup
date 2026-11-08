@@ -39,6 +39,7 @@ export default function ProfileMainScreen({ navigation }: Props) {
       onPressPrivacy={() => setPrivacyVisible(true)}
       onPressLogout={() => setLogoutVisible(true)}
       appVersion={getAppVersion()}
+      logrosLabel={profile.logrosLabel}
       privacyVisible={privacyVisible}
       logoutVisible={logoutVisible}
       onClosePrivacy={() => setPrivacyVisible(false)}

@@ -38,6 +38,7 @@ export interface ProfileViewProps {
   onPressPrivacy: () => void;
   onPressLogout: () => void;
   appVersion: string;
+  logrosLabel: string | null;
   privacyVisible: boolean;
   logoutVisible: boolean;
   onClosePrivacy: () => void;
@@ -59,6 +60,7 @@ export default function ProfileView({
   onPressPrivacy,
   onPressLogout,
   appVersion,
+  logrosLabel,
   privacyVisible,
   logoutVisible,
   onClosePrivacy,
@@ -162,6 +164,7 @@ export default function ProfileView({
             icon="trophy-outline"
             title={perfilCopy.achievements.title}
             subtitle={perfilCopy.achievements.caption}
+            value={logrosLabel ?? undefined}
             accessory="chevron"
             showDivider={false}
             horizontalInset={false}

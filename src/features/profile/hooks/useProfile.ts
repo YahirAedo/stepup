@@ -6,6 +6,9 @@ import { ProgressService } from '../../../services/ProgressService';
 import { hasSession } from '../../../services/session';
 import { buildPerfilView } from '../logic/buildPerfilView';
 import { buildProfileMetrics } from '../logic/buildProfileMetrics';
+import { syncUnlockedLogros } from '../../logros/logrosData';
+import { formatLogrosSummary } from '../../logros/logic/formatLogrosSummary';
+import { LOGROS_CATALOG } from '../../logros/logic/logrosCopy';
 import type { SessionUser } from '../../../services/session';
 
 export function useProfile() {
@@ -21,6 +24,7 @@ export function useProfile() {
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const [logrosLabel, setLogrosLabel] = useState<string | null>(null);
   const hasLoaded = useRef(false);
 
   const load = useCallback(async () => {
@@ -38,6 +42,12 @@ export function useProfile() {
       setStats(loadedStats);
       setConflictsCount(conflicts.length);
       setLastSyncAt(loadedLastSync);
+      try {
+        const ids = await syncUnlockedLogros(new Date());
+        setLogrosLabel(formatLogrosSummary(ids.length, LOGROS_CATALOG.length));
+      } catch {
+        setLogrosLabel(null);
+      }
     } catch {
       setError(true);
     } finally {
@@ -88,5 +98,6 @@ export function useProfile() {
     syncing,
     onSync,
     reload: load,
+    logrosLabel,
   };
 }
