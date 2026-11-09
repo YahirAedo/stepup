@@ -18,6 +18,7 @@ import {
 import { mci } from '../designlab/mciIconMap';
 import { focusCopy } from '../../features/focus/logic/focusCopy';
 import FocusCountdownRing from './FocusCountdownRing';
+import FocusTaskHeader from './FocusTaskHeader';
 import FocusTimerExpiredOverlay from './FocusTimerExpiredOverlay';
 
 export interface FocusRunningViewProps {
@@ -71,19 +72,12 @@ export default function FocusRunningView({
         }}
         showsVerticalScrollIndicator={false}
       >
-        <RNText
-          numberOfLines={2}
-          ellipsizeMode="tail"
-          style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'], textAlign: 'center' }]}
-        >
-          {taskName}
-        </RNText>
-
-        <RNText
-          style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors.secondary, textAlign: 'center' }]}
-        >
-          {`Paso ${stepIndex} de ${totalSteps}`}
-        </RNText>
+        <FocusTaskHeader
+          taskName={taskName}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          align="center"
+        />
 
         <RNText
           style={[

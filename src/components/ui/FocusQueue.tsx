@@ -55,21 +55,20 @@ export default function FocusQueue({
     outputRange: ['0deg', '180deg'],
   });
 
-  const nextLine = items.length > 0 ? `Siguiente: ${items[0].name}` : '';
-
   return (
     <View>
       <Pressable
         onPress={handleToggle}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel="Próximos pasos"
+        accessibilityLabel={`Próximos pasos, ${items.length}`}
         style={({ pressed }) => ({
           width: '100%',
-          minHeight: s(48),
+          minHeight: s(48) + sereneSpacing['space-sm'] * 2,
           backgroundColor: sereneColors['surface-container-lowest'],
           borderRadius: sereneBorderRadius.xl,
-          padding: sereneSpacing['space-md'],
+          paddingHorizontal: sereneSpacing['space-md'],
+          paddingVertical: sereneSpacing['space-sm'],
           flexDirection: 'row',
           alignItems: 'center',
           gap: sereneSpacing['space-md'],
@@ -101,23 +100,12 @@ export default function FocusQueue({
         <View style={{ flex: 1, minWidth: 0 }}>
           <RNText
             style={[
-              sereneTypography['title-md'] as TextStyle,
+              sereneTypography['label-lg'] as TextStyle,
               { color: sereneColors['on-surface'] },
             ]}
           >
             Próximos pasos
           </RNText>
-          {nextLine ? (
-            <RNText
-              numberOfLines={1}
-              style={[
-                sereneTypography['body-sm'] as TextStyle,
-                { color: sereneColors['on-surface-variant'] },
-              ]}
-            >
-              {nextLine}
-            </RNText>
-          ) : null}
         </View>
 
         {onEdit ? (
