@@ -13,6 +13,14 @@ export function ringProgress(seconds: number, totalSeconds: number): number {
   return progress;
 }
 
+export function ringRemaining(seconds: number, totalSeconds: number): number {
+  if (totalSeconds <= 0) return 0;
+  const remaining = seconds / totalSeconds;
+  if (remaining < 0) return 0;
+  if (remaining > 1) return 1;
+  return remaining;
+}
+
 export function ringDashOffset(progress: number, radius: number): number {
   const circumference = 2 * Math.PI * radius;
   return circumference * (1 - progress);

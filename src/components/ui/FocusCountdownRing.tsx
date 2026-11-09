@@ -6,7 +6,7 @@ import {
   sereneTypography,
   useResponsive,
 } from '../../theme/serene';
-import { ringProgress, ringDashOffset } from '../../features/focus/logic/ringProgress';
+import { ringRemaining, ringDashOffset } from '../../features/focus/logic/ringProgress';
 
 const RADIUS = 84;
 
@@ -26,8 +26,8 @@ export default function FocusCountdownRing({
   const { scale: s } = useResponsive();
   const size = s(224);
   const circumference = 2 * Math.PI * RADIUS;
-  const progress = ringProgress(seconds, totalSeconds);
-  const offset = ringDashOffset(progress, RADIUS);
+  const remaining = ringRemaining(seconds, totalSeconds);
+  const offset = ringDashOffset(remaining, RADIUS);
 
   return (
     <View
