@@ -224,8 +224,8 @@ export default function FocusStepCard({
             })}
           >
             <MaterialCommunityIcons
-              name={mci('schedule')}
-              size={s(22)}
+              name="send-clock"
+              size={s(24)}
               color={sereneColors.secondary}
             />
           </Pressable>
