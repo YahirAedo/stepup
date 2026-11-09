@@ -7,18 +7,22 @@ import {
 } from '../../theme/serene';
 import type { ProgressBarResult } from '../../features/tasks/logic/getProgressBar';
 import { getFillWidthPercent } from '../../features/tasks/logic/getProgressBar';
+import { getProgressBarPalette } from '../../features/tasks/logic/getProgressBarPalette';
 
 export type TaskProgressBarProps = {
   progress: ProgressBarResult;
   height?: number;
+  tone?: 'default' | 'onDark';
 };
 
 export default function TaskProgressBar({
   progress,
   height,
+  tone = 'default',
 }: TaskProgressBarProps) {
   const { scale: s } = useResponsive();
   const h = height ?? s(8);
+  const palette = getProgressBarPalette(tone);
 
   let statuses: ReadonlyArray<'done' | 'current' | 'pending'> = [];
 
@@ -29,11 +33,11 @@ export default function TaskProgressBar({
   const segmentColor = (status: 'done' | 'current' | 'pending') => {
     switch (status) {
       case 'done':
-        return sereneColors['primary-container'];
+        return sereneColors[palette.done as keyof typeof sereneColors];
       case 'current':
-        return sereneColors['secondary-container'];
+        return sereneColors[palette.current as keyof typeof sereneColors];
       default:
-        return sereneColors['surface-container-high'];
+        return sereneColors[palette.pending as keyof typeof sereneColors];
     }
   };
 
@@ -51,7 +55,7 @@ export default function TaskProgressBar({
           gap: progress.kind === 'segments' ? s(2) : 0,
           padding: progress.kind === 'segments' ? s(1) : 0,
           borderRadius: sereneBorderRadius.full,
-          backgroundColor: sereneColors['surface-container-high'],
+          backgroundColor: sereneColors[palette.track as keyof typeof sereneColors],
           overflow: 'hidden',
         }}
       >
@@ -61,7 +65,7 @@ export default function TaskProgressBar({
               width: fillWidth as DimensionValue,
               height: '100%',
               borderRadius: sereneBorderRadius.full,
-              backgroundColor: sereneColors['primary-container'],
+              backgroundColor: sereneColors[palette.fill as keyof typeof sereneColors],
             }}
           />
         ) : (

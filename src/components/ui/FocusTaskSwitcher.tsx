@@ -31,7 +31,6 @@ export interface SwitcherTask {
 export interface FocusTaskSwitcherProps {
   active: SwitcherTask;
   alternatives: SwitcherTask[];
-  pendingCount: number;
   onSelect: (taskId: number) => void;
   expandedByDefault?: boolean;
 }
@@ -39,7 +38,6 @@ export interface FocusTaskSwitcherProps {
 export default function FocusTaskSwitcher({
   active,
   alternatives,
-  pendingCount,
   onSelect,
   expandedByDefault = false,
 }: FocusTaskSwitcherProps) {
@@ -74,16 +72,17 @@ export default function FocusTaskSwitcher({
         onPress={handleToggle}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel="Cambiar de tarea"
+        accessibilityLabel={`Cambiar de tarea, ${alternatives.length} para elegir`}
         style={({ pressed }) => ({
           width: '100%',
-          minHeight: s(48),
+          minHeight: s(48) + sereneSpacing['space-sm'] * 2,
           backgroundColor: sereneColors['surface-container-lowest'],
           borderRadius: sereneBorderRadius.xl,
-          padding: sereneSpacing['space-md'],
           flexDirection: 'row',
           alignItems: 'center',
           gap: sereneSpacing['space-md'],
+          paddingHorizontal: sereneSpacing['space-md'],
+          paddingVertical: sereneSpacing['space-sm'],
           ...sereneShadows.card,
           opacity: pressed ? 0.95 : 1,
         })}
@@ -103,26 +102,26 @@ export default function FocusTaskSwitcher({
         <View style={{ flex: 1, minWidth: 0 }}>
           <RNText
             style={[
-              sereneTypography['label-sm'] as TextStyle,
-              { color: sereneColors['on-surface-variant'], textTransform: 'uppercase', letterSpacing: 0.8 },
+              sereneTypography['label-lg'] as TextStyle,
+              { color: sereneColors['on-surface'] },
             ]}
           >
             Cambiar de tarea
           </RNText>
-          <RNText numberOfLines={1} style={[sereneTypography['body-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>
-            {active.name}
-          </RNText>
         </View>
         <View
           style={{
-            paddingHorizontal: s(10),
-            paddingVertical: s(4),
+            minWidth: s(28),
+            height: s(28),
+            paddingHorizontal: s(6),
             borderRadius: sereneBorderRadius.full,
-            backgroundColor: sereneColors['primary-fixed'],
+            backgroundColor: sereneColors['secondary-fixed'],
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors.primary }]}>
-            {`${pendingCount} pendientes`}
+          <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors.primary, fontWeight: '700' }]}>
+            {alternatives.length}
           </RNText>
         </View>
         <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>

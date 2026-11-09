@@ -19,7 +19,7 @@ import { buildFocusViewModel } from '../logic/buildFocusViewModel';
 import FocusEmptyView from '../../../components/ui/FocusEmptyView';
 import type { FocusEmptyState } from '../logic/buildFocusEmptyState';
 import { buildStepProgress } from '../logic/buildStepProgress';
-import FocusStepCard from '../../../components/ui/FocusStepCard';
+import FocusHeroCard from '../../../components/ui/FocusHeroCard';
 import FocusQueue from '../../../components/ui/FocusQueue';
 import FocusTaskSwitcher from '../../../components/ui/FocusTaskSwitcher';
 
@@ -164,17 +164,18 @@ export default function FocusView({
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: sereneSpacing.margin,
+          paddingTop: sereneSpacing['space-sm'],
           paddingBottom: sereneSpacing['space-lg'],
           gap: sereneSpacing['space-lg'],
         }}
         showsVerticalScrollIndicator={false}
       >
-        <FocusStepCard
+        <FocusHeroCard
+          taskName={viewModel.taskName}
           stepIndex={step.stepIndex}
           totalSteps={step.totalSteps}
           minutes={step.minutes}
           title={step.title}
-          taskName={viewModel.taskName}
           progress={buildStepProgress(step.stepIndex, step.totalSteps)}
           onStart={onStart}
           onPostpone={viewModel.canPostpone ? onPostpone : undefined}
@@ -186,7 +187,6 @@ export default function FocusView({
           <FocusTaskSwitcher
             active={switcher.active!}
             alternatives={switcher.alternatives}
-            pendingCount={switcher.pendingCount}
             onSelect={onSelectTask}
           />
         ) : null}
