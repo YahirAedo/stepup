@@ -22,6 +22,8 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
     este documento) no están incluidos en `lab-baseline`.
 - Línea base verificada antes de empezar: `typecheck` sin errores, `lint` sin
   errores y **385 tests en 41 archivos** (1 fallo preexistente en `tabs.test.ts`).
+- Estado actual (migración Serene cerrada, Fases 0 a 6): `typecheck` 0, `lint` 0,
+  **95 archivos / 700 tests**.
 
 ---
 
@@ -41,9 +43,9 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Tres pestañas: Foco, Tareas y Perfil | Decisión | 1 | hecho (detrás de flag) |
-| Sin `GlassTabBar` y sin pestaña Historial | `src/components/GlassTabBar.tsx` | 1 | hecho (detrás de flag) |
-| "Completadas" dentro de Tareas (sin pestaña propia) | Decisión | 1 | hecho (detrás de flag) |
+| Tres pestañas: Foco, Tareas y Perfil | Decisión | 1 | hecho |
+| Sin `GlassTabBar` y sin pestaña Historial | `src/components/GlassTabBar.tsx` | 1 | hecho |
+| "Completadas" dentro de Tareas (sin pestaña propia) | Decisión | 1 | hecho |
 
 ### Avance en la rama `migracion/serene` (sin mergear)
 
@@ -71,7 +73,7 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 |------|--------|------|--------|
 | Componentes compartidos del Lab en `src/components/ui/` | Decisión | 1 | hecho |
 | Cada área en `src/features/<área>/` (`tasks`, `focus`, `profile`, `auth`) con la pantalla real (contenedor), su vista (solo props, sin datos) y su hook de datos | Decisión | 1 | hecho |
-| El Design Lab pasa a importar las vistas desde `src/features/` | Decisión | 1 | pendiente (se hace cuando cada área se mueva) |
+| El Design Lab pasa a importar las vistas desde `src/features/` | Decisión | 1 | pendiente (solo `TasksListView`; focus y profile siguen con vistas propias del Lab) |
 | Promover `src/theme/serene` como entrada oficial de las pantallas nuevas | Decisión | 1 | hecho |
 | Regla que impida que un mismo archivo importe Zenith y Serene a la vez (test) | Decisión | 1 | hecho |
 
@@ -90,47 +92,47 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Listado con filtros derivados y tarjetas | `src/screens/designlab/TareasAListadoScreen.tsx` | 3 | hecho (detrás de flag) |
+| Listado con filtros derivados y tarjetas | `src/screens/designlab/TareasAListadoScreen.tsx` | 3 | hecho |
 | Resumen del día en el listado | Decisión | 3 | decidido: no se migra |
-| Detalle con filas, sheet de edición, Ordenar y cartel de tarea sin pasos | `src/screens/designlab/TareasADetalleScreen.tsx` | 3 | hecho (detrás de flag) |
+| Detalle con filas, sheet de edición, Ordenar y cartel de tarea sin pasos | `src/screens/designlab/TareasADetalleScreen.tsx` | 3 | hecho |
 | Lote 3b: Detalle (Serene) + `useTaskDetail` + `TaskDetailView` + `TasksOrderView` + `TaskOrderScreen`; `StepService.reorder` y `deleteBatch` ya existen; `pendingDelete` solo UI; `canShowReorder` (3+ pendientes); `reorderSteps` (solo pendientes no borrados, completados anclados); `togglePendingDelete`; `validateStepEdit`; `migrationFlags.tasks` sigue en `false`; riesgo de paso borrado offline con sesión iniciada puede reaparecer en pull (no arreglar) | `src/features/tasks/` | 3 | hecho (detrás de flag) |
 | Lote 3c-1: pantalla Editar (`TaskEdit`, `useTaskEdit`, `TaskEditView`) con borrador local y Guardar por plan (`buildEditPlan`), borrado diferido, Ordenar como panel inferior, un solo `EditarPasoSheet` con `mode` para añadir y editar paso, aviso al salir sin guardar (`shouldBlockLeave`), Borrar tarea solo en Editar; Detalle de solo lectura con lápiz en el header; se eliminó la ruta `TaskOrder`; `migrationFlags.tasks` sigue en `false` | `src/features/tasks/` | 3 | hecho (detrás de flag) |
 | Sheet de paso en modo crear: 'Secuencia · Paso X de Y' no suma el paso nuevo (con 6 pasos dice 'Paso 6 de 6' y debería decir 'Paso 7 de 7'). `getStepSheetPosition` calcula n+1 y tiene tests; no se encontró la causa en el código; se reproduce en el celular | `src/features/tasks/logic/stepSheetResult.ts` y `src/components/ui/EditarPasoSheet.tsx` | 3 | pendiente (baja prioridad, revisar mucho después) |
 | Pendientes del Lote 3b (deuda, no arreglar en este lote): nombre engañoso de `flushPendingDeletesThenReorder`; deshacer de un solo nivel; "Agregar paso" sin acción; duración `?? 0` del sheet; `flushPendingDeletes` sin uso; lógica de excluir borrados inline en `selectStep` | `src/features/tasks/` | 3 | pendiente |
-| Crear/Editar con fecha, "Sugerir pasos" con IA y borrado diferido | `src/screens/designlab/TareasACrearScreen.tsx`, `TareasAEditarScreen.tsx` | 3 | Editar con fecha y borrado diferido: hecho en 3c-1; falta Sugerir pasos con IA y Crear |
-| Tarea completada | `src/screens/designlab/TareasACompletadaScreen.tsx` | 3 | pendiente |
+| Crear/Editar con fecha, "Sugerir pasos" con IA y borrado diferido | `src/screens/designlab/TareasACrearScreen.tsx`, `TareasAEditarScreen.tsx` | 3 | hecho |
+| Tarea completada | `src/screens/designlab/TareasACompletadaScreen.tsx` | 3 | hecho |
 | `onSave` del sheet de edición debe conectar con `StepService` | `src/components/designlab/EditarPasoSheet.tsx:41` | 3 | hecho en 3c-1 (un solo sheet para añadir y editar paso) |
 | Lote 3a: vista Listado (Serene) + hook `useTasksList` + `buildTasksListModel` + `getProgressBar`; `migrationFlags.tasks` sigue en `false`; pendientes 3b y 3c; riesgo de pasos borrados offline sigue documentado | `src/features/tasks/` | 3 | hecho |
 | Campos de las fixtures que no existen en el modelo real (`Task`, `Step`) | `src/screens/designlab/tareasFlujoAFixtures.ts:9` | 3 | pendiente |
-| Prueba en celular con `tabs` y `tasks` en true | Decisión | 3 | pendiente |
-| Conectar `onCreateTask` y `onResumeFocus` del listado, y `onAddStep` del Detalle (hoy sin acción) | `src/features/tasks/TasksListScreen.tsx`, `src/features/tasks/TaskDetailScreen.tsx` | 3 | `onAddStep` del Detalle ya abre Editar; faltan `onCreateTask` y `onResumeFocus` |
+| Prueba en celular con `tabs` y `tasks` en true | Decisión | 3 | hecho (probada en el celular y en el APK de la demo) |
+| Conectar `onCreateTask` y `onResumeFocus` del listado, y `onAddStep` del Detalle (hoy sin acción) | `src/features/tasks/TasksListScreen.tsx`, `src/features/tasks/TaskDetailScreen.tsx` | 3 | hecho |
 
 ## Fase 4 — Focus
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
 | Subir `expo` a `~54.0.37` (hoy 54.0.34) y `expo-constants` a `~18.0.14` (hoy 18.0.13). Cambio aparte, antes de esta fase | `npx expo install --check` | 4 | pendiente |
-| Foco manual efímero en memoria | Decisión | 4 | pendiente |
-| "Posponer" efímero | Decisión | 4 | pendiente |
+| Foco manual efímero en memoria | `src/features/focus/state/focusSession.ts` | 4 | hecho |
+| "Posponer" efímero | `src/features/focus/state/focusSession.ts` | 4 | hecho |
 | `TimerService` con `endsAt` (hoy pausar/reanudar reinicia el paso y `resume()` es código muerto) | `src/services/TimerService.ts:52,61`; `src/hooks/useFocusCountdown.ts:45` | 4 | pendiente |
 | `expo-notifications`, `expo-keep-awake` y `expo-haptics` | `package.json` (no instalados) | 4 | pendiente |
 | Corregir la animación de `NotificationPermissionScreen` (animar `scale`, no `width`/`height` con `useNativeDriver`) | `src/screens/NotificationPermissionScreen.tsx` | 4 | pendiente |
 | Persistir el cronómetro al navegar | Decisión | 4 | pendiente |
 | Pantalla de descanso de 2 minutos (a definir) | Decisión | 4 | pendiente |
 | Corregir el nombre de un paso completado (hoy no se permite) | Decisión | 4 | pendiente |
-| Cambiar de tarea durante el foco no existe en el modelo real | `src/screens/designlab/focusFixtures.ts:55` | 4 | pendiente |
+| Cambiar de tarea durante el foco no existe en el modelo real | `src/screens/designlab/focusFixtures.ts:55` | 4 | hecho (`FocusTaskSwitcher`) |
 | Al guardar un paso hay que redirigir a Tareas, no quedarse en Focus | `src/screens/designlab/focusFixtures.ts:85` | 4 | pendiente |
 
 ## Fase 5 — Perfil
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Cerrar sesión sin borrar datos: `AuthService.logout` debe llamar solo a `clearSession`, no a `clearLocalData` | `src/services/AuthService.ts:37-39`; `src/screens/designlab/perfilFixtures.ts:188` | 5 | pendiente |
+| Cerrar sesión sin borrar datos: `AuthService.logout` debe llamar solo a `clearSession`, no a `clearLocalData` | `src/services/AuthService.ts:37-39` | 5 | hecho |
 | `ensureLocalOwner` debe avisar antes de borrar los datos de otra cuenta si hay cambios sin sincronizar (requiere chequeo de cambios sin sincronizar) | `src/services/localOwner.ts:4`; `src/screens/designlab/useAuthPreview.ts:38` | 5 | pendiente |
-| Recordatorio diario (activado y hora, en almacenamiento local) y permiso de notificaciones al activarlo | `src/screens/designlab/perfilFixtures.ts:174-176`; `src/screens/designlab/usePerfilPreview.ts:20` | 5 | pendiente |
+| Recordatorio diario (activado y hora, en almacenamiento local) y permiso de notificaciones al activarlo | `src/screens/designlab/perfilFixtures.ts:174-176`; `src/screens/designlab/usePerfilPreview.ts:20` | 5 | no se hace: sin tarjeta de recordatorio, no hay expo-notifications |
 | Marcador `// REQUIERE DEPENDENCIA` (variante de `// REQUIERE MIGRACIÓN`) por `expo-notifications` sin instalar | `src/screens/designlab/perfilFixtures.ts:174`; `src/screens/designlab/usePerfilPreview.ts:20` | 5 | pendiente |
-| Conflictos | `src/screens/designlab/ConflictosAScreen.tsx`; `src/screens/designlab/usePerfilPreview.ts:47` | 5 | pendiente |
-| Logros: reglas y logros nuevos (a definir) | `src/screens/designlab/LogrosAScreen.tsx` | 5 | pendiente |
+| Conflictos | `src/features/conflicts/ConflictosMainScreen.tsx` | 5 | hecho |
+| Logros: reglas y logros nuevos (a definir) | `src/features/logros/logic/evaluateLogros.ts` | 5 | hecho (8 reglas puras con tests, guardados en el teléfono) |
 | Texto de privacidad verdadero: datos sin cifrar en SQLite, sync solo con cuenta, texto de la tarea enviado a Gemini en "Sugerir pasos" | `src/screens/designlab/perfilFixtures.ts:199-202` | 5 | pendiente |
 | El alta de cuenta desde Perfil es un placeholder | `src/screens/designlab/usePerfilPreview.ts:42` | 5 | pendiente |
 
@@ -138,13 +140,13 @@ el comportamiento visible hasta que la fase correspondiente esté cerrada.
 
 | Ítem | Fuente | Fase | Estado |
 |------|--------|------|--------|
-| Onboarding, Login y Registro | `src/screens/designlab/Onboarding1AScreen.tsx`, `Onboarding2AScreen.tsx`, `LoginAScreen.tsx`, `RegistroAScreen.tsx` | 6 | pendiente |
-| Modo invitado y persistir `hasSeenOnboarding` también para el invitado | `src/screens/designlab/useAuthPreview.ts:30` | 6 | pendiente |
-| Sacar `NotificationPermission` del onboarding | `src/screens/designlab/Onboarding2AScreen.tsx:121` | 6 | pendiente |
+| Onboarding, Login y Registro | `src/features/auth/` | 6 | hecho |
+| Modo invitado y persistir `hasSeenOnboarding` también para el invitado | `src/features/auth/logic/onboardingStorage.ts` | 6 | hecho |
+| Sacar `NotificationPermission` del onboarding | `src/screens/designlab/Onboarding2AScreen.tsx:121` | 6 | sin uso, se borra en la Fase 7 |
 | Detección de conexión en Login | `src/screens/designlab/LoginAScreen.tsx` | 6 | pendiente |
-| Confirmar el texto "Puede tardar unos segundos" | `src/screens/designlab/authAFixtures.ts:52` | 6 | pendiente |
-| Login real: `AuthService.login(email, password)` y entrar a MainTabs | `src/screens/designlab/useAuthPreview.ts:24` | 6 | pendiente |
-| Registro real: `AuthService.register(name, email, password)` y entrar a MainTabs | `src/screens/designlab/useAuthPreview.ts:80` | 6 | pendiente |
+| Confirmar el texto "Puede tardar unos segundos" | `src/features/auth/logic/authCopy.ts` | 6 | hecho |
+| Login real: `AuthService.login(email, password)` y entrar a MainTabs | `src/features/auth/hooks/useLogin.ts` | 6 | hecho |
+| Registro real: `AuthService.register(name, email, password)` y entrar a MainTabs | `src/features/auth/hooks/useRegister.ts` | 6 | hecho (usa `SyncService.migrate`, no `AuthService.register`) |
 
 ## Fase 7 — Cierre
 

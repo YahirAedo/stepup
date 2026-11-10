@@ -46,6 +46,7 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | DT-34 | Design Lab: tema paralelo aislado en `src/theme/serene/` | Octubre 2026 | Confirmada — issue #295 |
 | DT-35 | Design Lab #296: preview "Focus — Paso previo" con selector, cola y transición al timer | Octubre 2026 | Confirmada — issue #296 |
 | DT-36 | Design Lab #296: timer expirado + pantalla "Paso completado" y enriquecimiento de la fase previa | Octubre 2026 | Confirmada — issue #296 |
+| DT-37 | Migración del rediseño Serene a la app real | Noviembre 2026 | Confirmada |
 
 # Decisiones detalladas
 
@@ -434,5 +435,20 @@ Las decisiones DT-01 a DT-08 corresponden a E1 y están documentadas en `Log Dec
 | **Razonamiento** | El overlay usa los fixtures ya compartidos (`corriendoFixtures`) en vez de props nuevas por pantalla, así el fix aplica a las dos previews que comparten `FocusRunningView`. Montar el timer solo cuando corre corrige un bug real (no solo visual) sin tocar el hook: al desmontar se limpia el `setInterval` y al remontar arranca desde `selectedMinutes`, que además hace que el selector de duración se refleje de verdad. Sacar el header común evita el apilado y respeta que cada mockup dibuja su propio chrome. Todos los componentes nuevos son **presentacionales y props-driven** (sin fixtures internos ni estado global), lo que permitió construirlos en paralelo y conectarlos después desde la pantalla. | |
 | **Alternativas descartadas** | (a) Un `TimerExpiredOverlay` embebido en `FocusPrevioScreen`: no aplicaría a `CronometroLimpioScreen` y dejaría el bug de 0:00 vivo en esa preview. (b) Tercera ruta con navegación push para "paso completado": rompe el crossfade y obliga a pasar estado entre pantallas; se mantiene como fase interna, con `FocusCompletadoScreen` solo como preview aislada. (c) Pausar el timer con `startPaused`/`pause()` en la fase previa: seguía dejando el componente montado y el `setInterval` vivo; el montaje condicional es más limpio. (d) Animar el overlay con Reanimated: no está instalado; `Animated` nativo alcanza. (e) Reescribir `useFocusCountdown` para aceptar un flag `enabled`: cambio innecesario en código compartido para resolver algo que se resuelve con el ciclo de vida del componente. | |
 | **Consecuencias** | Archivos nuevos: `ProjectContextCard`, `CadenceRow`, `AddMicroStepSheet`, `TimerExpiredOverlay`, `StepCompleteView`, `FocusCompletadoScreen`. Editados: `FocusRunningView` (overlay + `isFinished`), `FocusPrevioScreen` (3ª fase, header, montaje condicional, integración Fase 1), `focusFixtures` (+`project`, `microStep`, `corriendoFixtures.expired`, `completadoFixtures`), `ProfileStackParamList` (+`FocusCompletado`), `GlassTabBar` (+ ruta y `FULLSCREEN_ROUTES`), `DesignLabScreen` (+3ª tarjeta). Sustituciones de iconos por glyphmap: `list-check`→`format-list-checks`, `air`/`arrow-forward`/`bedtime`→`meditation`/`arrow-right`/`weather-night`. `title-sm` no existe en `sereneTypography` → se usa `body-sm` + `fontWeight:'600'`. Pendiente: captura visual Android/Expo Go de las tres fases. | |
+
+---
+
+## DT-37 Migración del rediseño Serene a la app real
+*Noviembre 2026*
+
+| | | |
+| --- | --- | --- |
+| **Estado** | **Confirmada** | |
+| **Contexto** | El rediseño "Serene" se migró a la app real por fases (0 a 6), con banderas en `src/config/migration.ts` que quedaron todas en `true`. La migración cerró con typecheck 0, lint 0 y 95 archivos / 700 tests. | |
+| **Decisión** | Foco: los pasos sin duración se tratan como 5 min; "+2 min" no persiste; cambiar de pestaña pausa el timer; completar el último paso lleva a `TaskCompleted`; estados vacíos (sin tareas, faltan pasos, todo al día). Tareas: pills Activas/Pendientes/Completadas; la tarjeta destacada es solo de En curso. Perfil: cerrar sesión conserva los datos locales (solo `clearSession`); fila Soporte oculta; el invitado ve "Crear cuenta". Acceso: registro con `SyncService.migrate`; "Seguir sin cuenta" guarda `hasSeenOnboarding`. Logros: 8 reglas puras con tests, guardados en el teléfono. Sync: `push()` serializado con cola de promesas; gana el último cambio (`updatedAt` del cliente); conflicto = mismo registro ya sincronizado editado en ambos lados con menos de 60 s. | |
+| **Razonamiento** | Se migró por fases para no romper el comportamiento visible hasta cerrar cada área, manteniendo Zenith y Serene conviviendo detrás de banderas. La migración se cierra con las banderas todas en `true` y la deuda restante se deja para la Fase 7. | |
+| **Alternativas descartadas** | Reescribir la app de una sola vez (descartado: mayor riesgo de regresión); mantener Zenith y Serene en paralelo de forma permanente (descartado: doble mantenimiento). | |
+| **Consecuencias** | Deudas conocidas: reaparición de pasos borrados offline con sesión; `applyServerIds` deja `dirty=0` sin comparar `updated_at`; `formatLastSync` dice "Ayer" entre 24 y 48 h. La Fase 7 (borrado de Zenith, banderas y docs) queda pendiente. | |
+
 
 *Ingeniería en Sistemas de Información*
