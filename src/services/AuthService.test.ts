@@ -166,7 +166,7 @@ describe('AuthService', () => {
     expect(mockedApiFetch).toHaveBeenLastCalledWith('/api/sync/pull');
   });
 
-  it('logout limpia la sesión y borra los datos locales', async () => {
+  it('logout limpia la sesión y conserva los datos locales', async () => {
     mockedApiFetch.mockResolvedValueOnce({
       user: { id: 'u2', name: 'Leo', email: 'leo@x.com' },
       token: 'jwt-2',
@@ -178,7 +178,6 @@ describe('AuthService', () => {
 
     expect(hasSession()).toBe(false);
     await expect(getSessionUser()).resolves.toBeNull();
-    await expect(countTasks()).resolves.toBe(0);
-    await expect(getLocalOwner(db)).resolves.toBeNull();
+    await expect(countTasks()).resolves.toBe(1);
   });
 });

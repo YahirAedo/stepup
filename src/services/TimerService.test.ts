@@ -121,3 +121,47 @@ describe('TimerService (maquina de estados)', () => {
     });
   });
 });
+
+describe('TimerService.addSeconds', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    TimerService.stop();
+  });
+
+  afterEach(() => {
+    TimerService.stop();
+    vi.useRealTimers();
+  });
+
+  it('suma con el timer corriendo', () => {
+    const onTick = vi.fn();
+    TimerService.start(2, onTick);
+    const before = TimerService.getState().seconds;
+    TimerService.addSeconds(30);
+    expect(TimerService.getState().seconds).toBe(before + 30);
+    expect(onTick).toHaveBeenCalled();
+  });
+
+  it('suma con el timer pausado', () => {
+    TimerService.start(2, () => {});
+    TimerService.pause();
+    const before = TimerService.getState().seconds;
+    TimerService.addSeconds(45);
+    expect(TimerService.getState().seconds).toBe(before + 45);
+  });
+
+  it('no hace nada si no hay timer iniciado', () => {
+    TimerService.stop();
+    TimerService.addSeconds(10);
+    expect(TimerService.getState().seconds).toBe(0);
+  });
+
+  it('no hace nada si ya terminó', () => {
+    const onFinish = vi.fn();
+    TimerService.start(1, () => {}, onFinish);
+    vi.advanceTimersByTime(60_000);
+    const before = TimerService.getState().seconds;
+    TimerService.addSeconds(10);
+    expect(TimerService.getState().seconds).toBe(before);
+  });
+});

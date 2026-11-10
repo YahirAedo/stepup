@@ -1,5 +1,6 @@
 import { getDb } from '../database/db';
 import { getLocalDate, getLocalDateDaysAgo } from '../utils/date';
+import { resolveCompletedDay } from '../utils/completedDay';
 
 function today(): string {
   return getLocalDate();
@@ -32,5 +33,65 @@ export const ProgressService = {
     const map = new Map(rows.map((r) => [r.date, r.steps_completed]));
     const days = Array.from({ length: 7 }, (_, i) => getDate(6 - i));
     return days.map((date) => ({ date, count: map.get(date) ?? 0 }));
+  },
+
+  async getProfileStats(): Promise<{ completedDates: string[]; stepsTotal: number }> {
+    const db = await getDb();
+    const since = getLocalDateDaysAgo(29);
+    const rows = await db.getAllAsync<{ completed_date: string | null; completed_at: string | null }>(
+      `SELECT completed_date, completed_at FROM steps WHERE status = 'completed' AND (completed_date >= ? OR completed_date IS NULL)`,
+      [since],
+    );
+    const countRows = await db.getAllAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM steps WHERE status = 'completed'`,
+      [],
+    );
+    const completedDates: string[] = [];
+    for (const row of rows) {
+      const day = resolveCompletedDay(row.completed_date, row.completed_at);
+      if (day === null) continue;
+      if (day < since) continue;
+      completedDates.push(day);
+    }
+    return {
+      completedDates,
+      stepsTotal: countRows[0]?.n ?? 0,
+    };
+  },
+
+  async getLogrosStats(): Promise<{
+    stepsTotal: number;
+    tasksCompleted: number;
+    completedDays: string[];
+    completedAtList: string[];
+  }> {
+    const db = await getDb();
+    const stepRows = await db.getAllAsync<{ completed_date: string | null; completed_at: string | null }>(
+      `SELECT completed_date, completed_at FROM steps WHERE status = 'completed'`,
+      [],
+    );
+    const countRows = await db.getAllAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM steps WHERE status = 'completed'`,
+      [],
+    );
+    const taskRows = await db.getAllAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM tasks WHERE status = 'completed'`,
+      [],
+    );
+
+    const completedDaysSet = new Set<string>();
+    const completedAtList: string[] = [];
+    for (const row of stepRows) {
+      const day = resolveCompletedDay(row.completed_date, row.completed_at);
+      if (day !== null) completedDaysSet.add(day);
+      if (row.completed_at !== null) completedAtList.push(row.completed_at);
+    }
+
+    return {
+      stepsTotal: countRows[0]?.n ?? 0,
+      tasksCompleted: taskRows[0]?.n ?? 0,
+      completedDays: Array.from(completedDaysSet),
+      completedAtList,
+    };
   },
 };

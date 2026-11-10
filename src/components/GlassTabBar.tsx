@@ -29,6 +29,35 @@ const TABS = [
   { name: 'Profile', label: 'Perfil', icon: 'account-circle-outline' },
 ] as const;
 
+/**
+ * Pantallas del Design Lab que se muestran a pantalla completa, sin tab bar.
+ * Los mockups no la incluyen y la pilora glass arruinaria la evaluacion
+ * visual de la preview. Se ocultan leyendo el estado anidado del stack
+ * porque la tab bar se renderiza desde el `Tab.Navigator` padre.
+ * Issue: #295.
+ */
+const FULLSCREEN_ROUTES = new Set([
+  'DesignLab',
+  'CronometroLimpio',
+  'FocusCompletado',
+  'EnfoqueFocus',
+  'FocusSinTareas',
+  'TareasAListado',
+  'TareasACrear',
+  'TareasADetalle',
+  'TareasAEditar',
+  'TareasACompletada',
+  'TareasEditarPasoSheet',
+  'PerfilA',
+  'SereneTabs',
+  'LogrosA',
+  'ConflictosA',
+  'Onboarding1A',
+  'Onboarding2A',
+  'LoginA',
+  'RegistroA',
+]);
+
 export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
   const { scale: s } = useResponsive();
   const { tabBarHeight, tabBarOffset } = useBottomLayout();
@@ -36,6 +65,13 @@ export function GlassTabBar({ state, navigation }: GlassTabBarProps) {
   const iconSize = s(22);
   const horizontalPadding = s(8);
   const labelMarginTop = s(2);
+
+  const activeTabRoute = state.routes[state.index];
+  const nestedState = activeTabRoute?.state;
+  const nestedRouteName = nestedState?.routes?.[nestedState.index ?? 0]?.name;
+  if (nestedRouteName && FULLSCREEN_ROUTES.has(nestedRouteName)) {
+    return null;
+  }
 
   return (
     <View
@@ -148,6 +184,25 @@ import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BadgesScreen from '../screens/BadgesScreen';
 import SyncConflictScreen from '../screens/SyncConflictScreen';
+import DesignLabScreen from '../screens/designlab/DesignLabScreen';
+import CronometroLimpioScreen from '../screens/designlab/CronometroLimpioScreen';
+import FocusCompletadoScreen from '../screens/designlab/FocusCompletadoScreen';
+import EnfoqueFocusScreen from '../screens/designlab/EnfoqueFocusScreen';
+import FocusSinTareasScreen from '../screens/designlab/FocusSinTareasScreen';
+import TareasAListadoScreen from '../screens/designlab/TareasAListadoScreen';
+import TareasACrearScreen from '../screens/designlab/TareasACrearScreen';
+import TareasADetalleScreen from '../screens/designlab/TareasADetalleScreen';
+import TareasAEditarScreen from '../screens/designlab/TareasAEditarScreen';
+import TareasACompletadaScreen from '../screens/designlab/TareasACompletadaScreen';
+import TareasEditarPasoSheetScreen from '../screens/designlab/TareasEditarPasoSheetScreen';
+import PerfilAVarianteScreen from '../screens/designlab/PerfilAVarianteScreen';
+import SereneTabsScreen from '../screens/designlab/SereneTabsScreen';
+import LogrosAScreen from '../screens/designlab/LogrosAScreen';
+import ConflictosAScreen from '../screens/designlab/ConflictosAScreen';
+import Onboarding1AScreen from '../screens/designlab/Onboarding1AScreen';
+import Onboarding2AScreen from '../screens/designlab/Onboarding2AScreen';
+import LoginAScreen from '../screens/designlab/LoginAScreen';
+import RegistroAScreen from '../screens/designlab/RegistroAScreen';
 
 const FocusStackNav = createNativeStackNavigator<FocusStackParamList>();
 const TasksStackNav = createNativeStackNavigator<TasksStackParamList>();
@@ -194,6 +249,25 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStackNav.Screen name="Badges" component={BadgesScreen} />
       <ProfileStackNav.Screen name="SyncConflict" component={SyncConflictScreen} />
+      <ProfileStackNav.Screen name="DesignLab" component={DesignLabScreen} />
+      <ProfileStackNav.Screen name="CronometroLimpio" component={CronometroLimpioScreen} />
+      <ProfileStackNav.Screen name="FocusCompletado" component={FocusCompletadoScreen} />
+      <ProfileStackNav.Screen name="EnfoqueFocus" component={EnfoqueFocusScreen} />
+      <ProfileStackNav.Screen name="FocusSinTareas" component={FocusSinTareasScreen} />
+      <ProfileStackNav.Screen name="TareasAListado" component={TareasAListadoScreen} />
+      <ProfileStackNav.Screen name="TareasACrear" component={TareasACrearScreen} />
+      <ProfileStackNav.Screen name="TareasADetalle" component={TareasADetalleScreen} />
+      <ProfileStackNav.Screen name="TareasAEditar" component={TareasAEditarScreen} />
+      <ProfileStackNav.Screen name="TareasACompletada" component={TareasACompletadaScreen} />
+      <ProfileStackNav.Screen name="TareasEditarPasoSheet" component={TareasEditarPasoSheetScreen} />
+      <ProfileStackNav.Screen name="PerfilA" component={PerfilAVarianteScreen} />
+      <ProfileStackNav.Screen name="SereneTabs" component={SereneTabsScreen} />
+      <ProfileStackNav.Screen name="LogrosA" component={LogrosAScreen} />
+      <ProfileStackNav.Screen name="ConflictosA" component={ConflictosAScreen} />
+      <ProfileStackNav.Screen name="Onboarding1A" component={Onboarding1AScreen} />
+      <ProfileStackNav.Screen name="Onboarding2A" component={Onboarding2AScreen} />
+      <ProfileStackNav.Screen name="LoginA" component={LoginAScreen} />
+      <ProfileStackNav.Screen name="RegistroA" component={RegistroAScreen} />
     </ProfileStackNav.Navigator>
   );
 }

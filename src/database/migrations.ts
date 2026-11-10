@@ -4,6 +4,7 @@ export interface MigrationDb {
   execAsync: (sql: string) => Promise<void>;
   getAllAsync: <T>(sql: string, params: SqlParam[]) => Promise<T[]>;
   runAsync: (sql: string, params: SqlParam[]) => Promise<{ lastInsertRowId: number }>;
+  withTransactionAsync?: (task: () => Promise<void>) => Promise<void>;
 }
 
 export type Migration = {
