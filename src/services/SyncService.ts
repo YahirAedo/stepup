@@ -31,6 +31,10 @@ import { hasSession, saveSession, type SessionUser } from './session';
 const PUSH_SCOPE = 'sync-push';
 const MIGRATE_SCOPE = 'sync-migrate';
 
+// Cola serializadora de pushes: evita que dos push() concurrentes lean las mismas
+// filas dirty y generen idempotency keys distintas (tareas duplicadas).
+let pushQueue: Promise<unknown> = Promise.resolve();
+
 type PushTask = {
   id?: string;
   localId: number;
@@ -132,77 +136,86 @@ export async function syncNow(): Promise<void> {
   }
 }
 
+async function pushOnce(idempotencyKey?: string): Promise<PushSummary> {
+  if (!hasSession()) {
+    return { tasks: 0, steps: 0 };
+  }
+
+  const db = await getDb();
+  const tasks = await getDirtyTasks(db);
+  const steps = await getDirtySteps(db);
+
+  if (tasks.length === 0 && steps.length === 0) {
+    return { tasks: 0, steps: 0 };
+  }
+
+  // Incluir TODAS las tareas locales para resolver el server_id de la tarea de cada
+  // step aunque la tarea ya esté sincronizada (no dirty) y no viaje en este push.
+  const allTasks = await getAllTasks(db);
+  const taskByLocal = new Map<number, Task>();
+  for (const task of allTasks) taskByLocal.set(task.id, task);
+
+  const payload = {
+    tasks: tasks.map((task): PushTask => ({
+      ...(task.server_id ? { id: task.server_id } : {}),
+      localId: task.id,
+      name: task.name,
+      description: task.description,
+      dueDate: task.due_date,
+      status: task.status,
+      createdAt: normalizeIso(task.created_at),
+      updatedAt: normalizeIso(task.updated_at, task.created_at),
+      completedAt: task.completed_at,
+    })),
+    steps: steps.map((step): PushStep => {
+      const parent = taskByLocal.get(step.task_id);
+      const taskServerId = parent?.server_id ?? null;
+      return {
+        ...(step.server_id ? { id: step.server_id } : {}),
+        localId: step.id,
+        ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
+        name: step.name,
+        durationMin: step.duration_min,
+        orderIndex: step.order_index,
+        status: step.status,
+        updatedAt: normalizeIso(step.updated_at),
+        completedAt: step.completed_at,
+        ...(step.completed_date ? { date: step.completed_date } : {}),
+      };
+    }),
+  };
+
+  return withIdempotencyKey(db, PUSH_SCOPE, payload, idempotencyKey, async (key) => {
+    const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
+      method: 'POST',
+      idempotencyKey: key,
+      body: JSON.stringify(payload),
+    });
+
+    const taskMap: Record<string, string> = {};
+    for (const item of result.tasks) {
+      if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
+    }
+    const stepMap: Record<string, string> = {};
+    for (const item of result.steps) {
+      if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
+    }
+
+    await applyServerIds(db, 'tasks', taskMap);
+    await applyServerIds(db, 'steps', stepMap);
+
+    return { tasks: result.tasks.length, steps: result.steps.length };
+  });
+}
+
 export const SyncService = {
   async push(idempotencyKey?: string): Promise<PushSummary> {
-    if (!hasSession()) {
-      return { tasks: 0, steps: 0 };
-    }
-
-    const db = await getDb();
-    const tasks = await getDirtyTasks(db);
-    const steps = await getDirtySteps(db);
-
-    if (tasks.length === 0 && steps.length === 0) {
-      return { tasks: 0, steps: 0 };
-    }
-
-    // Incluir TODAS las tareas locales para resolver el server_id de la tarea de cada
-    // step aunque la tarea ya esté sincronizada (no dirty) y no viaje en este push.
-    const allTasks = await getAllTasks(db);
-    const taskByLocal = new Map<number, Task>();
-    for (const task of allTasks) taskByLocal.set(task.id, task);
-
-    const payload = {
-      tasks: tasks.map((task): PushTask => ({
-        ...(task.server_id ? { id: task.server_id } : {}),
-        localId: task.id,
-        name: task.name,
-        description: task.description,
-        dueDate: task.due_date,
-        status: task.status,
-        createdAt: normalizeIso(task.created_at),
-        updatedAt: normalizeIso(task.updated_at, task.created_at),
-        completedAt: task.completed_at,
-      })),
-      steps: steps.map((step): PushStep => {
-        const parent = taskByLocal.get(step.task_id);
-        const taskServerId = parent?.server_id ?? null;
-        return {
-          ...(step.server_id ? { id: step.server_id } : {}),
-          localId: step.id,
-          ...(taskServerId ? { taskId: taskServerId } : { taskLocalId: step.task_id }),
-          name: step.name,
-          durationMin: step.duration_min,
-          orderIndex: step.order_index,
-          status: step.status,
-          updatedAt: normalizeIso(step.updated_at),
-          completedAt: step.completed_at,
-          ...(step.completed_date ? { date: step.completed_date } : {}),
-        };
-      }),
-    };
-
-    return withIdempotencyKey(db, PUSH_SCOPE, payload, idempotencyKey, async (key) => {
-      const result = await apiFetch<PushResult>(ENDPOINTS.sync.push, {
-        method: 'POST',
-        idempotencyKey: key,
-        body: JSON.stringify(payload),
-      });
-
-      const taskMap: Record<string, string> = {};
-      for (const item of result.tasks) {
-        if (item.localId !== undefined) taskMap[String(item.localId)] = item.id;
-      }
-      const stepMap: Record<string, string> = {};
-      for (const item of result.steps) {
-        if (item.localId !== undefined) stepMap[String(item.localId)] = item.id;
-      }
-
-      await applyServerIds(db, 'tasks', taskMap);
-      await applyServerIds(db, 'steps', stepMap);
-
-      return { tasks: result.tasks.length, steps: result.steps.length };
-    });
+    const run = pushQueue.then(
+      () => pushOnce(idempotencyKey),
+      () => pushOnce(idempotencyKey),
+    );
+    pushQueue = run.catch(() => undefined);
+    return run;
   },
 
   async pull(): Promise<PushSummary> {
@@ -238,6 +251,11 @@ export const SyncService = {
   async getConflicts(): Promise<SyncConflict[]> {
     const db = await getDb();
     return getStoredConflicts(db);
+  },
+
+  async getLastSyncAt(): Promise<string | null> {
+    const db = await getDb();
+    return getLastSyncAt(db);
   },
 
   async resolveConflictKeepLocal(conflictId: number): Promise<void> {

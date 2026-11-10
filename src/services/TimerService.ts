@@ -79,6 +79,12 @@ export const TimerService = {
     }, 1000);
   },
 
+  addSeconds(n: number): void {
+    if (state.mode !== 'countdown' || state.finished) return;
+    state.seconds += n;
+    onTickCallback?.(state);
+  },
+
   stop(): void {
     if (intervalId) {
       clearInterval(intervalId);

@@ -620,3 +620,47 @@ describe('idempotencia client-side persistente (issue #124)', () => {
     await expect(getPendingIdempotencyKey(db, 'sync-migrate')).resolves.not.toBeNull();
   });
 });
+
+describe('SyncService.push serializado (concurrencia)', () => {
+  it('3 push concurrentes con 1 tarea dirty: una sola llamada a apiFetch y nunca dos en vuelo', async () => {
+    const taskId = await insertTask({ dirty: 1 });
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    mocks.apiFetch.mockImplementation(async () => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      inFlight -= 1;
+      return { tasks: [{ id: 'uuid-task', applied: true, localId: taskId }], steps: [] };
+    });
+
+    const p1 = SyncService.push();
+    const p2 = SyncService.push();
+    const p3 = SyncService.push();
+
+    const [r1, r2, r3] = await Promise.all([p1, p2, p3]);
+
+    expect(mocks.apiFetch).toHaveBeenCalledTimes(1);
+    expect(maxInFlight).toBeLessThanOrEqual(1);
+    expect(r1).toEqual({ tasks: 1, steps: 0 });
+    expect(r2).toEqual({ tasks: 0, steps: 0 });
+    expect(r3).toEqual({ tasks: 0, steps: 0 });
+  });
+
+  it('si el primer push falla, el segundo igual se ejecuta', async () => {
+    const taskId = await insertTask({ dirty: 1 });
+    mocks.apiFetch.mockRejectedValueOnce(new Error('boom'));
+    mocks.apiFetch.mockResolvedValueOnce({
+      tasks: [{ id: 'uuid-task', applied: true, localId: taskId }],
+      steps: [],
+    });
+
+    const p1 = SyncService.push();
+    const p2 = SyncService.push();
+
+    await expect(p1).rejects.toThrow('boom');
+    await expect(p2).resolves.toEqual({ tasks: 1, steps: 0 });
+    expect(mocks.apiFetch).toHaveBeenCalledTimes(2);
+  });
+});

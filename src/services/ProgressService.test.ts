@@ -65,3 +65,175 @@ describe('ProgressService', () => {
     expect(rows).toEqual([]);
   });
 });
+
+describe('ProgressService.getProfileStats', () => {
+  it('devuelve completedDates de los ultimos 30 dias y el total de pasos completados', async () => {
+    const today = dateOffset(0);
+    const old = dateOffset(40);
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P', 30, 0, 'completed', NULL, NULL, 0, '2026-08-01T00:00:00.000Z', ?)`,
+      [taskId, today],
+    );
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P2', 30, 1, 'completed', NULL, NULL, 0, '2026-08-01T00:00:00.000Z', ?)`,
+      [taskId, old],
+    );
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P3', 30, 2, 'pending', NULL, NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId],
+    );
+
+    const stats = await ProgressService.getProfileStats();
+    expect(stats.completedDates).toEqual([today]);
+    expect(stats.stepsTotal).toBe(2);
+  });
+});
+
+describe('ProgressService.getProfileStats (completed_date NULL)', () => {
+  it('paso con completed_date NULL y completed_at de hoy entra en completedDates', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    const todayIso = new Date().toISOString();
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P', 30, 0, 'completed', ?, NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId, todayIso],
+    );
+
+    const stats = await ProgressService.getProfileStats();
+    // use local date comparison loosely: ensure at least one entry
+    expect(stats.completedDates.length).toBeGreaterThanOrEqual(1);
+    expect(stats.stepsTotal).toBe(1);
+  });
+
+  it('paso con completed_at de hace 40 dias no entra en completedDates', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    const oldIso = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P', 30, 0, 'completed', ?, NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId, oldIso],
+    );
+
+    const stats = await ProgressService.getProfileStats();
+    expect(stats.completedDates).toEqual([]);
+    expect(stats.stepsTotal).toBe(1);
+  });
+
+  it('stepsTotal cuenta ambos aunque uno no entre en completedDates', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    const todayIso = new Date().toISOString();
+    const oldIso = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P1', 30, 0, 'completed', ?, NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId, todayIso],
+    );
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P2', 30, 1, 'completed', ?, NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId, oldIso],
+    );
+
+    const stats = await ProgressService.getProfileStats();
+    expect(stats.stepsTotal).toBe(2);
+    expect(stats.completedDates.length).toBe(1);
+  });
+});
+
+describe('ProgressService.getLogrosStats', () => {
+  it('stepsTotal cuenta los pasos completados', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P', 30, 0, 'completed', '2026-08-01T07:30:00.000Z', NULL, 0, '2026-08-01T00:00:00.000Z', '2026-08-01')`,
+      [taskId],
+    );
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P2', 30, 1, 'pending', NULL, NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId],
+    );
+
+    const stats = await ProgressService.getLogrosStats();
+    expect(stats.stepsTotal).toBe(1);
+  });
+
+  it('tasksCompleted cuenta las tareas completadas', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T1', NULL, 'completed', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T2', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+
+    const stats = await ProgressService.getLogrosStats();
+    expect(stats.tasksCompleted).toBe(1);
+  });
+
+  it('completedDays devuelve fechas distintas del historial', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P', 30, 0, 'completed', '2026-08-01T07:30:00.000Z', NULL, 0, '2026-08-01T00:00:00.000Z', NULL)`,
+      [taskId],
+    );
+
+    const stats = await ProgressService.getLogrosStats();
+    expect(stats.completedDays.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('completedAtList contiene los completed_at no nulos', async () => {
+    await db.runAsync(
+      `INSERT INTO tasks (name, due_date, status, created_at, completed_at, server_id, dirty, updated_at)
+         VALUES ('T', NULL, 'active', ?, NULL, NULL, 0, ?)`,
+      ['2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z'],
+    );
+    const taskId = 1;
+    await db.runAsync(
+      `INSERT INTO steps (task_id, name, duration_min, order_index, status, completed_at, server_id, dirty, updated_at, completed_date)
+         VALUES (?, 'P', 30, 0, 'completed', '2026-08-01T07:30:00.000Z', NULL, 0, '2026-08-01T00:00:00.000Z', '2026-08-01')`,
+      [taskId],
+    );
+
+    const stats = await ProgressService.getLogrosStats();
+    expect(stats.completedAtList).toEqual(['2026-08-01T07:30:00.000Z']);
+  });
+});

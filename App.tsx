@@ -19,14 +19,29 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
+// Design Lab (#295): Space Grotesk + Inter solo para las previews bajo
+// src/screens/designlab/. Excepcion documentada al DS — ver
+// src/theme/serene/typography.ts.
+import {
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+} from '@expo-google-fonts/space-grotesk';
+import { Inter_400Regular } from '@expo-google-fonts/inter';
 
 import OnboardingScreen1 from './src/screens/OnboardingScreen1';
 import OnboardingScreen2 from './src/screens/OnboardingScreen2';
 import NotificationPermissionScreen from './src/screens/NotificationPermissionScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import LoginMainScreen from './src/features/auth/LoginMainScreen';
+import RegisterMainScreen from './src/features/auth/RegisterMainScreen';
+import OnboardingProblemScreen from './src/features/auth/OnboardingProblemScreen';
+import OnboardingSolutionScreen from './src/features/auth/OnboardingSolutionScreen';
+import { migrationFlags } from './src/config/migration';
 import { colors } from './src/theme';
 import { MainTabs } from './src/components/GlassTabBar';
+import AppTabs from './src/navigation/AppTabs';
+import { TABS_VARIANT } from './src/navigation/tabs';
 import { FloatingActionButton } from './src/components/FloatingActionButton';
 
 SplashScreen.preventAutoHideAsync();
@@ -50,11 +65,11 @@ function AppContent() {
   const tasksStackIndex = activeTabRoute?.state?.index ?? 0;
 
   // Show FAB only on the Tasks tab root screen (TaskList)
-  const showFAB = activeTabName === 'Tasks' && tasksStackIndex === 0;
+  const showFAB = !migrationFlags.tasks && activeTabName === 'Tasks' && tasksStackIndex === 0;
 
   return (
     <>
-      <MainTabs />
+      {TABS_VARIANT === 'serene' ? <AppTabs /> : <MainTabs />}
       {showFAB && (
         <FloatingActionButton
           onPress={() => {
@@ -74,6 +89,10 @@ function AppContent() {
   );
 }
 
+import { StepService } from './src/services/StepService';
+
+let reconcileDone = false;
+
 export default function App() {
   const [fontsLoaded, fontsError] = useFonts({
     Manrope_800ExtraBold,
@@ -81,6 +100,9 @@ export default function App() {
     PlusJakartaSans_400Regular,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    Inter_400Regular,
   });
 
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
@@ -92,7 +114,19 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      await loadSession();
+      try {
+        await loadSession();
+      } catch (e) {
+        console.error('[App] loadSession failed', e);
+      }
+      if (!reconcileDone) {
+        reconcileDone = true;
+        try {
+          await StepService.reconcileAllTasks();
+        } catch (e) {
+          console.error('[App] reconcileAllTasks failed', e);
+        }
+      }
       const hasSeenOnboarding = await storage.getItem(ONBOARDING_KEY);
       if (!mounted) return;
       if (hasSession()) {
@@ -137,11 +171,11 @@ export default function App() {
           initialRouteName={initialRoute}
           screenOptions={{ headerShown: false }}
         >
-          <RootStack.Screen name="Onboarding1" component={OnboardingScreen1} />
-          <RootStack.Screen name="Onboarding2" component={OnboardingScreen2} />
+          <RootStack.Screen name="Onboarding1" component={migrationFlags.auth ? OnboardingProblemScreen : OnboardingScreen1} />
+          <RootStack.Screen name="Onboarding2" component={migrationFlags.auth ? OnboardingSolutionScreen : OnboardingScreen2} />
           <RootStack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
-          <RootStack.Screen name="Login" component={LoginScreen} />
-          <RootStack.Screen name="Register" component={RegisterScreen} />
+          <RootStack.Screen name="Login" component={migrationFlags.auth ? LoginMainScreen : LoginScreen} />
+          <RootStack.Screen name="Register" component={migrationFlags.auth ? RegisterMainScreen : RegisterScreen} />
           <RootStack.Screen name="MainTabs" component={AppContent} />
         </RootStack.Navigator>
       </NavigationContainer>
