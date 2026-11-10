@@ -16,6 +16,7 @@ import {
   useResponsive,
 } from '../../theme/serene';
 import { mci } from '../designlab/mciIconMap';
+import { getActionButtonPalette } from './actionButtonPalette';
 import { focusCopy } from '../../features/focus/logic/focusCopy';
 import FocusCountdownRing from './FocusCountdownRing';
 import FocusTaskHeader from './FocusTaskHeader';
@@ -60,6 +61,7 @@ export default function FocusRunningView({
   }, [timer.finished]);
 
   const running = focusCopy.running;
+  const secondaryPalette = getActionButtonPalette('secondary');
 
   return (
     <View style={{ flex: 1, backgroundColor: sereneColors.surface }}>
@@ -145,12 +147,12 @@ export default function FocusRunningView({
               gap: sereneSpacing['space-sm'],
               paddingVertical: sereneSpacing['space-sm'],
               borderRadius: sereneBorderRadius.lg,
-              backgroundColor: sereneColors['surface-container-high'],
+              backgroundColor: sereneColors[secondaryPalette.background as keyof typeof sereneColors],
               opacity: pressed || timer.finished ? 0.9 : 1,
             })}
           >
-            <MaterialCommunityIcons name={mci('timer')} size={s(20)} color={sereneColors.primary} />
-            <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors.primary }]}>
+            <MaterialCommunityIcons name={mci('timer')} size={s(20)} color={sereneColors[secondaryPalette.content as keyof typeof sereneColors]} />
+            <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors[secondaryPalette.content as keyof typeof sereneColors] }]}>
               {running.extend}
             </RNText>
           </Pressable>

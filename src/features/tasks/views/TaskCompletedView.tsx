@@ -3,7 +3,6 @@ import {
   View,
   ScrollView,
   Text as RNText,
-  Pressable,
   ActivityIndicator,
   type TextStyle,
 } from 'react-native';
@@ -18,6 +17,7 @@ import {
   withAlpha,
 } from '../../../theme/serene';
 import { mci } from '../../../components/designlab/mciIconMap';
+import ActionButton from '../../../components/ui/ActionButton';
 import { taskCompletedCopy } from '../logic/taskCompletedCopy';
 import { formatCompletedMeta } from '../logic/formatCompletedMeta';
 import type { CompletedSummary } from '../logic/buildCompletedSummary';
@@ -27,6 +27,7 @@ export interface TaskCompletedViewProps {
   loading: boolean;
   loadError: string | null;
   onPrimaryPress: () => void;
+  onSecondaryPress: () => void;
 }
 
 export default function TaskCompletedView({
@@ -34,6 +35,7 @@ export default function TaskCompletedView({
   loading,
   loadError,
   onPrimaryPress,
+  onSecondaryPress,
 }: TaskCompletedViewProps) {
   const { scale: s } = useResponsive();
 
@@ -85,27 +87,7 @@ export default function TaskCompletedView({
         >
           {loadError ?? taskCompletedCopy.loadError}
         </RNText>
-        <Pressable
-          onPress={onPrimaryPress}
-          accessibilityRole="button"
-          accessibilityLabel={taskCompletedCopy.primary}
-          style={({ pressed }) => ({
-            minHeight: s(48),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: sereneSpacing['space-sm'],
-            paddingVertical: sereneSpacing['space-sm'],
-            paddingHorizontal: sereneSpacing['space-md'],
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: sereneColors.primary,
-            opacity: pressed ? 0.9 : 1,
-          })}
-        >
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-            {taskCompletedCopy.primary}
-          </RNText>
-        </Pressable>
+        <ActionButton variant="primary" label={taskCompletedCopy.primary} onPress={onPrimaryPress} />
       </View>
     );
   }
@@ -321,28 +303,20 @@ export default function TaskCompletedView({
           backgroundColor: sereneColors.surface,
         }}
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={taskCompletedCopy.primary}
-          onPress={onPrimaryPress}
-          style={({ pressed }) => ({
-            minHeight: s(48),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: sereneSpacing['space-sm'],
-            paddingVertical: sereneSpacing['space-sm'],
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: sereneColors.primary,
-            ...sereneShadows.card,
-            opacity: pressed ? 0.9 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name={mci('arrow_forward')} size={s(20)} color={sereneColors['on-primary']} accessible={false} importantForAccessibility="no" />
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-            {taskCompletedCopy.primary}
-          </RNText>
-        </Pressable>
+        <View style={{ gap: sereneSpacing['space-sm'] }}>
+          <ActionButton
+            variant="primary"
+            label={taskCompletedCopy.primary}
+            onPress={onPrimaryPress}
+            icon={mci('arrow_forward')}
+          />
+          <ActionButton
+            variant="secondary"
+            label={taskCompletedCopy.secondary}
+            onPress={onSecondaryPress}
+            icon="timer-outline"
+          />
+        </View>
       </View>
     </View>
   );

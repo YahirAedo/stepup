@@ -7,6 +7,7 @@ export const taskCompletedCopy = {
   recapLabel: 'Resumen',
   microCopy: 'Lo de hoy ya suma.',
   primary: 'Volver a mis tareas',
+  secondary: 'Ir a Foco',
   loadError: 'No se pudo cargar la tarea.',
   loading: 'Cargando…',
 };

@@ -1,15 +1,15 @@
 import React from 'react';
-import { View, Text as RNText, Pressable, type TextStyle } from 'react-native';
+import { View, Text as RNText, type TextStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   sereneColors,
   sereneTypography,
   sereneSpacing,
-  sereneBorderRadius,
   useResponsive,
 } from '../../theme/serene';
 import { focusCopy } from '../../features/focus/logic/focusCopy';
 import type { FocusEmptyState } from '../../features/focus/logic/buildFocusEmptyState';
+import ActionButton from './ActionButton';
 
 export interface FocusEmptyViewProps {
   emptyState: FocusEmptyState;
@@ -86,48 +86,10 @@ export default function FocusEmptyView({ emptyState, onPrimary, onSecondary }: F
       </View>
 
       <View style={{ width: '100%', maxWidth: s(360), gap: sereneSpacing['space-sm'] }}>
-        <Pressable
-          onPress={onPrimary}
-          accessibilityRole="button"
-          accessibilityLabel={copy.primaryCta}
-          style={({ pressed }) => ({
-            minHeight: s(48),
-            width: '100%',
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: sereneColors['primary-container'],
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: s(8),
-            opacity: pressed ? 0.95 : 1,
-          })}
-        >
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-            {copy.primaryCta}
-          </RNText>
-        </Pressable>
+        <ActionButton variant="primary" label={copy.primaryCta} onPress={onPrimary} />
 
         {copy.secondaryCta && onSecondary ? (
-          <Pressable
-            onPress={onSecondary}
-            accessibilityRole="button"
-            accessibilityLabel={copy.secondaryCta}
-            style={({ pressed }) => ({
-              minHeight: s(48),
-              width: '100%',
-              borderRadius: sereneBorderRadius.lg,
-              backgroundColor: sereneColors['secondary-container'],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: s(8),
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-secondary-container'] }]}>
-              {copy.secondaryCta}
-            </RNText>
-          </Pressable>
+          <ActionButton variant="secondary" label={copy.secondaryCta} onPress={onSecondary} />
         ) : null}
       </View>
     </View>

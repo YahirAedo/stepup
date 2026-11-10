@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
-  Pressable,
   Text as RNText,
   View,
   type TextStyle,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   sereneColors,
   sereneTypography,
@@ -17,6 +15,7 @@ import {
   useResponsive,
 } from '../../theme/serene';
 import { mci } from '../designlab/mciIconMap';
+import ActionButton from './ActionButton';
 
 export interface FocusTimerExpiredOverlayProps {
   visible: boolean;
@@ -66,7 +65,6 @@ export default function FocusTimerExpiredOverlay({
   if (!mounted) return null;
 
   const scrimColor = withAlpha(sereneColors['on-surface'], 0.5);
-  const buttonHeight = s(52);
 
   return (
     <Animated.View
@@ -126,78 +124,21 @@ export default function FocusTimerExpiredOverlay({
           {subtitle}
         </RNText>
 
-        <View style={{ width: '100%', marginTop: sereneSpacing['space-lg'] }}>
-          <Pressable
+        <View style={{ width: '100%', marginTop: sereneSpacing['space-lg'], gap: sereneSpacing['space-sm'] }}>
+          <ActionButton
+            variant="primary"
+            label={primaryCta}
             onPress={onMarkDone}
-            accessibilityRole="button"
-            accessibilityLabel={primaryCta}
+            icon={mci('done')}
             disabled={disabled}
-            accessibilityState={{ disabled }}
-            style={({ pressed }) => ({
-              width: '100%',
-              minHeight: s(48),
-              height: buttonHeight,
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: sereneColors['primary-container'],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: s(8),
-              opacity: pressed || disabled ? 0.9 : 1,
-              ...sereneShadows.card,
-            })}
-          >
-            <MaterialCommunityIcons name={mci('done')} size={s(20)} color={sereneColors['on-primary-container']} />
-            <RNText
-              style={[
-                sereneTypography['label-lg'] as TextStyle,
-                {
-                  color: sereneColors['on-primary-container'],
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.4,
-                },
-              ]}
-            >
-              {primaryCta}
-            </RNText>
-          </Pressable>
-
-          <Pressable
+          />
+          <ActionButton
+            variant="secondary"
+            label={secondaryCta}
             onPress={onExtend}
-            accessibilityRole="button"
-            accessibilityLabel={secondaryCta}
+            icon={mci('timer')}
             disabled={disabled}
-            accessibilityState={{ disabled }}
-            style={({ pressed }) => ({
-              width: '100%',
-              minHeight: s(48),
-              height: buttonHeight,
-              marginTop: sereneSpacing['space-sm'],
-              borderRadius: sereneBorderRadius.full,
-              backgroundColor: sereneColors['surface-container-high'],
-              borderWidth: 1,
-              borderColor: sereneColors['outline-variant'],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: s(8),
-              opacity: pressed || disabled ? 0.9 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name={mci('timer')} size={s(20)} color={sereneColors.primary} />
-            <RNText
-              style={[
-                sereneTypography['label-lg'] as TextStyle,
-                {
-                  color: sereneColors.primary,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.4,
-                },
-              ]}
-            >
-              {secondaryCta}
-            </RNText>
-          </Pressable>
+          />
         </View>
       </Animated.View>
     </Animated.View>

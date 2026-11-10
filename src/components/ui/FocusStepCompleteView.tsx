@@ -3,7 +3,6 @@ import {
   View,
   ScrollView,
   Text as RNText,
-  Pressable,
   type TextStyle,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +15,7 @@ import {
   useResponsive,
 } from '../../theme/serene';
 import { mci } from '../designlab/mciIconMap';
+import ActionButton from './ActionButton';
 import { focusCopy } from '../../features/focus/logic/focusCopy';
 import { buildStepCompletedView } from '../../features/focus/logic/buildStepCompletedView';
 
@@ -181,51 +181,19 @@ export default function FocusStepCompleteView({
           </View>
         ) : null}
 
-        <Pressable
+        <ActionButton
+          variant="primary"
+          label={focusCopy.completed.continueCta}
           onPress={onContinue}
-          accessibilityRole="button"
-          accessibilityLabel={focusCopy.completed.continueCta}
-          style={({ pressed }) => ({
-            width: '100%',
-            minHeight: s(48),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: sereneSpacing['space-sm'],
-            paddingVertical: sereneSpacing['space-sm'],
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: sereneColors['primary-container'],
-            opacity: pressed ? 0.9 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name={mci('play_arrow')} size={s(20)} color={sereneColors['on-primary']} />
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-primary'] }]}>
-            {focusCopy.completed.continueCta}
-          </RNText>
-        </Pressable>
+          icon={mci('play_arrow')}
+        />
 
-        <Pressable
+        <ActionButton
+          variant="secondary"
+          label={focusCopy.completed.goTasksCta}
           onPress={onGoTasks}
-          accessibilityRole="button"
-          accessibilityLabel={focusCopy.completed.goTasksCta}
-          style={({ pressed }) => ({
-            width: '100%',
-            minHeight: s(48),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: sereneSpacing['space-sm'],
-            paddingVertical: sereneSpacing['space-sm'],
-            borderRadius: sereneBorderRadius.lg,
-            backgroundColor: sereneColors['surface-container-high'],
-            opacity: pressed ? 0.9 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name={mci('arrow_forward')} size={s(20)} color={sereneColors['on-surface']} />
-          <RNText style={[sereneTypography['label-lg'] as TextStyle, { color: sereneColors['on-surface'] }]}>
-            {focusCopy.completed.goTasksCta}
-          </RNText>
-        </Pressable>
+          icon={mci('arrow_forward')}
+        />
       </ScrollView>
     </View>
   );
