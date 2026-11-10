@@ -149,14 +149,8 @@ export default function TaskCreateView({
           showsVerticalScrollIndicator={false}
         >
           <View style={{ gap: sereneSpacing['space-xs'] }}>
-            <RNText
-              accessibilityRole="header"
-              style={[sereneTypography['title-lg'] as TextStyle, { color: sereneColors['on-surface'] }]}
-            >
-              {f.screenTitle}
-            </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: sereneSpacing['space-sm'] }}>
-              <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface-variant'], flexShrink: 1 }]}>{f.titleLabel}</RNText>
+              <RNText style={[sereneTypography['label-md'] as TextStyle, { color: sereneColors['on-surface'], flexShrink: 1 }]}>{f.titleLabel}</RNText>
               <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>{`${title.length}/${f.titleMaxLength}`}</RNText>
             </View>
 
@@ -332,11 +326,14 @@ export default function TaskCreateView({
 
           {aiStatus === 'ready' && aiSuggestions && aiSuggestions.length > 0 && (
             <View style={{ gap: sereneSpacing['space-sm'], paddingTop: sereneSpacing['space-xs'] }}>
+              <RNText style={[sereneTypography['title-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>
+                Pasos recomendados
+              </RNText>
               {aiSuggestions.map((suggest, idx) => (
                 <View
                   key={idx}
                   accessible={true}
-                  accessibilityLabel={`${suggest.name}, ${taskEditCopy.ai.minutes(suggest.duration_min)} minutos`}
+                  accessibilityLabel={`${suggest.name}, ${suggest.duration_min} minutos`}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -351,7 +348,7 @@ export default function TaskCreateView({
                   <MaterialCommunityIcons name={mci('check')} size={s(16)} color={sereneColors['primary']} />
                   <View style={{ flex: 1 }}>
                     <RNText style={[sereneTypography['body-md'] as TextStyle, { color: sereneColors['on-surface'] }]}>
-                      {suggest.name}
+                       {suggest.name}
                     </RNText>
                     <RNText style={[sereneTypography['label-sm'] as TextStyle, { color: sereneColors['on-surface-variant'] }]}>
                       {taskEditCopy.ai.minutes(suggest.duration_min)}
