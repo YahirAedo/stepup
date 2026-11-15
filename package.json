@@ -24,8 +24,8 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/bottom-tabs": "^7.17.0",
-    "@react-navigation/native": "^7.2.6",
-    "@react-navigation/native-stack": "^7.17.1",
+    "@react-navigation/native": "^7.3.16",
+    "@react-navigation/native-stack": "^7.18.8",
     "expo": "~54.0.33",
     "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.9",
@@ -48,9 +48,9 @@
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
-    "sql.js": "^1.14.1",
+    "sql.js": "^1.14.2",
     "typescript": "~5.9.2",
-    "typescript-eslint": "^8.65.0",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.10"
   },
   "private": true
