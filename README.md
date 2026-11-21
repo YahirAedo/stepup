@@ -256,8 +256,9 @@ stepup/
 │   ├── Contexto.md                 # Contexto completo del proyecto (entregas)
 │   ├── GUIA-DISENO-MOVIL.md        # Guía móvil canónica (design system)
 │   ├── GUIA-DOCKER-POSTGRES.md     # Setup del backend local con Docker
-│   ├── Entrega 3 PRD.md            # PRD de la entrega en curso
-│   └── practicas-recomendadas.md  # Prácticas de ingeniería
+│   ├── Entrega 3 PRD.md            # PRD de la entrega cerrada
+│   ├── Arquitectura actual de la aplicacion.md # Arquitectura implementada vigente
+│   └── ...                         # Entregables y registros históricos de E1, E2 y E3
 ├── App.tsx                        # Entry point + navegación bottom tabs
 ├── AGENTS.md                      # Guía para agentes de IA
 ├── app.json
